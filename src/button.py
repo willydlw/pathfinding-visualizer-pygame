@@ -10,8 +10,7 @@ class Button:
         self.font = pygame.font.SysFont('Arial', 20)
 
     def handle_event(self, event):
-        """Returns True only once when the mouse button is released over the button."""
-        action = False 
+        """Returns the button text only once when the mouse button is released over the button."""
         mouse_pos = pygame.mouse.get_pos() 
 
         # check for mouse press 
@@ -22,12 +21,12 @@ class Button:
         # check for mouse release 
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             if self.pressed:
+                self.pressed = False   # reset state
                 # Only trigger action if mouse is still over the button on release 
                 if self.rect.collidepoint(mouse_pos):
-                    action = True 
-                self.pressed = False 
-
-        return action 
+                    return self.text
+            
+        return None
 
 
     def draw(self, surface):

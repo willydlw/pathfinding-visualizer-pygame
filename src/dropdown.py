@@ -1,6 +1,10 @@
 import pygame 
+import logging 
 
 from .button import Button
+
+
+logger = logging.getLogger(__name__)
 
 class Dropdown:
     def __init__(self, x, y, width, height, options):
@@ -18,11 +22,23 @@ class Dropdown:
         if not self.is_open:
             return None 
         
+        # check if an option was clicked
+        button_hit = False 
+        mouse_pos = pygame.mouse.get_pos()
         for btn in self.buttons:
-            if btn.handle_event(event):
+            if btn.rect.collidepoint(mouse_pos):
+                button_hit = True 
+            
+            result = btn.handle_event(event)
+            if result:
+                logging.info(f"Button action triggered: {result}")
                 self.is_open = False  # close after selection 
-                return btn.text 
+                return result 
     
+        # Only close if a MOUSEBUTTONDOWN happened AND it wasn't on a button 
+        if event.type == pygame.MOUSEBUTTONDOWN and not button_hit:
+            self.is_open = False
+
         return None 
     
     def draw(self, surface):

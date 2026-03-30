@@ -1,5 +1,7 @@
 import pygame 
+import logging 
 
+logger = logging.getLogger(__name__)
 
 class Grid:
     def __init__(self, x, y, width, height, rows, cols):
@@ -7,7 +9,7 @@ class Grid:
         self.rows = rows 
         self.cols = cols 
         self.cell_w = width // cols 
-        self.cell_h = width // rows 
+        self.cell_h = height // rows 
 
         # init 2D list with 0 (Empty)
         self.map = [[0 for _ in range(cols)] for _ in range(rows)]
@@ -41,7 +43,7 @@ class Grid:
             cell = self.get_cell_from_pos(pos)
             if cell:
                 row, col = cell 
-                self.map[row][col]
+                self.map[row][col] = 0
 
     def draw(self, surface):
         for r in range(self.rows):
