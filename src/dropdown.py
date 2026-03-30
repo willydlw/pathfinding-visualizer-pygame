@@ -1,6 +1,6 @@
 import pygame 
 
-from button import Button
+from .button import Button
 
 class Dropdown:
     def __init__(self, x, y, width, height, options):
@@ -22,10 +22,7 @@ class Dropdown:
             if btn.handle_event(event):
                 self.is_open = False  # close after selection 
                 return btn.text 
-            
-        # close menu if clicking outside of it 
-        #if event.type == pygame.MOUSEBUTTONDOWN:
-        #    self.is_open = False 
+    
         return None 
     
     def draw(self, surface):

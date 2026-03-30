@@ -19,9 +19,9 @@ def main():
                 pygame.quit()
                 sys.exit() 
 
-        result = header.handle_events(event)
-        if result:
-            last_event_text = result 
+            result = header.handle_events(event)
+            if result:
+                last_event_text = result 
 
         # Display selection status at bottom
         font = pygame.font.SysFont('Arial', 20)
