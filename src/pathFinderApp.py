@@ -45,7 +45,7 @@ class PathFinderApp:
         if action == "Map: Clear":
             self.grid.map = [[0 for _ in range(self.grid.cols)] for _ in range(self.grid.rows)]
         else:
-            logging.debug(f"TODO: process all UI actions in {_process_ui_action.__name__}")
+            logging.debug(f"TODO: process all UI actions in {self._process_ui_action.__name__}")
 
     def _update(self):
         # Handle continuous mouse painting for walls 

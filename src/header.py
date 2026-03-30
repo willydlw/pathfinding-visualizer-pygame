@@ -43,3 +43,5 @@ class Header:
         pygame.draw.rect(surface, (40, 40, 40), self.rect)
         self.algo_btn.draw(surface)
         self.algo_menu.draw(surface) # draws on top if open
+        self.map_btn.draw(surface)
+        self.map_menu.draw(surface)
