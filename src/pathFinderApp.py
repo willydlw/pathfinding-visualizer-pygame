@@ -5,6 +5,7 @@ from pygame_gui.elements import UIButton
 import logging 
 
 from .grid import Grid 
+from .sidebar import Sidebar
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +49,13 @@ class PathFinderApp:
         # UI Management 
         self.ui_manager = pygame_gui.UIManager((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
 
-        # Create a button 
-        self.load_button = UIButton(relative_rect=pygame.Rect((self.GRID_WIDTH + 50, 100), (200, 50)),
-                                    text='Load Map',
-                                    manager=self.ui_manager)
+        #  create sidebar 
+        self.sidebar = Sidebar(
+            self.ui_manager,
+            self.SIDEBAR_WIDTH,
+            self.WINDOW_HEIGHT,
+            self.GRID_WIDTH
+        )
         
         logging.info(f"PathFinderApp initialized")
 
@@ -63,11 +67,7 @@ class PathFinderApp:
 
             # Process UI events 
             self.ui_manager.process_events(event) 
-
-            # Handle specific UI actions 
-            if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                if event.ui_element == self.load_button:
-                    print("Load Map clicked!")
+            self.sidebar.handle_events(event)
 
 
 
@@ -79,7 +79,7 @@ class PathFinderApp:
         self.screen.fill(self.COLOR_BG)
         self.grid.draw(self.screen)
 
-        # draw sidebar 
+        # draw sidebar background area
         sidebar_rect = pygame.Rect(self.GRID_WIDTH, 0, self.SIDEBAR_WIDTH, self.WINDOW_HEIGHT)
         pygame.draw.rect(self.screen, self.COLOR_SIDEBAR, sidebar_rect)
 
