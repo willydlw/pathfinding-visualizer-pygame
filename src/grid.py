@@ -1,5 +1,5 @@
 import pygame 
-
+import json 
 
 import logging 
 
@@ -83,5 +83,28 @@ class Grid:
                 
                 # horizontal lines
                 pygame.draw.line(surface, self.COLOR_GRID_LINE, (0, i * self.cell_size), (i * self.grid_size, i * self.cell_size))
+    
+    
+    def load_from_file(self, file_path):
+        """Loads a map from a JSON file into the grid."""
+        try:
+            with open(file_path, 'r') as f:
+                loaded_data = json.load(f)
             
-                
+            if len(loaded_data) == self.rows and len(loaded_data[0]) == self.cols:
+                self.map = loaded_data 
+                logger.info(f"Map loaded successfully from {file_path}")
+            else:
+                logger.error("Loaded map dimensions do not match current grid.")
+        except Exception as e:
+            logger.error(f"Failed to load map: {e}")
+    
+
+    def save_to_file(self, file_path):
+        """Saves the current map 2D list to a JSON file."""
+        try:
+            with open(file_path, 'w') as f:
+                json.dump(self.map, f) 
+            logger.info(f"Map successfully saved to {file_path}")
+        except Exception as e:
+            logger.error(f"Failed to save map: {e}")

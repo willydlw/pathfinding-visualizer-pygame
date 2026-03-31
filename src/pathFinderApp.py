@@ -74,10 +74,12 @@ class PathFinderApp:
 
 
     def _update(self):
-        # Only allow drawing on the grid if the mouse is not hovering
-        # over a UI element 
-        if not self.ui_manager.get_hovering_any_element():
-            self.grid.handle_mouse()
+        # Check if dialog is blocking the screen 
+        is_blocking = self.ui_manager.get_hovering_any_element() 
+
+        if not is_blocking:
+            self.grid.handle_mouse() 
+
     
 
     def _draw(self):
