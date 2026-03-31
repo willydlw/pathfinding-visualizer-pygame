@@ -40,6 +40,9 @@ class Grid:
         self.rect = pygame.Rect(x, y, self.grid_size, self.grid_size)
 
         self.current_brush = self.GREEN
+
+        self.start_pos = None 
+        self.end_pos = None 
         
         
 
@@ -50,6 +53,8 @@ class Grid:
     def clear(self):
          """Resets the grid map to all empty (0)."""
          self.map = [[self.EMPTY for _ in range(self.cols)] for _ in range(self.rows)]
+         self.start_pos = None 
+         self.end_pos = None 
          logger.info("Grid cleared!")
 
     
@@ -77,16 +82,29 @@ class Grid:
 
         if mouse_buttons[0]:    # left click held down 
             # if we are painting Start or End, clear the old one first 
-            if self.current_brush in [self.START, self.END]:
-                for r in range(self.rows):
-                    for c in range(self.cols):
-                        if self.map[r][c] == self.current_brush:
-                            self.map[r][c] = self.EMPTY
+            if self.current_brush == self.START:
+                if self.start_pos:
+                    old_r, old_c = self.start_pos 
+                    self.map[old_r][old_c] = self.EMPTY 
+                self.start_pos = (row, col)
+            elif self.current_brush == self.END:
+                if self.end_pos:
+                    old_r, old_c = self.end_pos 
+                    self.map[old_r][old_c] = self.EMPTY 
+                self.end_pos = (row, col)
+
+            # if painting over and existing START/END with terrain, clear the reference 
+            elif (row, col) == self.start_pos: self.start_pos = None 
+            elif (row, col) == self.end_pos: self.end_pos = None 
 
             self.map[row][col] = self.current_brush
-            
+
+
+
         elif mouse_buttons[2]:      # right click held down (eraser)
-             self.map[row][col] = self.EMPTY
+            if (row, col)  == self.start_pos: self.start_pos = None 
+            elif (row, col) == self.end_pos: self.end_pos = None 
+            self.map[row][col] = self.EMPTY
 
 
     def draw(self, surface):
@@ -118,7 +136,14 @@ class Grid:
                                  (self.rect.x + self.grid_size, self.rect.y + offset)
                                 )
     
-    
+    def find_node(self, node_type):
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if self.map[r][c] == node_type:
+                    return (r, c)
+        return None 
+
+
     def load_from_file(self, file_path):
         """Loads a map from a JSON file into the grid."""
         try:
@@ -127,6 +152,8 @@ class Grid:
             
             if len(loaded_data) == self.rows and len(loaded_data[0]) == self.cols:
                 self.map = loaded_data 
+                self.start_pos = self.find_node(self.START)
+                self.end_pos = self.find_node(self.END)
                 logger.info(f"Map loaded successfully from {file_path}")
             else:
                 logger.error("Loaded map dimensions do not match current grid.")
