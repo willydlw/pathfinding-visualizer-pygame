@@ -2,8 +2,6 @@ import logging
 import pygame
 from pathlib import Path 
 
-
-
 from src import PathFinderApp 
 
 def configure_logger():

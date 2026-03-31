@@ -1,32 +1,58 @@
 import pygame 
+import pygame_gui 
+from pygame_gui.elements import UIButton 
+
 import logging 
 
-from .header import Header 
 from .grid import Grid 
-from .constants import SCREEN_WIDTH, SCREEN_HEIGHT, FPS 
-
 
 logger = logging.getLogger(__name__)
 
 
 class PathFinderApp:
-    def __init__(self):
-        pygame.init() 
-        self.screen_width = SCREEN_WIDTH 
-        self.screen_height = SCREEN_HEIGHT 
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-        pygame.display.set_caption("Algorithm Visualizer")
+    # Class constants
+    FPS = 60
 
+    CELL_SIZE_PIXELS = 12 
+    NUM_GRID_CELLS = 64      # number of cells
+    SIDEBAR_WIDTH = 300 
+
+    GRID_WIDTH = NUM_GRID_CELLS * CELL_SIZE_PIXELS 
+    
+    WINDOW_WIDTH = GRID_WIDTH + SIDEBAR_WIDTH
+    WINDOW_HEIGHT = GRID_WIDTH 
+
+    # Colors (RGB)
+    COLOR_BG = (30, 30, 30)             # Dark gray 
+    
+    COLOR_SIDEBAR = (240, 240, 240)     # Off-white for UI 
+    COLOR_WALKABLE = (46, 204, 113)     # Green walkable area 
+
+    def __init__(self):
+
+        # window attributes
+        pygame.init() 
+        self.screen_width = self.WINDOW_WIDTH 
+        self.screen_height = self.WINDOW_HEIGHT 
+
+        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        pygame.display.set_caption("Pathfinding Visualizer")
+
+        # application state 
         self.clock = pygame.time.Clock() 
         self.running = True 
 
-        # UI Components 
-        self.header = Header(self.screen_width, 50)
-        self.grid = Grid(0, 50, self.screen_width, self.screen_height - 50, 25, 40)
+        # Grid 
+        self.grid = Grid(0, 0, self.NUM_GRID_CELLS, self.CELL_SIZE_PIXELS)
 
-        self.mouse_captured_by_ui = False    # flag to track mouse press 
+        # UI Management 
+        self.ui_manager = pygame_gui.UIManager((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
 
-        self.status_text = "Ready"
+        # Create a button 
+        self.load_button = UIButton(relative_rect=pygame.Rect((self.GRID_WIDTH + 50, 100), (200, 50)),
+                                    text='Load Map',
+                                    manager=self.ui_manager)
+        
         logging.info(f"PathFinderApp initialized")
 
     
@@ -35,67 +61,42 @@ class PathFinderApp:
             if event.type == pygame.QUIT:
                 self.running = False 
 
-            # Track if a new press starts on the header
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.pos[1] <= self.header.rect.height:
-                    self.mouse_captured_by_ui = True 
-                else:
-                    self.mouse_captured_by_ui = False 
+            # Process UI events 
+            self.ui_manager.process_events(event) 
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    # escape key press should close any open menus 
-                    self.header.algo_menu.is_open = False 
-                    self.header.map_menu.is_open = False 
-                    logging.info("Menus closed via Escape key")
-            
-            # pass events to UI 
-            result = self.header.handle_events(event)
-            if result:
-                logging.info(f"result: {result}")
-                self._process_ui_action(result)
+            # Handle specific UI actions 
+            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == self.load_button:
+                    print("Load Map clicked!")
 
-    def _process_ui_action(self, action):
-        """Dispatches actions based on UI returns."""
-        logging.info(f"UI action: {action}")
-        self.status_text = action
 
-        if action == "Clear":
-            self.grid.map = [[0 for _ in range(self.grid.cols)] for _ in range(self.grid.rows)]
-            logging.info("Grid cleared via UI")
-        else:
-            logging.debug(f"TODO: process all UI actions in {self._process_ui_action.__name__}")
 
     def _update(self):
-
-        # Check if any menu is currently open 
-        menu_is_open = self.header.algo_menu.is_open or self.header.map_menu.is_open
-
-        # Only allow grid interaction if
-        #   - No menu is open 
-        #   - The mouse button didn't start its press on the header/menu 
-        #   - The mouse is physically over the grid 
-        mouse_pos = pygame.mouse.get_pos()
-
-        if not menu_is_open and not self.mouse_captured_by_ui:
-            if mouse_pos[1] > self.header.rect.height:
-                self.grid.handle_mouse()
+        pass 
     
 
     def _draw(self):
-        self.screen.fill((30, 30, 30))
+        self.screen.fill(self.COLOR_BG)
         self.grid.draw(self.screen)
-        self.header.draw(self.screen)
 
-        # Optional: draw status bar text at the very bottom 
-        # TODO: add small footer here later 
+        # draw sidebar 
+        sidebar_rect = pygame.Rect(self.GRID_WIDTH, 0, self.SIDEBAR_WIDTH, self.WINDOW_HEIGHT)
+        pygame.draw.rect(self.screen, self.COLOR_SIDEBAR, sidebar_rect)
 
+        # render UI elements 
+        self.ui_manager.draw_ui(self.screen)
+
+        # update display
         pygame.display.flip() 
+
 
     def run(self):
         """The main application loop."""
         while self.running:
-            self._handle_events() 
-            self._update()
+            # update based on delta time 
+            time_delta = self.clock.tick(self.FPS) / 1000.0 
+            self._handle_events()
+            self.ui_manager.update(time_delta)
+
             self._draw() 
-            self.clock.tick(FPS)
+            self.clock.tick(self.FPS)
