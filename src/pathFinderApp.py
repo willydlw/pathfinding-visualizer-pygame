@@ -19,15 +19,17 @@ class PathFinderApp:
     SIDEBAR_WIDTH = 300 
 
     GRID_WIDTH = NUM_GRID_CELLS * CELL_SIZE_PIXELS 
-    
-    WINDOW_WIDTH = GRID_WIDTH + SIDEBAR_WIDTH
-    WINDOW_HEIGHT = GRID_WIDTH 
+
+    PADDING = 20   # space around the grid 
+
+    WINDOW_WIDTH = GRID_WIDTH + SIDEBAR_WIDTH + (PADDING * 3) # left, middle, right
+    WINDOW_HEIGHT = GRID_WIDTH + (PADDING * 2)                # top, bottom
 
     # Colors (RGB)
-    COLOR_BG = (172, 242, 193)           # light green
+    COLOR_BG = (225, 225, 225)
     
     COLOR_SIDEBAR = (240, 240, 240)     # Off-white for UI 
-    COLOR_WALKABLE = (46, 204, 113)     # Green walkable area 
+  
 
     def __init__(self):
 
@@ -43,18 +45,19 @@ class PathFinderApp:
         self.clock = pygame.time.Clock() 
         self.running = True 
 
-        # Grid 
-        self.grid = Grid(0, 0, self.NUM_GRID_CELLS, self.CELL_SIZE_PIXELS)
+        # Position grid within padding
+        self.grid = Grid(self.PADDING, self.PADDING, self.NUM_GRID_CELLS, self.CELL_SIZE_PIXELS)
 
         # UI Management 
         self.ui_manager = pygame_gui.UIManager((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
 
-        #  create sidebar 
+        # Position sidebar after the grid + extra padding 
+        sidebar_x = self.GRID_WIDTH + (self.PADDING * 2)
         self.sidebar = Sidebar(
             self.ui_manager,
             self.SIDEBAR_WIDTH,
             self.WINDOW_HEIGHT,
-            self.GRID_WIDTH, 
+            sidebar_x, 
             self.grid
         )
         
@@ -86,9 +89,10 @@ class PathFinderApp:
         self.screen.fill(self.COLOR_BG)
         self.grid.draw(self.screen)
 
-        # draw sidebar background area
-        sidebar_rect = pygame.Rect(self.GRID_WIDTH, 0, self.SIDEBAR_WIDTH, self.WINDOW_HEIGHT)
-        pygame.draw.rect(self.screen, self.COLOR_SIDEBAR, sidebar_rect)
+        # draw sidebar background with padding
+        sidebar_x = self.GRID_WIDTH + (self.PADDING * 2)
+        sidebar_rect = pygame.Rect(sidebar_x, self.PADDING, self.SIDEBAR_WIDTH, self.GRID_WIDTH)
+        pygame.draw.rect(self.screen, self.COLOR_SIDEBAR, sidebar_rect, border_radius=8)
 
         # render UI elements 
         self.ui_manager.draw_ui(self.screen)
