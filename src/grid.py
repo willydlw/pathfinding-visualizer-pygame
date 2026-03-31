@@ -1,9 +1,17 @@
 import pygame 
+
+
 import logging 
 
 logger = logging.getLogger(__name__)
 
 class Grid:
+
+    EMPTY = 0
+    WALL = 1
+
+    COLOR_EMPTY = (225, 225, 225)
+    COLOR_WALL = (70, 70, 70)
 
     COLOR_GRID_LINE = (50, 50, 50)      # Lighter gray lines
 
@@ -22,7 +30,13 @@ class Grid:
         self.map = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 
     
-    def get_cell_from_pos(self, pos):
+    def clear(self):
+         """Resets the grid map to all empty (0)."""
+         self.map = [[self.EMPTY for _ in range(self.cols)] for _ in range(self.rows)]
+         logger.info("Grid cleared!")
+
+    
+    def get_pos(self, pos):
         """Translates screen pixel coordinates to (row, col)."""
         x, y = pos 
         if self.rect.collidepoint(pos):
@@ -33,13 +47,37 @@ class Grid:
         return None 
     
     def handle_mouse(self):
-        pass 
+        """Check mouse state every frame for continuous drawing/erasing."""
+        mouse_buttons = pygame.mouse.get_pressed() 
+        mpos = pygame.mouse.get_pos()
+
+        # Get the cell location under the mouse 
+        cell = self.get_pos(mpos)
+        if not cell:
+             return 
+        
+        row, col = cell 
+
+        if mouse_buttons[0]:    # left click held down 
+            self.map[row][col] = self.WALL
+        elif mouse_buttons[2]:      # right click held down (eraser)
+             self.map[row][col] = self.EMPTY
 
 
     def draw(self, surface):
+        # Draw the colored cell blocks
+        for row in range(self.rows):
+             for col in range(self.cols):
+                  if self.map[row][col] == self.WALL:
+                    rect = pygame.Rect(col * self.cell_size, 
+                                        row * self.cell_size,
+                                        self.cell_size,
+                                        self.cell_size
+                                        )
+                    pygame.draw.rect(surface, self.COLOR_WALL, rect)
 
         # Draw grid lines (square grid: rows equal cols)
-        for i in range(self.grid_size + 1):
+        for i in range(self.rows + 1):
                 #vertical lines
                 pygame.draw.line(surface, self.COLOR_GRID_LINE, (i * self.cell_size, 0), (i * self.cell_size, self.grid_size))
                 

@@ -24,7 +24,7 @@ class PathFinderApp:
     WINDOW_HEIGHT = GRID_WIDTH 
 
     # Colors (RGB)
-    COLOR_BG = (30, 30, 30)             # Dark gray 
+    COLOR_BG = (172, 242, 193)           # light green
     
     COLOR_SIDEBAR = (240, 240, 240)     # Off-white for UI 
     COLOR_WALKABLE = (46, 204, 113)     # Green walkable area 
@@ -54,13 +54,15 @@ class PathFinderApp:
             self.ui_manager,
             self.SIDEBAR_WIDTH,
             self.WINDOW_HEIGHT,
-            self.GRID_WIDTH
+            self.GRID_WIDTH, 
+            self.grid
         )
         
         logging.info(f"PathFinderApp initialized")
 
     
     def _handle_events(self):
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False 
@@ -72,7 +74,10 @@ class PathFinderApp:
 
 
     def _update(self):
-        pass 
+        # Only allow drawing on the grid if the mouse is not hovering
+        # over a UI element 
+        if not self.ui_manager.get_hovering_any_element():
+            self.grid.handle_mouse()
     
 
     def _draw(self):
@@ -91,12 +96,11 @@ class PathFinderApp:
 
 
     def run(self):
-        """The main application loop."""
         while self.running:
-            # update based on delta time 
             time_delta = self.clock.tick(self.FPS) / 1000.0 
+
             self._handle_events()
             self.ui_manager.update(time_delta)
+            self._update()
 
             self._draw() 
-            self.clock.tick(self.FPS)

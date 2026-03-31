@@ -7,8 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Sidebar:
-    def __init__(self, manager, width, height, x_offset):
+    def __init__(self, manager, width, height, x_offset, grid_ref):
         self.manager = manager 
+        self.grid = grid_ref 
 
         # UI Layout Constants 
         padding = 10 
@@ -35,14 +36,16 @@ class Sidebar:
             if event.ui_element == self.map_dropdown:
                 action = event.text 
                 self.execute_map_action(action)
-                # Reset selection(optional)
-                # self.map_dropdown.selected_option = "Select Action..."
+                
     
     def execute_map_action(self, action):
         if action == "Create New":
+            self.grid.clear()
+            # Reset selection(optional)
+            self.map_dropdown.selected_option = "Select Action..."
             print("Logic for clearing grid...")
         elif action == "Load Map":
-            print("Logice for opening file browser...")
+            print("Logic for opening file browser...")
         elif action == "Save Map":
             print("Logic for saving current grid...")
         else:
