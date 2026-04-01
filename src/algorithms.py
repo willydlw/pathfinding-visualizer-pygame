@@ -18,7 +18,7 @@ def get_neighbors(node, grid_map):
     # Adjacent relative positions (row_offset, col_offset)
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-    for dr, dc in indices:
+    for dr, dc in directions:
         r, c = node.row + dr, node.col + dc 
 
         # Boundary check 
@@ -58,7 +58,8 @@ def bfs(grid):
 
         if current == end_node:
             logging.info("Path found!")
-            return end_node 
+            yield True   # Signal to PathFinder App that search is done
+            return       # Stop the generator 
 
         # for every unvisited neighbor of the current node,
         # mark it as
@@ -68,5 +69,8 @@ def bfs(grid):
                 neighbor.parent = current   # Link for path reconstruction
                 queue.append(neighbor)
 
+                # yield here to pause the algorithm and let pygame draw 
+                yield False 
+
     logging.info("No path exists")
-    return None 
+    yield True 

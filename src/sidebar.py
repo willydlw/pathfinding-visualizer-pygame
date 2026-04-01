@@ -11,9 +11,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Sidebar:
-    def __init__(self, manager, width, height, x_offset, grid_ref):
+    def __init__(self, manager, width, height, x_offset, grid, app):
         self.manager = manager 
-        self.grid = grid_ref 
+        self.grid = grid
+        self.app = app
         self.save_dialog = None 
 
         # UI Layout Constants 
@@ -45,9 +46,28 @@ class Sidebar:
 
         # Terrain Controls 
         self.terrain_dropdown = UIDropDownMenu(
-            options_list=["Green", "Blue", "Gray", "Wall", "Start", "End"],
+            options_list=["Default", "Green", "Blue", "Gray", "Navy", "Start", "End"],
             starting_option="Green",
-            relative_rect=pygame.Rect((x_offset + 10, 200), (width - 20, 40)),
+            relative_rect=pygame.Rect((x_offset + padding, 200), (width - 20, 40)),
+            manager=self.manager
+        )
+
+        # Algorithm Controls 
+        self.algorithms = ["BFS", "DFS", "A*"]
+        self.algor_dropdown = UIDropDownMenu(
+            options_list=self.algorithms,
+            starting_option=self.algorithms[0],
+            relative_rect=pygame.Rect((x_offset + padding, 250), (menu_width, 30)),
+            manager=self.manager
+        )
+
+        self.selected_algo = self.algorithms[0]
+
+        # Add Run Search button 
+        # Positioned at y = 100 to leave a small gap below the dropdown 
+        self.search_button = UIButton(
+            relative_rect=pygame.Rect((x_offset + padding, 300), (menu_width, 40)),
+            text="Run Search",
             manager=self.manager
         )
 
@@ -62,10 +82,11 @@ class Sidebar:
             elif event.ui_element == self.terrain_dropdown:
                 # update the brush on the grid 
                 mapping = {
+                    "Default": self.grid.DEFAULT,
                     "Green": self.grid.GREEN,
                     "Blue" : self.grid.BLUE,
                     "Gray" : self.grid.GRAY,
-                    "Wall" : self.grid.WALL,
+                    "Navy" : self.grid.NAVY,
                     "Start": self.grid.START,
                     "End"  : self.grid.END
                 }
@@ -74,6 +95,9 @@ class Sidebar:
                 if new_brush is not None:
                     self.grid.current_brush = new_brush 
                     logging.info(f"Brush changed to : {event.text}")
+            elif event.ui_element == self.algor_dropdown:
+                self.selected_algo = event.text 
+                logging.info(f"Selected algorithm: {self.selected_algo}")
 
         # Capture the file path when the user picks one 
         if event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
@@ -84,7 +108,25 @@ class Sidebar:
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == self.clear_button:
                 self.grid.clear()
+            elif event.ui_element == self.search_button:
+                self.run_search() 
     
+    def run_search(self):
+        # ensure start and end are set before running 
+        if not self.grid.start_pos or not self.grid.end_pos:
+            logging.warning("Cannot run search without start and end positions.")
+            return 
+        
+        if self.selected_algo == "BFS":
+            from src.algorithms import bfs 
+            # Assign the generator to the app's tracker
+            # Note: You may need to pass the app instance to Sidebar or 
+            # use a callback to set self.active_generator in PathFinderApp
+            self.app.active_generator = bfs(self.grid)
+        else:
+            logging.error(f"Algorithm {self.selected_algo} not implemented")
+            return 
+
     def execute_map_action(self, action):
 
         if action == "Save Map":

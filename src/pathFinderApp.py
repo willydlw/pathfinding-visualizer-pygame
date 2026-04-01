@@ -58,9 +58,12 @@ class PathFinderApp:
             self.SIDEBAR_WIDTH,
             self.WINDOW_HEIGHT,
             sidebar_x, 
-            self.grid
+            self.grid,
+            self
         )
         
+        self.active_generator = None        # Holds the BFS generator 
+
         logging.info(f"PathFinderApp initialized")
 
     
@@ -77,11 +80,24 @@ class PathFinderApp:
 
 
     def _update(self):
-        # Check if dialog is blocking the screen 
-        is_blocking = self.ui_manager.get_hovering_any_element() 
 
-        if not is_blocking:
-            self.grid.handle_mouse() 
+        # Check if a search is currently animating
+        if self.active_generator:
+            try:
+                finished = next(self.active_generator)
+                if finished:
+                    self.active_generator = None 
+                    logging.info("Search finished.")
+            except StopIteration:
+                self.active_generator = None 
+        else:
+            # Check if dialog is blocking the mouse
+            is_blocking = self.ui_manager.get_hovering_any_element() 
+
+            if not is_blocking:
+                self.grid.handle_mouse() 
+
+        
 
     
 

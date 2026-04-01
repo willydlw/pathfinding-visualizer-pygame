@@ -11,7 +11,7 @@ class Grid:
 
     # Terrain Types
     DEFAULT = 0
-    WALL = 1
+    NAVY = 1
     GREEN = 2
     BLUE = 3
     GRAY = 4 
@@ -21,7 +21,7 @@ class Grid:
     # Terrain Colors
     COLORS = {
         DEFAULT: (225, 225, 225), # light gray / off-white 
-        WALL:  (50, 50, 50),    # very dark gray 
+        NAVY:  (0, 0, 128),    # navy blue 
         GREEN: (46, 204, 113),  # emerald green 
         BLUE:  (52, 152, 219),  # Peter River Blue 
         GRAY:  (149, 165, 166), # Concrete gray
