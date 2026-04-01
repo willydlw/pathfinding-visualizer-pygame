@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 class Grid:
 
     # Terrain Types
-    EMPTY = 0
+    DEFAULT = 0
     WALL = 1
     GREEN = 2
     BLUE = 3
@@ -18,7 +18,7 @@ class Grid:
 
     # Terrain Colors
     COLORS = {
-        EMPTY: (225, 225, 225), # light gray / off-white 
+        DEFAULT: (225, 225, 225), # light gray / off-white 
         WALL:  (50, 50, 50),    # very dark gray 
         GREEN: (46, 204, 113),  # emerald green 
         BLUE:  (52, 152, 219),  # Peter River Blue 
@@ -46,13 +46,13 @@ class Grid:
         
         
 
-        # init 2D list with 0 (Empty)
+        # init 2D list with 0 (DEFAULT)
         self.map = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 
     
     def clear(self):
-         """Resets the grid map to all empty (0)."""
-         self.map = [[self.EMPTY for _ in range(self.cols)] for _ in range(self.rows)]
+         """Resets the grid map to all DEFAULT (0)."""
+         self.map = [[self.DEFAULT for _ in range(self.cols)] for _ in range(self.rows)]
          self.start_pos = None 
          self.end_pos = None 
          logger.info("Grid cleared!")
@@ -85,12 +85,12 @@ class Grid:
             if self.current_brush == self.START:
                 if self.start_pos:
                     old_r, old_c = self.start_pos 
-                    self.map[old_r][old_c] = self.EMPTY 
+                    self.map[old_r][old_c] = self.DEFAULT
                 self.start_pos = (row, col)
             elif self.current_brush == self.END:
                 if self.end_pos:
                     old_r, old_c = self.end_pos 
-                    self.map[old_r][old_c] = self.EMPTY 
+                    self.map[old_r][old_c] = self.DEFAULT 
                 self.end_pos = (row, col)
 
             # if painting over and existing START/END with terrain, clear the reference 
@@ -104,7 +104,7 @@ class Grid:
         elif mouse_buttons[2]:      # right click held down (eraser)
             if (row, col)  == self.start_pos: self.start_pos = None 
             elif (row, col) == self.end_pos: self.end_pos = None 
-            self.map[row][col] = self.EMPTY
+            self.map[row][col] = self.DEFAULT
 
 
     def draw(self, surface):
@@ -112,7 +112,7 @@ class Grid:
         for row in range(self.rows):
              for col in range(self.cols):
                   terrain_type = self.map[row][col]
-                  if terrain_type != self.EMPTY:
+                  if terrain_type != self.DEFAULT:
                     rect = pygame.Rect( self.rect.x + (col * self.cell_size), 
                                         self.rect.y + (row * self.cell_size),
                                         self.cell_size,
