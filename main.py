@@ -16,7 +16,7 @@ def configure_logger():
     # and automatically inherit settings 
     logging.basicConfig(
         level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s - [%(filename)s: %(lineno)d] - %(message)s',
+        format='%(asctime)s - %(levelname)s - [%(filename)s: %(funcName)s: %(lineno)d] - %(message)s',
         handlers=[
             logging.FileHandler(str(LOG_FILE), mode="w"),
             logging.StreamHandler()  # print to console

@@ -3,69 +3,61 @@ import json
 
 import logging 
 
+from .constants import TERRAIN_TYPES, TERRAIN_COLORS
 from .node import Node
 
 logger = logging.getLogger(__name__)
 
 class Grid:
 
-    # Terrain Types
-    DEFAULT = 0
-    NAVY = 1
-    GREEN = 2
-    BLUE = 3
-    GRAY = 4 
-    START = 5 
-    END = 6
-
-    # Terrain Colors
-    COLORS = {
-        DEFAULT: (225, 225, 225), # light gray / off-white 
-        NAVY:  (0, 0, 128),    # navy blue 
-        GREEN: (46, 204, 113),  # emerald green 
-        BLUE:  (52, 152, 219),  # Peter River Blue 
-        GRAY:  (149, 165, 166), # Concrete gray
-        START: (241, 196, 15),  # bright yellow 
-        END:   (231, 75, 60),   # bright red
-    }
-
-    # Visited Color
-    VISITED_COLOR = (173, 216, 230)  # light blue
+   
 
 
-    COLOR_GRID_LINE = (50, 50, 50)      # Lighter gray lines
-
-    def __init__(self, x, y, num_cells, cell_size):
+    def __init__(self, x, y, grid_size, num_cells):
 
         self.rows = num_cells 
         self.cols = num_cells 
-        self.cell_size = cell_size                  # units: pixels
-        self.grid_size = num_cells * cell_size      # units: pixels
+        
+        self.grid_size = grid_size                  # units: pixels
+        self.cell_size = grid_size // num_cells     # units: pixels
 
-        self.rect = pygame.Rect(x, y, self.grid_size, self.grid_size)
+        self.rect = pygame.Rect(x, y, self.grid_size, self.grid_size)   # grid rectangle
 
-        self.current_brush = self.GREEN
+        
+        self.current_brush = TERRAIN_TYPES.GREEN             # default brush color
 
-        self.start_pos = None 
-        self.end_pos = None 
+        self.start_node = None                       
+        self.end_node = None 
         
         # init 2D list
-        self.map = [[Node(r, c, cell_size, self.DEFAULT) for c in range(self.cols)] 
+        self.map = [[Node(r, c, self.cell_size, TERRAIN_TYPES.DEFAULT) for c in range(self.cols)] 
                     for r in range(self.rows)
         ]
+
+        logging.info(f"grid_size: {self.grid_size}, rows: {self.rows}, cell_size: {self.cell_size}")
+        logging.info(f"Grid init completed.")
 
     
     def clear(self):
         """Resets the grid map to all DEFAULT (0)."""
         self.map = [
-            [Node(r, c, self.cell_size, self.DEFAULT) for c in range(self.cols)] 
+            [Node(r, c, self.cell_size, TERRAIN_TYPES.DEFAULT) for c in range(self.cols)] 
             for r in range(self.rows)
         ]
-        self.start_pos = None 
-        self.end_pos = None 
+        self.start_node = None 
+        self.end_node = None 
         logger.info("Grid cleared!")
 
     
+    def get_node_from_pos(self, pos):
+        """Returns the Node object at the give pixel coordinates, or None."""
+        coords = self.get_pos(pos) 
+        if coords:
+            row, col = coords 
+            return self.map[row][col]
+        return None 
+    
+
     def get_pos(self, pos):
         """Translates screen pixel coordinates to (row, col)."""
         x, y = pos 
@@ -76,72 +68,62 @@ class Grid:
             return row, col 
         return None 
     
-    def handle_mouse(self):
-        """Check mouse state every frame for continuous drawing/erasing."""
-        mouse_buttons = pygame.mouse.get_pressed() 
-        mpos = pygame.mouse.get_pos()
+    def handle_continuous_mouse(self):
+        """Handles painting terrain/start/end whild mouse is held down."""
+        mouse_pressed = pygame.mouse.get_pressed() 
 
-        # Get the cell location under the mouse 
-        cell = self.get_pos(mpos)
-        if not cell:
-             return 
+        # Left click held: paint terrain or start/end
+        if pygame.mouse.get_pressed()[0]:
+            pos = pygame.mouse.get_pos() 
+            node = self.get_node_from_pos(pos)
+
+            if node:
+                if self.current_brush == TERRAIN_TYPES.START:
+                    if self.start_node: self.start_node.is_start = False 
+                    node.is_start = True 
+                    self.start_node = node 
+                elif self.current_brush == TERRAIN_TYPES.END:
+                    if self.end_node: self.end_node.is_end = False 
+                    node.is_end = True 
+                    self.end_node = node 
+                else:
+                    node.terrain = self.current_brush
         
-        row, col = cell 
-        node = self.map[row][col]
-
-        if mouse_buttons[0]:    # left click held down 
-            # if we are painting Start or End, clear the old one first 
-            if self.current_brush == self.START:
-                if self.start_pos:
-                    old_r, old_c = self.start_pos 
-                    self.map[old_r][old_c].terrain = self.DEFAULT
-                self.start_pos = (row, col)
-            elif self.current_brush == self.END:
-                if self.end_pos:
-                    old_r, old_c = self.end_pos 
-                    self.map[old_r][old_c].terrain = self.DEFAULT 
-                self.end_pos = (row, col)
-
-            # if painting over and existing START/END with terrain, clear the reference 
-            elif (row, col) == self.start_pos: self.start_pos = None 
-            elif (row, col) == self.end_pos: self.end_pos = None 
-
-            node.terrain = self.current_brush
-
-
-
-        elif mouse_buttons[2]:      # right click held down (eraser)
-            if (row, col)  == self.start_pos: self.start_pos = None 
-            elif (row, col) == self.end_pos: self.end_pos = None 
-            node.terrain = self.DEFAULT
-
+    
+    def handle_mouse_event(self, event):
+        """Handles one-time clicks, specifically for right-click release"""
+        # Right click: Erase (Wait for button UP)
+        if event.type == pygame.MOUSEBUTTONUP and event.button == 3:
+            pos = pygame.mouse.get_pos() 
+            node = self.get_node_from_pos(pos)
+            if node:
+                if node.is_start:
+                    node.is_start = False 
+                    self.start_node = None 
+                elif node.is_end:
+                    node.is_end = False 
+                    self.end_node = None 
+                else:
+                    node.terrain = TERRAIN_TYPES.DEFAULT 
 
     def draw(self, surface):
         # Draw the colored cell blocks
         for row in self.map:
              for node in row:
-                # Determine color based on node.terrain or node.visited 
-                color = self.COLORS.get(node.terrain, self.COLORS[self.DEFAULT])
-
-                # Special color for search visualization 
-                if node.visited and node.terrain not in [self.START, self.END]:
-                     color = self.VISITED_COLOR 
-                
-                node.draw(surface, self.rect.x, self.rect.y, color)
-             
+                node.draw(surface, self.rect.x, self.rect.y)
 
         # Draw grid lines (square grid: rows equal cols)
         for i in range(self.rows + 1):
                 offset = i * self.cell_size
 
                 #vertical lines
-                pygame.draw.line(surface, self.COLOR_GRID_LINE, 
+                pygame.draw.line(surface, TERRAIN_COLORS[TERRAIN_TYPES.GRID_LINE], 
                                  (self.rect.x + offset, self.rect.y), 
                                  (self.rect.x + offset, self.rect.y + self.grid_size)
                                 )
                 
                 # horizontal lines
-                pygame.draw.line(surface, self.COLOR_GRID_LINE, 
+                pygame.draw.line(surface, TERRAIN_COLORS[TERRAIN_TYPES.GRID_LINE], 
                                  (self.rect.x, self.rect.y + offset), 
                                  (self.rect.x + self.grid_size, self.rect.y + offset)
                                 )
@@ -155,29 +137,59 @@ class Grid:
 
 
     def load_from_file(self, file_path):
-        """Loads a map from a JSON file into the grid."""
         try:
             with open(file_path, 'r') as f:
                 data = json.load(f)
 
+            self.rows = data["rows"]
+            self.cols = data["cols"]
+            self.cell_size = self.grid_size // self.rows 
+
+            # rebuild the 2d map with the stored terrain types
+            self.map = []
             for r in range(self.rows):
+                row = []
                 for c in range(self.cols):
-                    self.map[r][c].terrain = data[r][c]
-                    if data[r][c] == self.START: self.start_pos = (r, c)
-                    if data[r][c] == self.END: self.end_pos = (r, c)
+                    terrain_val = data["cells"][r][c]
+                    row.append(Node(r, c, self.cell_size, terrain_val))
+                self.map.append(row)
+            
+            # Restore the start node reference and flag
+            if data["start_pos"]:
+                r, c = data["start_pos"]
+                self.start_node = self.map[r][c]
+                self.start_node.is_start = True 
+            else:
+                self.start_node = None 
+
+            # Restore the end node reference and flag 
+            if data["end_pos"]:
+                r, c = data["end_pos"]
+                self.end_node = self.map[r][c]
+                self.end_node.is_end = True 
+            else:
+                self.end_node = None 
+
+            logging.info(f"Map loaded from {file_path}")
+
         except Exception as e:
             logger.error(f"Failed to load map: {e}")
     
 
     def save_to_file(self, file_path):
-        """Saves the current map 2D list to a JSON file."""
-
-        # Create a 2D list of integers from the Nodes to save as JSON 
-        raw_map = [[node.terrain for node in row] for row in self.map]
+        grid_data = {
+            "rows": self.rows,
+            "cols": self.cols,
+            # Save start/end as coordinates
+            "start_pos": (self.start_node.r, self.start_node.c) if self.start_node else None,
+            "end_pos": (self.end_node.r, self.end_node.c) if self.end_node else None,
+            # Save only the underlying terrain for each node 
+            "cells": [[node.terrain for node in row] for row in self.map]
+        }
 
         try:
             with open(file_path, 'w') as f:
-                json.dump(raw_map, f) 
+                json.dump(grid_data, f) 
             logger.info(f"Map successfully saved to {file_path}")
         except Exception as e:
             logger.error(f"Failed to save map: {e}")

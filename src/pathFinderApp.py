@@ -14,13 +14,12 @@ class PathFinderApp:
     # Class constants
     FPS = 60
 
-    CELL_SIZE_PIXELS = 12 
-    NUM_GRID_CELLS = 64      # number of cells
-    SIDEBAR_WIDTH = 300 
+    NUM_GRID_CELLS = 8      # number of cells
+    SIDEBAR_WIDTH = 400
 
-    GRID_WIDTH = NUM_GRID_CELLS * CELL_SIZE_PIXELS 
+    GRID_WIDTH = 768        # pixels
 
-    PADDING = 20   # space around the grid 
+    PADDING = 20       # space around the grid 
 
     WINDOW_WIDTH = GRID_WIDTH + SIDEBAR_WIDTH + (PADDING * 3) # left, middle, right
     WINDOW_HEIGHT = GRID_WIDTH + (PADDING * 2)                # top, bottom
@@ -46,7 +45,7 @@ class PathFinderApp:
         self.running = True 
 
         # Position grid within padding
-        self.grid = Grid(self.PADDING, self.PADDING, self.NUM_GRID_CELLS, self.CELL_SIZE_PIXELS)
+        self.grid = Grid(self.PADDING, self.PADDING, self.GRID_WIDTH, self.NUM_GRID_CELLS,)
 
         # UI Management 
         self.ui_manager = pygame_gui.UIManager((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
@@ -77,6 +76,10 @@ class PathFinderApp:
             self.ui_manager.process_events(event) 
             self.sidebar.handle_events(event)
 
+            # Pass the event to the grid to for "one-time" actions
+            # (like Right-Click release)
+            if not self.ui_manager.get_hovering_any_element():
+                self.grid.handle_mouse_event(event)
 
 
     def _update(self):
@@ -95,11 +98,9 @@ class PathFinderApp:
             is_blocking = self.ui_manager.get_hovering_any_element() 
 
             if not is_blocking:
-                self.grid.handle_mouse() 
+                # only handle continuous painting here
+                self.grid.handle_continuous_mouse()
 
-        
-
-    
 
     def _draw(self):
         self.screen.fill(self.COLOR_BG)

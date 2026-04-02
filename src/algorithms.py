@@ -24,7 +24,6 @@ def get_neighbors(node, grid_map):
         # Boundary check 
         if 0 <= r < rows and 0 <= c < cols:
             neighbor = grid_map[r][c]
-        if neighbor.terrain == node.terrain:
             neighbors.append(neighbor)
 
     return neighbors
@@ -36,24 +35,20 @@ def bfs(grid):
     Returns the end node if path found, else None
     """
 
-    if not grid.start_pos or not grid.end_pos:
-        logger.warning("Start or End position not set!")
-        return None 
+    if not grid.start_node or not grid.end_node:
+        logger.warning("Start or End node not set!")
+        yield True  # Signal finished so the app doesn't hang
+        return
+    
+    start_node = grid.start_node 
+    end_node = grid.end_node
 
-    # Get node objects from coordinates 
-    start_node = grid.map[grid.start_pos[0]][grid.start_pos[1]]
-    end_node = grid.map[grid.end_pos[0]][grid.end_pos[1]]
 
-
-    # enqueue the starting node
+    # enqueue the starting node and mark as visited
     queue =deque([start_node]) 
-
-    # mark the starting node as visited 
     start_node.visited = True 
    
-
     while queue:
-        # dequeue the front node
         current = queue.popleft()
 
         if current == end_node:
@@ -61,8 +56,6 @@ def bfs(grid):
             yield True   # Signal to PathFinder App that search is done
             return       # Stop the generator 
 
-        # for every unvisited neighbor of the current node,
-        # mark it as
         for neighbor in get_neighbors(current, grid.map):
             if not neighbor.visited:
                 neighbor.visited = True 

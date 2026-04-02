@@ -8,6 +8,8 @@ from tkinter import filedialog
 
 import logging 
 
+from .constants import TERRAIN_TYPES
+
 logger = logging.getLogger(__name__)
 
 class Sidebar:
@@ -82,20 +84,22 @@ class Sidebar:
             elif event.ui_element == self.terrain_dropdown:
                 # update the brush on the grid 
                 mapping = {
-                    "Default": self.grid.DEFAULT,
-                    "Green": self.grid.GREEN,
-                    "Blue" : self.grid.BLUE,
-                    "Gray" : self.grid.GRAY,
-                    "Navy" : self.grid.NAVY,
-                    "Start": self.grid.START,
-                    "End"  : self.grid.END
+                    "Default": TERRAIN_TYPES.DEFAULT,
+                    "Green": TERRAIN_TYPES.GREEN,
+                    "Blue" : TERRAIN_TYPES.BLUE,
+                    "Gray" : TERRAIN_TYPES.GRAY,
+                    "Navy" : TERRAIN_TYPES.NAVY,
+                    "Start": TERRAIN_TYPES.START,
+                    "End"  : TERRAIN_TYPES.END
                 }
 
+                logging.info(f"event.text: {event.text}")
                 new_brush = mapping.get(event.text)
                 if new_brush is not None:
                     self.grid.current_brush = new_brush 
                     logging.info(f"Brush changed to : {event.text}")
-            elif event.ui_element == self.algor_dropdown:
+
+            elif event.ui_element == self.algo_dropdown:
                 self.selected_algo = event.text 
                 logging.info(f"Selected algorithm: {self.selected_algo}")
 
@@ -113,7 +117,7 @@ class Sidebar:
     
     def run_search(self):
         # ensure start and end are set before running 
-        if not self.grid.start_pos or not self.grid.end_pos:
+        if not self.grid.start_node or not self.grid.end_node:
             logging.warning("Cannot run search without start and end positions.")
             return 
         
