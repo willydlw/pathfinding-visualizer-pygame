@@ -181,8 +181,8 @@ class Grid:
             "rows": self.rows,
             "cols": self.cols,
             # Save start/end as coordinates
-            "start_pos": (self.start_node.r, self.start_node.c) if self.start_node else None,
-            "end_pos": (self.end_node.r, self.end_node.c) if self.end_node else None,
+            "start_pos": (self.start_node.row, self.start_node.col) if self.start_node else None,
+            "end_pos": (self.end_node.row, self.end_node.col) if self.end_node else None,
             # Save only the underlying terrain for each node 
             "cells": [[node.terrain for node in row] for row in self.map]
         }
@@ -193,3 +193,11 @@ class Grid:
             logger.info(f"Map successfully saved to {file_path}")
         except Exception as e:
             logger.error(f"Failed to save map: {e}")
+
+    def reset_search_data(self):
+        """Clears search flags without removing terrain."""
+        for row in self.map:
+            for node in row:
+                node.visited = False 
+                node.parent = None 
+                node.path = False 

@@ -15,6 +15,7 @@ class Node:
         self.is_end = False 
         self.visited = False 
         self.parent = None 
+        self.path = False
 
         # For A* later 
         self.g = float('inf')
@@ -41,6 +42,8 @@ class Node:
             color = TERRAIN_COLORS[TERRAIN_TYPES.START]
         elif self.is_end:
             color = TERRAIN_COLORS[TERRAIN_TYPES.END]
+        elif self.path:
+            color = TERRAIN_COLORS[TERRAIN_TYPES.PATH]
         elif self.visited:
             color = TERRAIN_COLORS[TERRAIN_TYPES.VISITED]
         else:

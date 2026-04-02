@@ -56,7 +56,7 @@ class Sidebar:
 
         # Algorithm Controls 
         self.algorithms = ["BFS", "DFS", "A*"]
-        self.algor_dropdown = UIDropDownMenu(
+        self.algo_dropdown = UIDropDownMenu(
             options_list=self.algorithms,
             starting_option=self.algorithms[0],
             relative_rect=pygame.Rect((x_offset + padding, 250), (menu_width, 30)),
@@ -116,6 +116,9 @@ class Sidebar:
                 self.run_search() 
     
     def run_search(self):
+        # resets search flags
+        self.grid.reset_search_data()
+
         # ensure start and end are set before running 
         if not self.grid.start_node or not self.grid.end_node:
             logging.warning("Cannot run search without start and end positions.")

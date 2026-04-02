@@ -29,6 +29,14 @@ def get_neighbors(node, grid_map):
     return neighbors
 
 
+def reconstruct_path(end_node):
+    """Backtracks from the end node to the start node to mark the path."""
+    curr = end_node.parent      # start with node before the end
+    while curr and not curr.is_start:
+        curr.path = True 
+        curr = curr.parent 
+
+
 def bfs(grid):
     """
     Performs a Breadth-First-Search on the grid.
@@ -53,6 +61,7 @@ def bfs(grid):
 
         if current == end_node:
             logging.info("Path found!")
+            reconstruct_path(current)
             yield True   # Signal to PathFinder App that search is done
             return       # Stop the generator 
 
