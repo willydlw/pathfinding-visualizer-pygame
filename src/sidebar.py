@@ -21,69 +21,76 @@ class Sidebar:
 
         # UI Layout Constants 
         padding = 10 
-        label_width = 140 
-        dropdown_width = 140
-        menu_width = width - label_width - (padding * 2)
+        label_width = 110
+        widget_height = 35 
 
+        # calculate width for items that take up the remaining space
+        full_widget_width = width - (padding * 2)
+        right_col_width = width - label_width - (padding * 3)
 
+        col1_x = x_offset + padding 
+        col2_x = col1_x + label_width + padding 
+
+        # Get color theme
         theme = manager.get_theme()
 
         # get font info for a standard label 
         label_font_info = theme.get_font_info(combined_element_ids=['label'])
-        print(f"Default Label Font: {label_font_info['name']}")
-        print(f"Default Label Size: {label_font_info['size']}")
+       
 
-        label_x = x_offset + padding 
-
-        # Map Controls
-        self.label = UILabel(
-            relative_rect=pygame.Rect((label_x, 10), (-1, 40)),
-            text="Environment Map",
-            manager=self.manager,
+        # --- Row 1: Environment Map ---
+        self.map_label = UILabel(
+            relative_rect=pygame.Rect((col1_x, 20), (label_width, widget_height)),
+            text="Map Actions:",
+            manager=self.manager
         )
 
-        # Add the map dropdown 
         self.map_dropdown = UIDropDownMenu(
             options_list=["Select Action...", "Create New", "Load Map", "Save Map"],
             starting_option="Select Action...",
-            relative_rect=pygame.Rect((label_x + padding + label_width, 10),(dropdown_width, 40 )),
+            relative_rect=pygame.Rect((col2_x, 20),(right_col_width, widget_height)),
             manager=self.manager
         )
 
-        
+        # --- Row 2: Terrain ---
+        self.terrain_label = UILabel(
+            relative_rect=pygame.Rect((col1_x, 70), (label_width, widget_height)),
+            text="Terrain Type:",
+            manager=self.manager
+        )
 
-        # Terrain Controls 
         self.terrain_dropdown = UIDropDownMenu(
             options_list=["Default", "Green", "Blue", "Gray", "Navy", "Start", "End"],
             starting_option="Green",
-            relative_rect=pygame.Rect((x_offset + padding, 200), (width - 20, 40)),
+            relative_rect=pygame.Rect((col2_x, 70), (right_col_width, widget_height)),
             manager=self.manager
         )
 
-        # Algorithm Controls 
+        # --- Row 3: Algorithm --- 
+        self.algo_label = UILabel(
+            relative_rect=pygame.Rect((col1_x, 120), (label_width, widget_height)),
+            text="Algorithm:",
+            manager=self.manager
+        )
+
         self.algorithms = ["BFS", "DFS", "A*"]
         self.algo_dropdown = UIDropDownMenu(
             options_list=self.algorithms,
             starting_option=self.algorithms[0],
-            relative_rect=pygame.Rect((x_offset + padding, 250), (menu_width, 30)),
+            relative_rect=pygame.Rect((col2_x, 120), (right_col_width, widget_height)),
             manager=self.manager
         )
 
-        self.selected_algo = self.algorithms[0]
-
-        # Add Run Search button 
-        # Positioned at y = 100 to leave a small gap below the dropdown 
+        # --- Row 4: Action Buttons 
         self.search_button = UIButton(
-            relative_rect=pygame.Rect((x_offset + padding, 300), (menu_width, 40)),
-            text="Run Search",
+            relative_rect=pygame.Rect((col1_x, 180), (full_widget_width, widget_height)),
+            text="RUN SEARCH",  
             manager=self.manager
         )
 
-        # Add Clear button 
-        # Positioned at y = 100 to leave a small gap below the dropdown 
         self.clear_button = UIButton(
-            relative_rect=pygame.Rect((x_offset + padding, 100), (menu_width, 40)),
-            text="Clear Grid",
+            relative_rect=pygame.Rect((col1_x, 230), (full_widget_width, widget_height)),
+            text="CLEAR GRID",
             manager=self.manager
         )
 
@@ -145,6 +152,9 @@ class Sidebar:
         # Red Tile - Node is in closed list (has been expanded)
         # Orange Tile - Node is in open list (generated, but not expanded)
         # White Tile - Node is on the generated path
+
+        # Do we need this?
+        #self.selected_algo = self.algorithms[0]
 
 
     def handle_events(self, event):
