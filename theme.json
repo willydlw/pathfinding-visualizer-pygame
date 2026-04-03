@@ -1,0 +1,47 @@
+{
+    "label": {
+        "font": { "name": "noto_sans", "size": "14", "bold": "1" },
+        "colours": { "normal_text": "#000000", "dark_bg": "#00000000" }
+    },
+    
+    "drop_down_menu.button": {
+        "colours": {
+            "normal_bg":  "#d8e2f2",
+            "hovered_bg": "#c8d2e2",
+            "active_bg":  "#b8c2d2",
+            "normal_text": "#000000"
+        },
+        "font": { "name": "noto_sans", "size": "14", "bold": "1" }
+    },
+
+    "drop_down_menu.#expand_button": {
+        "colours": {
+            "normal_bg": "#d8e2f2",
+            "hovered_bg": "#c8d2e2",
+            "normal_text": "#000000"
+        }
+    },
+
+    "drop_down_menu.#drop_down_options_list": {
+        "colours": {
+            "dark_bg": "#d8e2f2",
+            "normal_border": "#c8d2e2"
+        }
+    },
+
+    "@selection_list_item": {
+        "colours": {
+            "normal_bg": "#d8e2f2",
+            "hovered_bg": "#c8d2e2",
+            "selected_bg": "#b8c2d2",
+            "normal_text": "#000000",
+            "hovered_text": "#000000",
+            "selected_text": "#000000"
+        },
+        "font": {
+            "name": "noto_sans",
+            "size": "14",
+            "bold": "1"
+        }
+    }
+}
