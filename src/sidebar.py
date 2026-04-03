@@ -21,30 +21,36 @@ class Sidebar:
 
         # UI Layout Constants 
         padding = 10 
-        menu_width = width - (padding * 2)
+        label_width = 140 
+        dropdown_width = 140
+        menu_width = width - label_width - (padding * 2)
+
+
+        theme = manager.get_theme()
+
+        # get font info for a standard label 
+        label_font_info = theme.get_font_info(combined_element_ids=['label'])
+        print(f"Default Label Font: {label_font_info['name']}")
+        print(f"Default Label Size: {label_font_info['size']}")
+
+        label_x = x_offset + padding 
 
         # Map Controls
         self.label = UILabel(
-            relative_rect=pygame.Rect((x_offset + padding, 10), (menu_width, 30)),
-            text="Map Controls",
-            manager=self.manager 
+            relative_rect=pygame.Rect((label_x, 10), (-1, 40)),
+            text="Environment Map",
+            manager=self.manager,
         )
 
         # Add the map dropdown 
         self.map_dropdown = UIDropDownMenu(
             options_list=["Select Action...", "Create New", "Load Map", "Save Map"],
             starting_option="Select Action...",
-            relative_rect=pygame.Rect((x_offset+padding, 50),(menu_width, 40 )),
+            relative_rect=pygame.Rect((label_x + padding + label_width, 10),(dropdown_width, 40 )),
             manager=self.manager
         )
 
-        # Add Clear button 
-        # Positioned at y = 100 to leave a small gap below the dropdown 
-        self.clear_button = UIButton(
-            relative_rect=pygame.Rect((x_offset + padding, 100), (menu_width, 40)),
-            text="Clear Grid",
-            manager=self.manager
-        )
+        
 
         # Terrain Controls 
         self.terrain_dropdown = UIDropDownMenu(
@@ -72,6 +78,73 @@ class Sidebar:
             text="Run Search",
             manager=self.manager
         )
+
+        # Add Clear button 
+        # Positioned at y = 100 to leave a small gap below the dropdown 
+        self.clear_button = UIButton(
+            relative_rect=pygame.Rect((x_offset + padding, 100), (menu_width, 40)),
+            text="Clear Grid",
+            manager=self.manager
+        )
+
+        # Mapping 
+        # Label: Environment Map 
+        # Default (64x64) with a default map loaded
+        # Small (8x8)
+        # L-shaped wall (16 x 16)
+        # Sparse Canvas (128 x 128)
+        # Dense Canvas (256 x 256)
+        # Maze (128 x 128)
+        # Wheel of War? (256 x 256)
+
+        # Legal Actions
+        # Object must be within the map bounds 
+        # Move in 4 directions Cardinal (4 neighbors)
+        # Move in 8 directions Diagonal (8 neighbors)
+        # Object can only move to a space if it is the same color as where it is currently
+        # Object cannot move off the map
+        # Action costs are all 100 for width, height and approx 141 for diagonal
+
+        # Toggle Grid button that turns displaying grid on/off
+
+        # Object Size
+        # TODO: Select size of object finding its path
+        # Examples: 1x1 Square, 2x2 square
+
+        # Visualization Control
+        # TODO: Visualization Label
+        # Choice: Instant Path, 
+        #       Animated Search (select animation speed). When this option is selected
+        #       show another button with default of 1x Speed (which shows every iteration of the search)
+        #       and provides dropdown choices of 2x, 4x, 8x, 16x 32x speed
+        #           Draw path between start and current node when showing animation 
+        #           Show closed (visited) set in special color 
+        #           Show open set in special color
+
+        #       Single Step (click button for each iteration) (good for debugging)
+
+        # TODO: Button for "Rerun Previous Path"
+        # TODO: Button for Run Tests
+        #           Show test result stats
+        # TODO: Random Tests (maze generation with random start/stop?)
+
+        # TODO: Show Stats 
+        # Headings: Search(algo), Start (location), Goal(location), Cost, Closed (number in closed set?)
+        # Time, Node/sec?
+
+        # Show instructions
+        # Search Visualization Instructions 
+        # How to set start and goal tiles 
+        # Object can only move through same color tiles in the grid 
+        # Choose Animate Search visualization to see real-time search progress 
+        # Re-Run Previous - Performs previous search again (useful when animating)
+
+
+        # Visualization Legend 
+        # Blue/Green/Gray tiles: terrain type, object can move within a color 
+        # Red Tile - Node is in closed list (has been expanded)
+        # Orange Tile - Node is in open list (generated, but not expanded)
+        # White Tile - Node is on the generated path
 
 
     def handle_events(self, event):

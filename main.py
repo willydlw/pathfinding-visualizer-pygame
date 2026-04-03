@@ -29,6 +29,8 @@ def configure_logger():
 
 def main():
     print("Hello from pathfinding-visualizer-pygame!")
+    #print("*** Fonts ***")
+    #print(pygame.font.get_fonts())
     configure_logger() 
     
     try:

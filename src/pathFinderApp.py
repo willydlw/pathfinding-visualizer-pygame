@@ -44,11 +44,22 @@ class PathFinderApp:
         self.clock = pygame.time.Clock() 
         self.running = True 
 
-        # Position grid within padding
+        # Grid position top left x,y with padding on left and above
         self.grid = Grid(self.PADDING, self.PADDING, self.GRID_WIDTH, self.NUM_GRID_CELLS,)
 
         # UI Management 
-        self.ui_manager = pygame_gui.UIManager((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
+        try:
+            self.ui_manager = pygame_gui.UIManager(
+                (self.WINDOW_WIDTH, self.WINDOW_HEIGHT),
+                'theme.json'
+                )
+        except json.JSONDecodeError as e:
+            logging.error(f"problem with 'theme.json'")
+            logging.error(f"Details: {e.msg} at line {e.lineno}, column {e.colno}")
+            self.ui_manager = pygame_gui.UIManager((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
+        except FileNotFoundError:
+            logging.error(f"File 'theme.json' not found")
+            self.ui_manager = pygame_gui.UIManager((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
 
         # Position sidebar after the grid + extra padding 
         sidebar_x = self.GRID_WIDTH + (self.PADDING * 2)
@@ -62,7 +73,6 @@ class PathFinderApp:
         )
         
         self.active_generator = None        # Holds the BFS generator 
-
         logging.info(f"PathFinderApp initialized")
 
     

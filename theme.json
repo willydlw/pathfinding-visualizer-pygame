@@ -3,6 +3,19 @@
         "font": { "name": "noto_sans", "size": "14", "bold": "1" },
         "colours": { "normal_text": "#000000", "dark_bg": "#00000000" }
     },
+
+    "drop_down_menu": {
+        "colours": {
+            "normal_bg": "#00000000",
+            "dark_bg": "#00000000",
+            "normal_border": "#00000000",
+            "shadow": "#00000000"
+        },
+        "misc": {
+            "shadow_width": "0",
+            "border_width": "0"
+        }
+    },
     
     "drop_down_menu.button": {
         "colours": {
@@ -11,7 +24,12 @@
             "active_bg":  "#b8c2d2",
             "normal_text": "#000000"
         },
-        "font": { "name": "noto_sans", "size": "14", "bold": "1" }
+        "font": { "name": "noto_sans", "size": "14", "bold": "1" },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "8",
+            "border_width": "1"
+        }
     },
 
     "drop_down_menu.#expand_button": {
@@ -19,6 +37,11 @@
             "normal_bg": "#d8e2f2",
             "hovered_bg": "#c8d2e2",
             "normal_text": "#000000"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "8",
+            "border_width": "1"
         }
     },
 
@@ -26,6 +49,11 @@
         "colours": {
             "dark_bg": "#d8e2f2",
             "normal_border": "#c8d2e2"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "8",
+            "border_width": "1"
         }
     },
 
@@ -38,10 +66,6 @@
             "hovered_text": "#000000",
             "selected_text": "#000000"
         },
-        "font": {
-            "name": "noto_sans",
-            "size": "14",
-            "bold": "1"
-        }
+        "font": { "name": "noto_sans", "size": "14", "bold": "1" }
     }
 }
