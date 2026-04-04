@@ -1,4 +1,11 @@
 {
+     "label": {
+        "colours": {
+            "normal_text": "#000000",
+            "text_shadow": "#444444"
+        }
+    },
+
     "button": {
         "colours": {
             "normal_bg": "#d8e2f2",
