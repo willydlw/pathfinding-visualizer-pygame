@@ -3,8 +3,6 @@ import pygame_gui
 from pygame_gui.elements import UIDropDownMenu, UILabel, UIButton
 from pygame_gui.windows import UIFileDialog 
 
-import tkinter as tk 
-from tkinter import filedialog 
 
 import logging 
 
@@ -17,7 +15,10 @@ class Sidebar:
         self.manager = manager 
         self.grid = grid
         self.app = app
-        self.save_dialog = None 
+
+        # Track the active dialog to distinguish between Load and Save actions
+        self.active_file_dialog = None 
+        self.current_action = None 
 
         # UI Layout Constants 
         padding = 10 
@@ -186,12 +187,23 @@ class Sidebar:
                 self.selected_algo = event.text 
                 logging.info(f"Selected algorithm: {self.selected_algo}")
 
-        # Capture the file path when the user picks one 
+        # 2. Handle File Selection (Replaces Tkinter's return value)
         if event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
-            if event.ui_element == self.save.dialog:
-                self.grid.save_to_file(event.text)
+            if event.ui_element == self.active_file_dialog:
+                if self.current_action == "SAVE":
+                    self.grid.save_to_file(event.text)
+                    logging.info(f"Map saved to: {event.text}")
+                elif self.current_action == "LOAD":
+                    self.grid.load_from_file(event.text)
+                    logging.info(f"Map loaded from: {event.text}")
 
-        # Hanlde Button Press 
+        # 3. Clean up dialog reference when closed
+        if event.type == pygame_gui.UI_WINDOW_CLOSE:
+            if event.ui_element == self.active_file_dialog:
+                self.active_file_dialog = None
+                self.current_action = None
+
+        # Handle Button Press 
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == self.clear_button:
                 self.grid.clear()
@@ -218,39 +230,25 @@ class Sidebar:
             return 
 
     def execute_map_action(self, action):
-
+        """Helper to trigger the file dialog based on dropdown selection."""
         if action == "Save Map":
-            # Hide the main tkinter window that pops up 
-            root = tk.Tk() 
-            root.withdraw() 
-
-            file_path = filedialog.asksaveasfilename(
-                initialdir="./maps",
-                title="Save Map as...",
-                defaultextension=".json",
-                filetypes=(("JSON files", "*.json"), ("all files", "*.*"))
+            self.current_action = "SAVE"
+            self.active_file_dialog = UIFileDialog(
+                rect=pygame.Rect(160, 50, 440, 500),
+                manager=self.manager,
+                window_title="Save Map As...",
+                initial_file_path="maps/",
+                allow_existing_files_only=False  # Crucial for 'Save As' behavior
             )
-
-            if file_path:
-                self.grid.save_to_file(file_path)
-            root.destroy()  # clean up tkinter 
-
         elif action == "Load Map":
-            root = tk.Tk() 
-            root.withdraw() 
-
-            file_path = filedialog.askopenfilename(
-                initialdir="./maps",
-                title="Select map file",
-                filetypes=(("JSON files", "*.json"), ("all_files", "*.*"))
+            self.current_action = "LOAD"
+            self.active_file_dialog = UIFileDialog(
+                rect=pygame.Rect(160, 50, 440, 500),
+                manager=self.manager,
+                window_title="Load Map...",
+                initial_file_path="maps/",
+                allow_existing_files_only=True   # Only pick files that exist
             )
-
-            if file_path:
-                self.grid.load_from_file(file_path)
-
-            root.destroy() 
-            self.map_dropdown.selected_option = "Select Action..."
-
         elif action == "Create New":
             self.grid.clear()
             # Reset selection(optional)

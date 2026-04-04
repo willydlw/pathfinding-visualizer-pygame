@@ -14,7 +14,7 @@ class PathFinderApp:
     # Class constants
     FPS = 60
 
-    NUM_GRID_CELLS = 8      # number of cells
+    NUM_GRID_CELLS = 16      # number of cells
     SIDEBAR_WIDTH = 400
 
     GRID_WIDTH = 768        # pixels
