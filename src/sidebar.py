@@ -6,7 +6,7 @@ from pygame_gui.windows import UIFileDialog
 
 import logging 
 
-from .constants import TERRAIN_TYPES, MAP_ACTION_TYPES, MAP_ACTION_DICT
+from .constants import TERRAIN_TYPES, TERRAIN_NAMES, MAP_ACTION_TYPES, MAP_ACTION_DICT
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +52,8 @@ class Sidebar:
         )
 
         self.terrain_dropdown = UIDropDownMenu(
-            options_list=["Default", "Green", "Blue", "Gray", "Navy", "Start", "End"],
-            starting_option="Green",
+            options_list=list(TERRAIN_NAMES.values()),
+            starting_option=TERRAIN_NAMES[TERRAIN_TYPES.DEFAULT],
             relative_rect=pygame.Rect((col2_x, 70), (right_col_width, widget_height)),
             manager=self.manager
         )
@@ -162,21 +162,13 @@ class Sidebar:
                     logging.info("New map created (grid cleared)")
 
             elif event.ui_element == self.terrain_dropdown:
-                # update the brush on the grid 
-                mapping = {
-                    "Default": TERRAIN_TYPES.DEFAULT,
-                    "Green": TERRAIN_TYPES.GREEN,
-                    "Blue" : TERRAIN_TYPES.BLUE,
-                    "Gray" : TERRAIN_TYPES.GRAY,
-                    "Navy" : TERRAIN_TYPES.NAVY,
-                    "Start": TERRAIN_TYPES.START,
-                    "End"  : TERRAIN_TYPES.END
-                }
-
-                new_brush = mapping.get(event.text)
+                # Dynamically map the Name back to the Enum Type ID
+                reverse_lookup = {name: type_id for type_id, name in TERRAIN_NAMES.items()}
+                new_brush = reverse_lookup.get(event.text)
+                
                 if new_brush is not None:
                     self.grid.current_brush = new_brush 
-                    logging.info(f"Brush changed to : {event.text}")
+                    logging.info(f"Brush changed to: {event.text}")
 
             elif event.ui_element == self.algo_dropdown:
                 self.selected_algo = event.text 
