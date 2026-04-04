@@ -4,48 +4,28 @@
             "normal_bg": "#d8e2f2",
             "hovered_bg": "#c8d2e2",
             "active_bg": "#b8c2d2",
-            "normal_text": "#000000"
-        },
-        "font": { "name": "noto_sans", "size": "14", "bold": "1" }
-    },
-
-    "selection_list": {
-        "colours": {
-            "dark_bg": "#ffffff",
-            "normal_bg": "#ffffff",
-            "selected_bg": "#c8d2e2"
+            "normal_text": "#000000",
+            "hovered_text": "#FFFFFF"
         }
     },
-
-    "selection_list.#item_list": {
-        "colours": {
-            "dark_bg": "#ffffff",
-            "normal_bg": "#ffffff"
-        }
-    },
-
-    "@selection_list_item": {
-        "colours": {
-            "normal_bg": "#ffffff",
-            "hovered_bg": "#c8d2e2",
-            "active_bg": "#b8c2d2",
-            "selected_bg": "#c8d2e2",
-            "normal_text": "#333333",
-            "hovered_text": "#000000",
-            "selected_text": "#000000"
-        },
-        "font": { "name": "noto_sans", "size": "14", "bold": "0" }
-    },
-
     "file_dialog": {
-        "colours": { "dark_bg": "#d8e2f2", "normal_border": "#c8d2e2" }
+        "colours": {
+            "dark_bg": "#d8e2f2",
+            "title_bar_colour": "#b8c2d2"
+        }
     },
-
-    "file_dialog.#file_path_text_line": {
+    "file_dialog.#file_display_list": {
+        "colours": {
+            "dark_bg": "#ffffff" 
+        }
+    },
+    "file_dialog.#file_display_list.@selection_list_item": {
         "colours": {
             "normal_bg": "#ffffff",
-            "dark_bg": "#ffffff",
-            "normal_text": "#333333"
+            "selected_bg": "#b8c2d2",
+            "normal_text": "#000000",
+            "selected_text": "#000000",
+            "hovered_bg": "#c8d2e2"
         }
     }
 }

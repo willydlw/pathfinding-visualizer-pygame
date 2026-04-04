@@ -28,3 +28,15 @@ TERRAIN_COLORS = {
     TERRAIN_TYPES.GRID_LINE: (50, 50, 50),      # Lighter gray lines
     TERRAIN_TYPES.PATH: (250, 149, 7)
 }
+
+
+class MAP_ACTION_TYPES(IntEnum):
+    CREATE = 0
+    LOAD = 1
+    SAVE = 2 
+
+MAP_ACTION_DICT = {
+    MAP_ACTION_TYPES.CREATE: "Create New",
+    MAP_ACTION_TYPES.LOAD:   "Load Map",
+    MAP_ACTION_TYPES.SAVE:   "Save Map"
+}

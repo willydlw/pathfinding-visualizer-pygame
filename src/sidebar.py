@@ -6,7 +6,7 @@ from pygame_gui.windows import UIFileDialog
 
 import logging 
 
-from .constants import TERRAIN_TYPES
+from .constants import TERRAIN_TYPES, MAP_ACTION_TYPES, MAP_ACTION_DICT
 
 logger = logging.getLogger(__name__)
 
@@ -24,20 +24,11 @@ class Sidebar:
         padding = 10 
         label_width = 110
         widget_height = 35 
-
-        # calculate width for items that take up the remaining space
         full_widget_width = width - (padding * 2)
         right_col_width = width - label_width - (padding * 3)
 
         col1_x = x_offset + padding 
         col2_x = col1_x + label_width + padding 
-
-        # Get color theme
-        theme = manager.get_theme()
-
-        # get font info for a standard label 
-        label_font_info = theme.get_font_info(combined_element_ids=['label'])
-       
 
         # --- Row 1: Environment Map ---
         self.map_label = UILabel(
@@ -47,8 +38,8 @@ class Sidebar:
         )
 
         self.map_dropdown = UIDropDownMenu(
-            options_list=["Select Action...", "Small (8x8)", "L-Wall", "Create New", "Load Map", "Save Map"],
-            starting_option="Select Action...",
+            options_list=list(MAP_ACTION_DICT.values()),
+            starting_option=MAP_ACTION_DICT[MAP_ACTION_TYPES.CREATE],
             relative_rect=pygame.Rect((col2_x, 20),(right_col_width, widget_height)),
             manager=self.manager
         )
@@ -162,8 +153,13 @@ class Sidebar:
         # drop down menu event
         if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
             if event.ui_element == self.map_dropdown:
-                action = event.text 
-                self.execute_map_action(action) 
+                if event.text == MAP_ACTION_DICT[MAP_ACTION_TYPES.LOAD]:
+                    self.open_file_dialog(MAP_ACTION_TYPES.LOAD)
+                elif event.text == MAP_ACTION_DICT[MAP_ACTION_TYPES.SAVE]:
+                    self.open_file_dialog(MAP_ACTION_TYPES.SAVE)
+                elif event.text == MAP_ACTION_DICT[MAP_ACTION_TYPES.CREATE]:
+                    self.grid.clear_grid()
+                    logging.info("New map created (grid cleared)")
 
             elif event.ui_element == self.terrain_dropdown:
                 # update the brush on the grid 
@@ -177,7 +173,6 @@ class Sidebar:
                     "End"  : TERRAIN_TYPES.END
                 }
 
-                logging.info(f"event.text: {event.text}")
                 new_brush = mapping.get(event.text)
                 if new_brush is not None:
                     self.grid.current_brush = new_brush 
@@ -187,13 +182,13 @@ class Sidebar:
                 self.selected_algo = event.text 
                 logging.info(f"Selected algorithm: {self.selected_algo}")
 
-        # 2. Handle File Selection (Replaces Tkinter's return value)
+        # 2. Handle File Selection
         if event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
             if event.ui_element == self.active_file_dialog:
-                if self.current_action == "SAVE":
+                if self.current_action == MAP_ACTION_TYPES.SAVE:
                     self.grid.save_to_file(event.text)
                     logging.info(f"Map saved to: {event.text}")
-                elif self.current_action == "LOAD":
+                elif self.current_action == MAP_ACTION_TYPES.LOAD:
                     self.grid.load_from_file(event.text)
                     logging.info(f"Map loaded from: {event.text}")
 
@@ -268,3 +263,17 @@ class Sidebar:
 
         # Reset dropdown to default text so user can click the same map again
         self.map_dropdown.selected_option = "Select Action..."
+
+
+    def open_file_dialog(self, action_type):
+        if self.active_file_dialog is None:
+            title = MAP_ACTION_DICT[action_type]
+
+            self.active_file_dialog = UIFileDialog(
+                rect=pygame.Rect(160, 50, 440, 500),
+                manager=self.manager,
+                window_title=title,
+                initial_file_path="maps/"
+            )
+
+            self.current_action = action_type
