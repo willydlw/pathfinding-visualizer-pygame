@@ -1,5 +1,6 @@
 import pygame 
 import json 
+import os
 
 import logging 
 
@@ -177,6 +178,10 @@ class Grid:
     
 
     def save_to_file(self, file_path):
+        # Ensure the file ends in .json
+        if not file_path.lower().endswith('.json'):
+            file_path += '.json'
+
         grid_data = {
             "rows": self.rows,
             "cols": self.cols,
@@ -188,11 +193,15 @@ class Grid:
         }
 
         try:
+            # Create directory if it doesn't exist (e.g., /maps/)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            
             with open(file_path, 'w') as f:
                 json.dump(grid_data, f) 
             logger.info(f"Map successfully saved to {file_path}")
         except Exception as e:
             logger.error(f"Failed to save map: {e}")
+
 
     def reset_search_data(self):
         """Clears search flags without removing terrain."""
