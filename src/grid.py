@@ -11,9 +11,6 @@ logger = logging.getLogger(__name__)
 
 class Grid:
 
-   
-
-
     def __init__(self, x, y, grid_size, num_cells):
 
         self.rows = num_cells 
@@ -142,32 +139,46 @@ class Grid:
             with open(file_path, 'r') as f:
                 data = json.load(f)
 
+            # Update the row, col counts 
             self.rows = data["rows"]
             self.cols = data["cols"]
+
+            # recalculate cell size
             self.cell_size = self.grid_size // self.rows 
 
-            # rebuild the 2d map with the stored terrain types
-            self.map = []
+            # build a new 2d map with the stored terrain types
+            new_map = []
+
             for r in range(self.rows):
                 row = []
                 for c in range(self.cols):
                     terrain_val = data["cells"][r][c]
                     row.append(Node(r, c, self.cell_size, terrain_val))
-                self.map.append(row)
+                new_map.append(row)
+
+            # replace the old map with the new map 
+            self.map = new_map
             
-            # Restore the start node reference and flag
-            if data["start_pos"]:
+            # handle start/end node assignment 
+            if data.get("start_pos"):
                 r, c = data["start_pos"]
-                self.start_node = self.map[r][c]
-                self.start_node.is_start = True 
+                # Bounds check: only assign if coordinates exist in the new grid
+                if r < self.rows and c < self.cols:
+                    self.start_node = self.map[r][c]
+                    self.start_node.is_start = True 
+                else:
+                    self.start_node = None 
             else:
                 self.start_node = None 
 
             # Restore the end node reference and flag 
-            if data["end_pos"]:
+            if data.get("end_pos"):
                 r, c = data["end_pos"]
-                self.end_node = self.map[r][c]
-                self.end_node.is_end = True 
+                if r < self.rows and c < self.cols:
+                    self.end_node = self.map[r][c]
+                    self.end_node.is_end = True 
+                else:
+                    self.end_node = None 
             else:
                 self.end_node = None 
 

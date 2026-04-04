@@ -47,7 +47,7 @@ class Sidebar:
         )
 
         self.map_dropdown = UIDropDownMenu(
-            options_list=["Select Action...", "Create New", "Load Map", "Save Map"],
+            options_list=["Select Action...", "Small (8x8)", "L-Wall", "Create New", "Load Map", "Save Map"],
             starting_option="Select Action...",
             relative_rect=pygame.Rect((col2_x, 20),(right_col_width, widget_height)),
             manager=self.manager
@@ -231,6 +231,14 @@ class Sidebar:
 
     def execute_map_action(self, action):
         """Helper to trigger the file dialog based on dropdown selection."""
+        if action == "Small (8x8)":
+            logging.info("Loading Small (8x8) map...")
+            self.grid.load_from_file("maps/small_8x8.json")
+        
+        elif action == "L-Wall":
+            logging.info("Loading L-Wall map...")
+            self.grid.load_from_file("maps/L-Wall.json")
+
         if action == "Save Map":
             self.current_action = "SAVE"
             self.active_file_dialog = UIFileDialog(
@@ -257,3 +265,6 @@ class Sidebar:
         
         else:
             logging.error(f"unknown action: {action}")
+
+        # Reset dropdown to default text so user can click the same map again
+        self.map_dropdown.selected_option = "Select Action..."

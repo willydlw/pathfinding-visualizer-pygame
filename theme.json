@@ -1,71 +1,51 @@
 {
-    "label": {
-        "font": { "name": "noto_sans", "size": "14", "bold": "1" },
-        "colours": { "normal_text": "#000000", "dark_bg": "#00000000" }
-    },
-
-    "drop_down_menu": {
-        "colours": {
-            "normal_bg": "#00000000",
-            "dark_bg": "#00000000",
-            "normal_border": "#00000000",
-            "shadow": "#00000000"
-        },
-        "misc": {
-            "shadow_width": "0",
-            "border_width": "0"
-        }
-    },
-    
-    "drop_down_menu.button": {
-        "colours": {
-            "normal_bg":  "#d8e2f2",
-            "hovered_bg": "#c8d2e2",
-            "active_bg":  "#b8c2d2",
-            "normal_text": "#000000"
-        },
-        "font": { "name": "noto_sans", "size": "14", "bold": "1" },
-        "misc": {
-            "shape": "rounded_rectangle",
-            "shape_corner_radius": "8",
-            "border_width": "1"
-        }
-    },
-
-    "drop_down_menu.#expand_button": {
+    "button": {
         "colours": {
             "normal_bg": "#d8e2f2",
             "hovered_bg": "#c8d2e2",
+            "active_bg": "#b8c2d2",
             "normal_text": "#000000"
         },
-        "misc": {
-            "shape": "rounded_rectangle",
-            "shape_corner_radius": "8",
-            "border_width": "1"
+        "font": { "name": "noto_sans", "size": "14", "bold": "1" }
+    },
+
+    "selection_list": {
+        "colours": {
+            "dark_bg": "#ffffff",
+            "normal_bg": "#ffffff",
+            "selected_bg": "#c8d2e2"
         }
     },
 
-    "drop_down_menu.#drop_down_options_list": {
+    "selection_list.#item_list": {
         "colours": {
-            "dark_bg": "#d8e2f2",
-            "normal_border": "#c8d2e2"
-        },
-        "misc": {
-            "shape": "rounded_rectangle",
-            "shape_corner_radius": "8",
-            "border_width": "1"
+            "dark_bg": "#ffffff",
+            "normal_bg": "#ffffff"
         }
     },
 
     "@selection_list_item": {
         "colours": {
-            "normal_bg": "#d8e2f2",
+            "normal_bg": "#ffffff",
             "hovered_bg": "#c8d2e2",
-            "selected_bg": "#b8c2d2",
-            "normal_text": "#000000",
+            "active_bg": "#b8c2d2",
+            "selected_bg": "#c8d2e2",
+            "normal_text": "#333333",
             "hovered_text": "#000000",
             "selected_text": "#000000"
         },
-        "font": { "name": "noto_sans", "size": "14", "bold": "1" }
+        "font": { "name": "noto_sans", "size": "14", "bold": "0" }
+    },
+
+    "file_dialog": {
+        "colours": { "dark_bg": "#d8e2f2", "normal_border": "#c8d2e2" }
+    },
+
+    "file_dialog.#file_path_text_line": {
+        "colours": {
+            "normal_bg": "#ffffff",
+            "dark_bg": "#ffffff",
+            "normal_text": "#333333"
+        }
     }
 }
