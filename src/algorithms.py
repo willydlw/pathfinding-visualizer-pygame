@@ -6,14 +6,16 @@ from .grid import Grid
 logger = logging.getLogger(__name__)
 
 
-def get_neighbors(node, grid_map):
+def get_neighbors(node, grid):
     """
     Returns a list of valid, walkable Node neighbors (Up, Down, Left, Righ)
     """
 
     neighbors = []
-    rows = len(grid_map)
-    cols = len(grid_map[0])
+    allowed_terrain = grid.start_node.terrain 
+
+    rows = grid.rows
+    cols = grid.cols
 
     # Adjacent relative positions (row_offset, col_offset)
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -23,8 +25,9 @@ def get_neighbors(node, grid_map):
 
         # Boundary check 
         if 0 <= r < rows and 0 <= c < cols:
-            neighbor = grid_map[r][c]
-            neighbors.append(neighbor)
+            neighbor = grid.map[r][c]
+            if neighbor.terrain == allowed_terrain:
+                neighbors.append(neighbor)
 
     return neighbors
 
@@ -65,7 +68,7 @@ def bfs(grid):
             yield True   # Signal to PathFinder App that search is done
             return       # Stop the generator 
 
-        for neighbor in get_neighbors(current, grid.map):
+        for neighbor in get_neighbors(current, grid):
             if not neighbor.visited:
                 neighbor.visited = True 
                 neighbor.parent = current   # Link for path reconstruction

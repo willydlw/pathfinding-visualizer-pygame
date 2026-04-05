@@ -1,6 +1,6 @@
 import pygame
 
-from .constants import TERRAIN_COLORS, TERRAIN_TYPES
+from .constants import TERRAIN_COLORS, TERRAIN_TYPES, UI_COLORS
 
 class Node:
     def __init__(self, row, col, size, terrain):
@@ -39,13 +39,13 @@ class Node:
     def draw(self, surface, x_offset, y_offset):
         
         if self.is_start:
-            color = TERRAIN_COLORS[TERRAIN_TYPES.START]
+            color = TERRAIN_COLORS[UI_COLORS.START]
         elif self.is_end:
-            color = TERRAIN_COLORS[TERRAIN_TYPES.END]
+            color = TERRAIN_COLORS[UI_COLORS.END]
         elif self.path:
-            color = TERRAIN_COLORS[TERRAIN_TYPES.PATH]
+            color = TERRAIN_COLORS[UI_COLORS.PATH]
         elif self.visited:
-            color = TERRAIN_COLORS[TERRAIN_TYPES.VISITED]
+            color = TERRAIN_COLORS[UI_COLORS.VISITED]
         else:
             color = TERRAIN_COLORS[self.terrain]
 

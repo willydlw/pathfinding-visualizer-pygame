@@ -4,7 +4,7 @@ import os
 
 import logging 
 
-from .constants import TERRAIN_TYPES, TERRAIN_COLORS
+from .constants import TERRAIN_TYPES, TERRAIN_COLORS, UI_COLORS
 from .node import Node
 
 logger = logging.getLogger(__name__)
@@ -66,27 +66,39 @@ class Grid:
             return row, col 
         return None 
     
-    def handle_continuous_mouse(self):
+    def handle_continuous_mouse(self, sidebar):
         """Handles painting terrain/start/end whild mouse is held down."""
-        mouse_pressed = pygame.mouse.get_pressed() 
-
         # Left click held: paint terrain or start/end
         if pygame.mouse.get_pressed()[0]:
             pos = pygame.mouse.get_pos() 
             node = self.get_node_from_pos(pos)
 
             if node:
-                if self.current_brush == TERRAIN_TYPES.START:
-                    if self.start_node: self.start_node.is_start = False 
+                # Handle start checkbox
+                if sidebar.start_checkbox.is_checked:
+                    # if we are click a new node, reset the old start node 
+                    if self.start_node and self.start_node != node:
+                        self.start_node.is_start = False 
                     node.is_start = True 
+                    node.is_end = False 
                     self.start_node = node 
-                elif self.current_brush == TERRAIN_TYPES.END:
-                    if self.end_node: self.end_node.is_end = False 
+                    logging.info(f"Start moved to: {node.row}, {node.col}")
+
+                # Handle end checkbox
+                elif sidebar.end_checkbox.is_checked:
+                    if self.end_node and self.end_node != node:
+                        self.end_node.is_end = False 
+                    node.is_start = False
                     node.is_end = True 
                     self.end_node = node 
+                    logging.info(f"End moved to: {node.row}, {node.col}")
+
+                # Handle regular painting
                 else:
-                    node.terrain = self.current_brush
-        
+                    # Normal terrain painting (only if node isn't currently start/end)
+                    if not node.is_start and not node.is_end:
+                        node.terrain = self.current_brush
+
     
     def handle_mouse_event(self, event):
         """Handles one-time clicks, specifically for right-click release"""
@@ -115,13 +127,13 @@ class Grid:
                 offset = i * self.cell_size
 
                 #vertical lines
-                pygame.draw.line(surface, TERRAIN_COLORS[TERRAIN_TYPES.GRID_LINE], 
+                pygame.draw.line(surface, TERRAIN_COLORS[UI_COLORS.GRID_LINE], 
                                  (self.rect.x + offset, self.rect.y), 
                                  (self.rect.x + offset, self.rect.y + self.grid_size)
                                 )
                 
                 # horizontal lines
-                pygame.draw.line(surface, TERRAIN_COLORS[TERRAIN_TYPES.GRID_LINE], 
+                pygame.draw.line(surface, TERRAIN_COLORS[UI_COLORS.GRID_LINE], 
                                  (self.rect.x, self.rect.y + offset), 
                                  (self.rect.x + self.grid_size, self.rect.y + offset)
                                 )
@@ -153,35 +165,30 @@ class Grid:
                 row = []
                 for c in range(self.cols):
                     terrain_val = data["cells"][r][c]
+                    #New nodes start with all UI flags (visited/path/start/end) as False
                     row.append(Node(r, c, self.cell_size, terrain_val))
                 new_map.append(row)
 
             # replace the old map with the new map 
             self.map = new_map
             
-            # handle start/end node assignment 
+            # restore Start Node with reference and flag
+            self.start_node = None 
             if data.get("start_pos"):
                 r, c = data["start_pos"]
                 # Bounds check: only assign if coordinates exist in the new grid
                 if r < self.rows and c < self.cols:
                     self.start_node = self.map[r][c]
                     self.start_node.is_start = True 
-                else:
-                    self.start_node = None 
-            else:
-                self.start_node = None 
 
             # Restore the end node reference and flag 
+            self.end_node = None 
             if data.get("end_pos"):
                 r, c = data["end_pos"]
                 if r < self.rows and c < self.cols:
                     self.end_node = self.map[r][c]
                     self.end_node.is_end = True 
-                else:
-                    self.end_node = None 
-            else:
-                self.end_node = None 
-
+                
             logging.info(f"Map loaded from {file_path}")
 
         except Exception as e:

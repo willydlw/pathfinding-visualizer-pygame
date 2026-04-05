@@ -109,7 +109,7 @@ class PathFinderApp:
 
             if not is_blocking:
                 # only handle continuous painting here
-                self.grid.handle_continuous_mouse()
+                self.grid.handle_continuous_mouse(self.sidebar)
 
 
     def _draw(self):
