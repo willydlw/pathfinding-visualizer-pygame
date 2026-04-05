@@ -6,7 +6,17 @@ from pygame_gui.windows import UIFileDialog
 
 import logging 
 
-from .constants import TERRAIN_TYPES, TERRAIN_NAMES, MAP_ACTION_TYPES, MAP_ACTION_DICT
+from .constants import (
+    TERRAIN_TYPES, 
+    TERRAIN_NAMES, 
+    MAP_ACTION_TYPES, 
+    MAP_ACTION_DICT, 
+    ANIMATION_MODE,
+    ANIMATION_MODE_NAMES, 
+    SPEED_OPTIONS,
+    SPEED_OPTION_NAMES
+)
+
 from .algorithms import bfs, dfs
 
 logger = logging.getLogger(__name__)
@@ -101,6 +111,37 @@ class Sidebar:
             manager=self.manager
         )
 
+        # --- Row 6: Animation Mode ---
+        self.anim_label = UILabel(
+            relative_rect=pygame.Rect((col1_x, 330), (label_width, widget_height)),
+            text="Animation: ",
+            manager=self.manager
+        )
+
+        self.anim_modes = list(ANIMATION_MODE_NAMES.values())
+        self.anim_dropdown = UIDropDownMenu(
+            options_list=self.anim_modes,
+            starting_option=self.anim_modes[0],  # default to "Animated"
+            relative_rect=pygame.Rect((col2_x, 330), (right_col_width, widget_height)),
+            manager=self.manager
+        )
+
+        # --- Row 7: Speed Multiplier (Hidden unless "Animated" is selected) ---
+        self.speed_options = list(SPEED_OPTION_NAMES.values())
+        self.speed_dropdown = UIDropDownMenu(
+            options_list=self.speed_options,
+            starting_option=self.speed_options[0], # default to 1x
+            relative_rect=pygame.Rect((col2_x, 380), (right_col_width, widget_height)),
+            manager=self.manager
+        )
+
+        # --- Row 8: Next Step Button (hidden by default) --- 
+        self.next_step_button = UIButton(
+            relative_rect=pygame.Rect((col1_x, 430), (full_widget_width, widget_height)),
+            text="NEXT STEP",
+            visible=0 # start hidden
+        )
+
         # Mapping 
         # Label: Environment Map 
         # Default (64x64) with a default map loaded
@@ -125,7 +166,7 @@ class Sidebar:
         # TODO: Select size of object finding its path
         # Examples: 1x1 Square, 2x2 square
 
-        # Visualization Control
+        # Animation Visualization Control
         # TODO: Visualization Label
         # Choice: Instant Path, 
         #       Animated Search (select animation speed). When this option is selected

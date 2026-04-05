@@ -7,6 +7,13 @@ import logging
 from .grid import Grid 
 from .sidebar import Sidebar
 
+from .constants import (
+    ANIMATION_MODE,
+    ANIMATION_MODE_NAMES,
+    SPEED_OPTION_NAMES,
+    SPEED_OPTIONS
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -73,6 +80,8 @@ class PathFinderApp:
         )
         
         self.active_generator = None        # Holds the BFS generator 
+
+        self.step_requested = False 
         logging.info(f"PathFinderApp initialized")
 
     
@@ -86,6 +95,22 @@ class PathFinderApp:
             self.ui_manager.process_events(event) 
             self.sidebar.handle_events(event)
 
+            # --- Handle Animation Mode Changes --- 
+            if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED: 
+                if event.ui_element == self.sidebar.anim_dropdown:
+                    mode_str = event.text
+                    current_mode = next(k for k, v in ANIMATION_MODE_NAMES.items() if v == mode_str)
+
+                    if current_mode == ANIMATION_MODE.SINGLE_STEP:
+                        self.sidebar.next_step_button.show() 
+                    else:
+                        self.sidebar.next_step_button.hide() 
+
+            # --- Handle Manual Step Button --- 
+            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == self.sidebar.next_step_button:
+                    self.step_requested = True 
+
             # Pass the event to the grid to for "one-time" actions
             # (like Right-Click release)
             if not self.ui_manager.get_hovering_any_element():
@@ -94,22 +119,43 @@ class PathFinderApp:
 
     def _update(self):
 
-        # Check if a search is currently animating
-        if self.active_generator:
-            try:
-                finished = next(self.active_generator)
-                if finished:
-                    self.active_generator = None 
-                    logging.info("Search finished.")
-            except StopIteration:
-                self.active_generator = None 
-        else:
-            # Check if dialog is blocking the mouse
-            is_blocking = self.ui_manager.get_hovering_any_element() 
-
-            if not is_blocking:
-                # only handle continuous painting here
+        if not self.active_generator:
+            # Handle continuous painting only when NO search is running 
+       
+            if not self.ui_manager.get_hovering_any_element():
                 self.grid.handle_continuous_mouse(self.sidebar)
+            return 
+        
+        current_mode_str = self.sidebar.anim_dropdown.selected_option
+        current_mode = next((k for k, v in ANIMATION_MODE_NAMES.items() if v == current_mode_str), ANIMATION_MODE.ANIMATED)
+
+        if current_mode == ANIMATION_MODE.INSTANT:
+            # run until the generator signals True (finished)
+            finished = False 
+            while not finished:
+                try:
+                    finished = next(self.active_generator)
+                except StopIteration:
+                    self.active_generator = None 
+        elif current_mode == ANIMATION_MODE.ANIMATED:
+            speed_str = self.sidebar.speed_dropdown.selected_option 
+            # Find which Enum key matches this string 
+            multiplier = next((k.value for k, v in SPEED_OPTION_NAMES.items() if v == speed_str), 1)
+
+            for _ in range(multiplier):
+                try:
+                    finished = next(self.active_generator)
+                    if finished:
+                        self.active_generator = None 
+                        break 
+                except StopIteration:
+                    self.active_generator = None 
+                    break 
+
+        elif current_mode == ANIMATION_MODE.SINGLE_STEP:
+            # Awaits manual trigger from sidebar button 
+            pass 
+
 
 
     def _draw(self):

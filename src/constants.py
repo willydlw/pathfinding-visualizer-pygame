@@ -43,6 +43,40 @@ TERRAIN_NAMES = {
 }
 
 
+
+
+# Animation 
+class ANIMATION_MODE(IntEnum):
+    ANIMATED = 200
+    INSTANT = 201
+    SINGLE_STEP = 202 
+
+class SPEED_OPTIONS(IntEnum):
+    ANIM_1x = 1
+    ANIM_2X = 2
+    ANIM_4X = 4 
+    ANIM_8X = 8
+    ANIM_16x = 16
+    ANIM_32x = 32
+
+
+ANIMATION_MODE_NAMES = {
+    ANIMATION_MODE.ANIMATED: "Animated",
+    ANIMATION_MODE.INSTANT: "Instant",
+    ANIMATION_MODE.SINGLE_STEP: "Single Step",
+}
+
+SPEED_OPTION_NAMES = {
+    SPEED_OPTIONS.ANIM_1x: "1x",
+    SPEED_OPTIONS.ANIM_2X: "2x",
+    SPEED_OPTIONS.ANIM_4X: "4x",
+    SPEED_OPTIONS.ANIM_8X: "8x",
+    SPEED_OPTIONS.ANIM_16x: "16x",
+    SPEED_OPTIONS.ANIM_32x: "32x",
+}
+
+
+# Mapping 
 class MAP_ACTION_TYPES(IntEnum):
     CREATE = 0
     LOAD = 1
