@@ -22,13 +22,13 @@ class Grid:
         self.rect = pygame.Rect(x, y, self.grid_size, self.grid_size)   # grid rectangle
 
         
-        self.current_brush = TERRAIN_TYPES.GREEN             # default brush color
+        self.current_brush = TERRAIN_TYPES.GRASS             # default brush color
 
         self.start_node = None                       
         self.end_node = None 
         
         # init 2D list
-        self.map = [[Node(r, c, self.cell_size, TERRAIN_TYPES.DEFAULT) for c in range(self.cols)] 
+        self.map = [[Node(r, c, self.cell_size, TERRAIN_TYPES.GRASS) for c in range(self.cols)] 
                     for r in range(self.rows)
         ]
 
@@ -39,7 +39,7 @@ class Grid:
     def clear(self):
         """Resets the grid map to all DEFAULT (0)."""
         self.map = [
-            [Node(r, c, self.cell_size, TERRAIN_TYPES.DEFAULT) for c in range(self.cols)] 
+            [Node(r, c, self.cell_size, TERRAIN_TYPES.GRASS) for c in range(self.cols)] 
             for r in range(self.rows)
         ]
         self.start_node = None 

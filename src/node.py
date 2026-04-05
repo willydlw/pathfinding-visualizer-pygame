@@ -11,11 +11,16 @@ class Node:
         self.size = size 
 
         self.terrain = terrain 
+
+        # State Flags
+        self.visited = False        # "Open set" (in queue/stack)
+        self.closed  = False        # "Closed set" (fully processed)
+        self.path    = False        
+        self.parent = None 
         self.is_start = False 
         self.is_end = False 
-        self.visited = False 
-        self.parent = None 
-        self.path = False
+      
+    
 
         # For A* later 
         self.g = float('inf')
@@ -46,8 +51,18 @@ class Node:
             color = TERRAIN_COLORS[UI_COLORS.PATH]
         elif self.visited:
             color = TERRAIN_COLORS[UI_COLORS.VISITED]
+        elif self.closed:
+            color = TERRAIN_COLORS[UI_COLORS.CLOSED]
         else:
             color = TERRAIN_COLORS[self.terrain]
 
         rect = (self.x + x_offset, self.y + y_offset, self.size, self.size)
         pygame.draw.rect(surface, color, rect)
+
+
+    def reset_state(self):
+        """Clears search data but keeps terrain."""
+        self.visited = False 
+        self.closed = False 
+        self.path = False 
+        self.parent = None 

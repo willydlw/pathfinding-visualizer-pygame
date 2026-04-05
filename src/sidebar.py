@@ -54,7 +54,7 @@ class Sidebar:
 
         self.terrain_dropdown = UIDropDownMenu(
             options_list=list(TERRAIN_NAMES.values()),
-            starting_option=TERRAIN_NAMES[TERRAIN_TYPES.DEFAULT],
+            starting_option=TERRAIN_NAMES[TERRAIN_TYPES.GRASS],
             relative_rect=pygame.Rect((col2_x, 70), (right_col_width, widget_height)),
             manager=self.manager
         )
@@ -303,8 +303,10 @@ class Sidebar:
     
     def reset_selection_modes(self):
         """Unchecks both start and end boxes."""
-        self.start_checkbox.uncheck()
-        self.end_checkbox.uncheck()
+        self.start_checkbox.is_checked = False 
+        self.start_checkbox._update_visual_state()
+        self.end_checkbox.is_checked = False 
+        self.end_checkbox._update_visual_state()
     
     
     def run_search(self):

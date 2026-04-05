@@ -4,44 +4,42 @@ FPS = 60
 
 # Walkable Surfaces 
 class TERRAIN_TYPES(IntEnum): 
-    DEFAULT = 0
-    NAVY = 1
-    GREEN = 2
-    BLUE = 3
-    GRAY = 4 
-  
+    GRASS = 0
+    SAND = 1
+    WATER = 2
+
 
 # UI/Status Indicators
 class UI_COLORS(IntEnum):
     START = 100
     END = 101 
-    VISITED = 102 
-    GRID_LINE = 103 
-    PATH = 104 
+    VISITED = 102
+    CLOSED = 103
+    PATH = 104
+    GRID_LINE = 105
+
 
 # Use enum members as keys
 TERRAIN_COLORS = {
-    # Walkable Terrains 
-    TERRAIN_TYPES.DEFAULT: (225, 225, 225), # light gray / off-white 
-    TERRAIN_TYPES.NAVY:  (0, 0, 128),    # navy blue 
-    TERRAIN_TYPES.GREEN: (46, 204, 113),  # emerald green 
-    TERRAIN_TYPES.BLUE:  (52, 152, 219),  # Peter River Blue 
-    TERRAIN_TYPES.GRAY:  (149, 165, 166), # Concrete gray
+    # Walkable Terrains (muted background tones)
+    TERRAIN_TYPES.GRASS: (119, 158, 133),   # soft sage green 
+    TERRAIN_TYPES.SAND:  (236, 217, 198),   # pale sand/Tan
+    TERRAIN_TYPES.WATER: (162, 192, 201),   # dusty blue  
+   
 
-    # UI Overlays 
-    UI_COLORS.START: (241, 196, 15),  # bright yellow 
-    UI_COLORS.END:   (231, 75, 60),   # bright red
-    UI_COLORS.VISITED: (173, 216, 230),  # light blue
-    UI_COLORS.GRID_LINE: (50, 50, 50),      # Lighter gray lines
-    UI_COLORS.PATH: (250, 149, 7)
+    # UI Overlays (High-Contrast "Action" Colors)
+    UI_COLORS.START:     ( 46, 204, 113),   # Emerald (Go) 
+    UI_COLORS.END:       (231,  76,  60),   # Alizarin Red (Stop)
+    UI_COLORS.VISITED:   (241, 196,  15),   # Sunflower Yellow (Scanning)
+    UI_COLORS.CLOSED:    (149, 165, 166),   # Asbestos Gray (Done)
+    UI_COLORS.PATH:      (155,  89, 182),   # Amethyst Purple (the result)
+    UI_COLORS.GRID_LINE: ( 44,  62,  80),   # Dark Midnight Blue
 }
 
 TERRAIN_NAMES = {
-    TERRAIN_TYPES.DEFAULT: "Default",
-    TERRAIN_TYPES.NAVY: "Navy",
-    TERRAIN_TYPES.GREEN: "Green",
-    TERRAIN_TYPES.BLUE: "Blue",
-    TERRAIN_TYPES.GRAY: "Gray",
+    TERRAIN_TYPES.GRASS: "Grass",
+    TERRAIN_TYPES.SAND:  "Sand",
+    TERRAIN_TYPES.WATER: "Water",
 }
 
 
