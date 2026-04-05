@@ -79,3 +79,43 @@ def bfs(grid):
 
     logging.info("No path exists")
     yield True 
+
+
+def dfs(grid):
+    """
+    Performs a Depth-First Search on the grid.
+    """
+
+    logging.info(f"entering DFS")
+
+    if not grid.start_node or not grid.end_node:
+        logger.warning("Start or End node not set!")
+        yield True 
+        return 
+    
+    start_node = grid.start_node 
+    end_node = grid.end_node 
+
+    # Use a list as a stack (LIFO)
+    stack = [start_node]
+    start_node.visited = True 
+
+    while stack:
+        current = stack.pop() 
+
+        if current == end_node:
+            logging.info("Path found via DFS.")
+            reconstruct_path(current)
+            yield True 
+            return 
+
+        for neighbor in get_neighbors(current, grid):
+            logging.info(f"found neighbors")
+            if not neighbor.visited:
+                neighbor.visited = True 
+                neighbor.parent = current 
+                stack.append(neighbor)
+                yield False 
+                
+    logging.info("No path exists")
+    yield True 

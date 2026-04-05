@@ -7,6 +7,7 @@ from pygame_gui.windows import UIFileDialog
 import logging 
 
 from .constants import TERRAIN_TYPES, TERRAIN_NAMES, MAP_ACTION_TYPES, MAP_ACTION_DICT
+from .algorithms import bfs, dfs
 
 logger = logging.getLogger(__name__)
 
@@ -307,7 +308,6 @@ class Sidebar:
     
     
     def run_search(self):
-        from .algorithms import bfs 
 
         # 1. Validation:Ensure start and end are set 
         if not self.grid.start_node or not self.grid.end_node:
@@ -335,6 +335,9 @@ class Sidebar:
             # Note: You may need to pass the app instance to Sidebar or 
             # use a callback to set self.active_generator in PathFinderApp
             self.app.active_generator = bfs(self.grid)
+        elif self.selected_algo == "DFS":
+            logging.info(f"Starting DFS on {TERRAIN_NAMES[start_terrain]} terrain...")
+            self.app.active_generator = dfs(self.grid)
         else:
             logging.error(f"Algorithm {self.selected_algo} not implemented")
             return 
