@@ -248,11 +248,20 @@ class Sidebar:
         # 4. Handle Checkbox Mutual Exclusivity
         if event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
             if event.ui_element == self.start_checkbox:
-                self.end_checkbox.is_checked = False 
+                self.end_checkbox.is_checked = False
+                self.end_checkbox._update_visual_state()
                 logging.info("Start placement mode active")
             elif event.ui_element == self.end_checkbox:
                 self.start_checkbox.is_checked = False
+                self.start_checkbox._update_visual_state()
                 logging.info("End placement mode active")
+
+
+        if event.type == pygame_gui.UI_CHECK_BOX_UNCHECKED: 
+            # if user clicks already-checked box, turn it back on 
+            # so one mode is always selected if they click it 
+            if event.ui_element == self.start_checkbox or event.ui_element == self.end_checkbox:
+                event.ui_element.is_checked = True 
 
         # Handle Button Press 
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
