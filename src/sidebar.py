@@ -139,6 +139,7 @@ class Sidebar:
         self.next_step_button = UIButton(
             relative_rect=pygame.Rect((col1_x, 430), (full_widget_width, widget_height)),
             text="NEXT STEP",
+            manager=self.manager,
             visible=0 # start hidden
         )
 
@@ -150,7 +151,7 @@ class Sidebar:
         # Sparse Canvas (128 x 128)
         # Dense Canvas (256 x 256)
         # Maze (128 x 128)
-        # Wheel of War? (256 x 256)
+        # ? (256 x 256)
 
         # Legal Actions
         # Object must be within the map bounds 
@@ -246,19 +247,73 @@ class Sidebar:
 
 
     def handle_events(self, event):
-        # Dropdown Menu Events
-        if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-            if event.ui_element == self.map_dropdown:
-                if event.text == MAP_ACTION_DICT[MAP_ACTION_TYPES.LOAD]:
-                    self.open_file_dialog(MAP_ACTION_TYPES.LOAD)
-                elif event.text == MAP_ACTION_DICT[MAP_ACTION_TYPES.SAVE]:
-                    self.open_file_dialog(MAP_ACTION_TYPES.SAVE)
-                elif event.text == MAP_ACTION_DICT[MAP_ACTION_TYPES.CREATE]:
-                    self.grid.clear_grid()
-                    self.reset_selection_modes()
-                    logging.info("Grid cleared, start/end unchecked")
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            self._handle_button_events(event)
 
-            elif event.ui_element == self.terrain_dropdown:
+        elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
+            self._handle_checkbox_checked_events(event)
+
+        elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
+            self._handle_checkbox_unchecked_events()
+        
+        elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+            self._handle_dropdown_menu_events(event)
+
+        elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
+            self._handle_file_dialog_path_picked_events(event)
+
+        elif event.type == pygame_gui.UI_WINDOW_CLOSE:
+            self._handle_window_close_events(event)
+
+
+    def _handle_button_events(self, event):
+            # run selected search
+            if event.ui_element == self.search_button:
+                self.run_search() 
+            # set to single step mode
+            elif event.ui_element == self.next_step_button:
+                self.app.step_requested = True 
+            # clear the grid
+            elif event.ui_element == self.clear_button:
+                self.reset_start_end_selection_modes()
+                self.grid.clear_grid()
+
+
+    def _handle_checkbox_checked_events(self, event):
+        # Handle Checkbox Mutual Exclusivity
+        if event.ui_element == self.start_checkbox:
+            self.end_checkbox.is_checked = False
+            self.end_checkbox._update_visual_state()
+        elif event.ui_element == self.end_checkbox:
+            self.start_checkbox.is_checked = False
+            self.start_checkbox._update_visual_state()
+
+
+    def _handle_checkbox_unchecked_events(self, event):
+        # Handle Checkbox Mutual Exclusivity
+        if event.ui_element == self.start_checkbox:
+            self.end_checkbox.is_checked = False
+            self.end_checkbox._update_visual_state()
+        elif event.ui_element == self.end_checkbox:
+            self.start_checkbox.is_checked = False
+            self.start_checkbox._update_visual_state()
+            
+
+    def _handle_dropdown_menu_events(self, event):
+        if event.ui_element == self.anim_dropdown:
+            # Next Step button visibility
+            if event.text == ANIMATION_MODE_NAMES[ANIMATION_MODE.SINGLE_STEP]:
+                self.next_step_button.show() 
+                self.speed_dropdown.hide() # hide speed as it's irrelevant 
+            else:
+                self.next_step_button.hide() 
+                self.speed_dropdown.show()
+
+        elif event.ui_element == self.algo_dropdown:
+                self.selected_algo = event.text 
+                logging.info(f"Selected algorithm: {self.selected_algo}")
+        
+        elif event.ui_element == self.terrain_dropdown:
                 # Dynamically map the Name back to the Enum Type ID
                 reverse_lookup = {name: type_id for type_id, name in TERRAIN_NAMES.items()}
                 new_brush = reverse_lookup.get(event.text)
@@ -267,52 +322,38 @@ class Sidebar:
                     self.grid.current_brush = new_brush 
                     logging.info(f"Brush changed to: {event.text}")
 
-            elif event.ui_element == self.algo_dropdown:
-                self.selected_algo = event.text 
-                logging.info(f"Selected algorithm: {self.selected_algo}")
+        elif event.ui_element == self.map_dropdown:
+            self._handle_map_action(event.text)
+            
 
-        # 2. Handle File Selection
-        if event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
-            if event.ui_element == self.active_file_dialog:
-                if self.current_action == MAP_ACTION_TYPES.SAVE:
-                    self.grid.save_to_file(event.text)
-                    logging.info(f"Map saved to: {event.text}")
-                elif self.current_action == MAP_ACTION_TYPES.LOAD:
-                    self.grid.load_from_file(event.text)
-                    logging.info(f"Map loaded from: {event.text}")
-
-        # 3. Clean up dialog reference when closed
-        if event.type == pygame_gui.UI_WINDOW_CLOSE:
-            if event.ui_element == self.active_file_dialog:
-                self.active_file_dialog = None
-                self.current_action = None
-
-        # 4. Handle Checkbox Mutual Exclusivity
-        if event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
-            if event.ui_element == self.start_checkbox:
-                self.end_checkbox.is_checked = False
-                self.end_checkbox._update_visual_state()
-                logging.info("Start placement mode active")
-            elif event.ui_element == self.end_checkbox:
-                self.start_checkbox.is_checked = False
-                self.start_checkbox._update_visual_state()
-                logging.info("End placement mode active")
+    def _handle_file_dialog_path_picked_events(self, event):
+        """ Handle File Selection """
+        if event.ui_element == self.active_file_dialog:
+            if self.current_action == MAP_ACTION_TYPES.SAVE:
+                self.grid.save_to_file(event.text)
+                logging.info(f"Map saved to: {event.text}")
+            elif self.current_action == MAP_ACTION_TYPES.LOAD:
+                self.grid.load_from_file(event.text)
+                logging.info(f"Map loaded from: {event.text}")
 
 
-        if event.type == pygame_gui.UI_CHECK_BOX_UNCHECKED: 
-            # if user clicks already-checked box, turn it back on 
-            # so one mode is always selected if they click it 
-            if event.ui_element == self.start_checkbox or event.ui_element == self.end_checkbox:
-                event.ui_element.is_checked = True 
+    def _handle_window_close_events(self, event):
+        # Clean up dialog reference when closed
+        if event.ui_element == self.active_file_dialog:
+            self.active_file_dialog = None
+            self.current_action = None
+           
 
-        # Handle Button Press 
-        if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            if event.ui_element == self.clear_button:
-                self.grid.clear()
-                self.reset_selection_modes()
-            elif event.ui_element == self.search_button:
-                self.run_search() 
-
+    def _handle_map_action(self, text):
+        if text == MAP_ACTION_DICT[MAP_ACTION_TYPES.LOAD]:
+                self.open_file_dialog(MAP_ACTION_TYPES.LOAD)
+        elif text == MAP_ACTION_DICT[MAP_ACTION_TYPES.SAVE]:
+            self.open_file_dialog(MAP_ACTION_TYPES.SAVE)
+        elif text == MAP_ACTION_DICT[MAP_ACTION_TYPES.CREATE]:
+            self.grid.clear_grid()
+            self.reset_selection_modes()
+            logging.info("Grid cleared, start/end unchecked")
+        
 
     def open_file_dialog(self, action_type):
         if self.active_file_dialog is None:
@@ -327,22 +368,8 @@ class Sidebar:
 
             self.current_action = action_type
 
-   
-    def reset_search_data(self):
-        """Clears search visuals (visited, path, parents) but keeps terrain."""
-        for row in self.map:
-            for node in row:
-                node.visited = False 
-                node.path = False 
-                node.parent = None
-
-                # Reset A* value if using them 
-                node.g = float('inf')
-                node.f = 0
-                node.h = 0 
-
     
-    def reset_selection_modes(self):
+    def reset_start_end_selection_modes(self):
         """Unchecks both start and end boxes."""
         self.start_checkbox.is_checked = False 
         self.start_checkbox._update_visual_state()
@@ -368,20 +395,10 @@ class Sidebar:
             )
             return 
         
-        # 3. Success: Reset old search data and start the generator 
-        self.grid.reset_search_data()
+        # 2. Get current algo settings from UI 
+        algo_name = self.selected_algo 
 
-        # 4. Execution 
-        if self.selected_algo == "BFS":
-            logging.info(f"Starting BFS on {TERRAIN_NAMES[start_terrain]} terrain...")
-            # Assign the generator to the app's tracker
-            # Note: You may need to pass the app instance to Sidebar or 
-            # use a callback to set self.active_generator in PathFinderApp
-            self.app.active_generator = bfs(self.grid)
-        elif self.selected_algo == "DFS":
-            logging.info(f"Starting DFS on {TERRAIN_NAMES[start_terrain]} terrain...")
-            self.app.active_generator = dfs(self.grid)
-        else:
-            logging.error(f"Algorithm {self.selected_algo} not implemented")
-            return 
+        # 3. Call the app to prepare the algorithm generator 
+        self.app.start_search(algo_name) 
+
             

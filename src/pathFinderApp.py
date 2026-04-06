@@ -6,6 +6,7 @@ import logging
 
 from .grid import Grid 
 from .sidebar import Sidebar
+from .algorithms import bfs, dfs 
 
 from .constants import (
     ANIMATION_MODE,
@@ -79,8 +80,7 @@ class PathFinderApp:
             self
         )
         
-        self.active_generator = None        # Holds the BFS generator 
-
+        self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
         logging.info(f"PathFinderApp initialized")
 
@@ -95,22 +95,6 @@ class PathFinderApp:
             self.ui_manager.process_events(event) 
             self.sidebar.handle_events(event)
 
-            # --- Handle Animation Mode Changes --- 
-            if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED: 
-                if event.ui_element == self.sidebar.anim_dropdown:
-                    mode_str = event.text
-                    current_mode = next(k for k, v in ANIMATION_MODE_NAMES.items() if v == mode_str)
-
-                    if current_mode == ANIMATION_MODE.SINGLE_STEP:
-                        self.sidebar.next_step_button.show() 
-                    else:
-                        self.sidebar.next_step_button.hide() 
-
-            # --- Handle Manual Step Button --- 
-            if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                if event.ui_element == self.sidebar.next_step_button:
-                    self.step_requested = True 
-
             # Pass the event to the grid to for "one-time" actions
             # (like Right-Click release)
             if not self.ui_manager.get_hovering_any_element():
@@ -119,9 +103,8 @@ class PathFinderApp:
 
     def _update(self):
 
+        # Handle continuous painting only when NO search is running 
         if not self.active_generator:
-            # Handle continuous painting only when NO search is running 
-       
             if not self.ui_manager.get_hovering_any_element():
                 self.grid.handle_continuous_mouse(self.sidebar)
             return 
@@ -130,22 +113,22 @@ class PathFinderApp:
         current_mode = next((k for k, v in ANIMATION_MODE_NAMES.items() if v == current_mode_str), ANIMATION_MODE.ANIMATED)
 
         if current_mode == ANIMATION_MODE.INSTANT:
-            # run until the generator signals True (finished)
-            finished = False 
-            while not finished:
-                try:
-                    finished = next(self.active_generator)
-                except StopIteration:
-                    self.active_generator = None 
+            try:
+                # run until the generator signals True (finished)
+                while next(self.active_generator) is False:
+                    pass     
+                self.active_generator = None 
+            except StopIteration:
+                self.active_generator = None 
+                logging.info("Active Generation is done.")
+
         elif current_mode == ANIMATION_MODE.ANIMATED:
             speed_str = self.sidebar.speed_dropdown.selected_option 
-            # Find which Enum key matches this string 
             multiplier = next((k.value for k, v in SPEED_OPTION_NAMES.items() if v == speed_str), 1)
 
             for _ in range(multiplier):
                 try:
-                    finished = next(self.active_generator)
-                    if finished:
+                    if next(self.active_generator) is True:
                         self.active_generator = None 
                         break 
                 except StopIteration:
@@ -153,9 +136,16 @@ class PathFinderApp:
                     break 
 
         elif current_mode == ANIMATION_MODE.SINGLE_STEP:
-            # Awaits manual trigger from sidebar button 
-            pass 
+            # Handle manual step logic
+            if self.step_requested:
+                try:
+                    finished = next(self.active_generator)
+                    if finished:
+                        self.active_generator = None 
+                except StopIteration:
+                    self.active_generator = None 
 
+                self.step_requested = False # reset the flag after one step
 
 
     def _draw(self):
@@ -183,3 +173,28 @@ class PathFinderApp:
             self._update()
 
             self._draw() 
+
+
+    def start_search(self, algo_name):
+        # Reset any previous search state
+        self.grid.reset_search_data()
+        
+        # Initialize the generator based on the dropdown choice
+        if algo_name == "BFS":
+            self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node)
+        elif algo_name == "DFS":
+            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node)
+        
+        self.step_requested = False
+        logging.info(f"Search started: {algo_name}")
+
+
+
+    def step_search(self):
+        if self.active_generator:
+            try:
+                # Get the next "frame" of the algorithm 
+                next(self.active_generator)
+            except StopIteration:
+                self.active_generator = None 
+                logging.info("Search finished.")

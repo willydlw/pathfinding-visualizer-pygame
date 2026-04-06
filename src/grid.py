@@ -222,9 +222,8 @@ class Grid:
 
 
     def reset_search_data(self):
-        """Clears search flags without removing terrain."""
+        """Clears search visuals (visited, path, closed, costs, parents) but keeps terrain."""
         for row in self.map:
             for node in row:
-                node.visited = False 
-                node.parent = None 
-                node.path = False 
+                node.reset_state()
+        

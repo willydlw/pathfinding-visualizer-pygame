@@ -40,20 +40,11 @@ def reconstruct_path(end_node):
         curr = curr.parent 
 
 
-def bfs(grid):
+def bfs(grid, start_node, end_node):
     """
     Performs a Breadth-First-Search on the grid.
     Returns the end node if path found, else None
     """
-
-    if not grid.start_node or not grid.end_node:
-        logger.warning("Start or End node not set!")
-        yield True  # Signal finished so the app doesn't hang
-        return
-    
-    start_node = grid.start_node 
-    end_node = grid.end_node
-
 
     # enqueue the starting node and mark as visited
     queue =deque([start_node]) 

@@ -66,3 +66,8 @@ class Node:
         self.closed = False 
         self.path = False 
         self.parent = None 
+
+        # Reset A* value if using them 
+        self.g = float('inf')
+        self.f = 0
+        self.h = 0 
