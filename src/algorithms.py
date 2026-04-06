@@ -12,8 +12,6 @@ def get_neighbors(node, grid):
     """
 
     neighbors = []
-    allowed_terrain = grid.start_node.terrain 
-
     rows = grid.rows
     cols = grid.cols
 
@@ -26,8 +24,7 @@ def get_neighbors(node, grid):
         # Boundary check 
         if 0 <= r < rows and 0 <= c < cols:
             neighbor = grid.map[r][c]
-            if neighbor.terrain == allowed_terrain:
-                neighbors.append(neighbor)
+            neighbors.append(neighbor)
 
     return neighbors
 
@@ -49,6 +46,8 @@ def bfs(grid, start_node, end_node):
     # enqueue the starting node and mark as visited
     queue =deque([start_node]) 
     start_node.visited = True 
+
+    allowed_terrain = start_node.terrain 
    
     while queue:
         current = queue.popleft()
@@ -61,34 +60,27 @@ def bfs(grid, start_node, end_node):
             return       # Stop the generator 
 
         for neighbor in get_neighbors(current, grid):
-            if not neighbor.visited:
-                neighbor.visited = True 
-                neighbor.parent = current   # Link for path reconstruction
-                queue.append(neighbor)
+            if not neighbor.visited and neighbor.terrain == allowed_terrain:
+                    neighbor.visited = True 
+                    neighbor.parent = current   # Link for path reconstruction
+                    queue.append(neighbor)
 
-                # yield here to pause the algorithm and let pygame draw 
-                yield False 
+        # yield here to pause the algorithm and let pygame draw 
+        # one full node processed per "frame"
+        yield False 
 
     logging.info("BFS, No path exists")
     yield True 
 
 
-def dfs(grid):
+def dfs(grid, start_node, end_node):
     """
     Performs a Depth-First Search on the grid.
     """
 
-    if not grid.start_node or not grid.end_node:
-        logger.warning("Start or End node not set!")
-        yield True 
-        return 
-    
-    start_node = grid.start_node 
-    end_node = grid.end_node 
-
     # Use a list as a stack (LIFO)
     stack = [start_node]
-    start_node.visited = True       
+    allowed_terrain = start_node.terrain       
 
     while stack:
         current = stack.pop() 
@@ -101,11 +93,14 @@ def dfs(grid):
             return 
 
         for neighbor in get_neighbors(current, grid):
-            if not neighbor.visited:
+            if not neighbor.visited and neighbor.terrain == allowed_terrain:
                 neighbor.visited = True 
                 neighbor.parent = current 
                 stack.append(neighbor)
-                yield False 
+
+        # yield here to pause the algorithm and let pygame draw 
+        # one full node processed per "frame"
+        yield False 
                 
     logging.info("DFS No path exists")
     yield True 

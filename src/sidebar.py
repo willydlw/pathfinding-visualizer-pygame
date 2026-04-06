@@ -251,10 +251,7 @@ class Sidebar:
             self._handle_button_events(event)
 
         elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
-            self._handle_checkbox_checked_events(event)
-
-        elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
-            self._handle_checkbox_unchecked_events()
+            self._handle_checkbox_toggle(event)
         
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
             self._handle_dropdown_menu_events(event)
@@ -264,6 +261,21 @@ class Sidebar:
 
         elif event.type == pygame_gui.UI_WINDOW_CLOSE:
             self._handle_window_close_events(event)
+
+
+    def _handle_checkbox_toggle(self, event):
+        """Handles mutual exclusivity in Pygame Gui 0.6.14"""
+        if event.ui_element == self.start_checkbox:
+            if self.start_checkbox.is_checked:
+                # Force uncheck the other 
+                self.end_checkbox.is_checked = False 
+                self.end_checkbox.rebuild()
+
+        elif event.ui_element == self.end_checkbox:
+            if self.end_checkbox.is_checked:
+                # force uncheck the other 
+                self.start_checkbox.is_checked = False 
+                self.start_checkbox.rebuild()
 
 
     def _handle_button_events(self, event):
@@ -277,27 +289,6 @@ class Sidebar:
             elif event.ui_element == self.clear_button:
                 self.grid.clear()
                 self.reset_start_end_selection_modes()
-
-
-    def _handle_checkbox_checked_events(self, event):
-        # Handle Checkbox Mutual Exclusivity
-        if event.ui_element == self.start_checkbox:
-            self.end_checkbox.is_checked = False
-            self.end_checkbox._update_visual_state()
-        elif event.ui_element == self.end_checkbox:
-            self.start_checkbox.is_checked = False
-            self.start_checkbox._update_visual_state()
-
-
-    def _handle_checkbox_unchecked_events(self, event):
-        # Handle Checkbox Mutual Exclusivity
-        if event.ui_element == self.start_checkbox:
-            self.end_checkbox.is_checked = False
-            self.end_checkbox._update_visual_state()
-        elif event.ui_element == self.end_checkbox:
-            self.start_checkbox.is_checked = False
-            self.start_checkbox._update_visual_state()
-            
 
     def _handle_dropdown_menu_events(self, event):
         if event.ui_element == self.anim_dropdown:
@@ -369,12 +360,12 @@ class Sidebar:
             self.current_action = action_type
 
     
-    def reset_start_end_selection_modes(self):
+    def uncheck_start_end(self):
         """Unchecks both start and end boxes."""
         self.start_checkbox.is_checked = False 
-        self.start_checkbox._update_visual_state()
+        self.start_checkbox.rebuild()
         self.end_checkbox.is_checked = False 
-        self.end_checkbox._update_visual_state()
+        self.end_checkbox.rebuild()
     
     
     def run_search(self):

@@ -66,6 +66,34 @@ class Grid:
             return row, col 
         return None 
     
+
+    def handle_click_event(self, sidebar):
+        """Called only once per mouse click (not held)"""
+        pos = pygame.mouse.get_pos() 
+        node = self.get_node_from_pos(pos)
+
+        if not node:
+            return 
+        
+        # Handle start placement 
+        if sidebar.start_checkbox.is_checked:
+            if self.start_node and self.start_node != node:
+                self.start_node.is_start = False 
+            node.is_start = True 
+            node.is_end = False 
+            self.start_node = node 
+            logging.info(f"Start set to: {node.row}, {node.col}")
+
+        # Handle End Placement 
+        elif sidebar.end_checkbox.is_checked:
+            if self.end_node and self.end_node != node:
+                self.end_node.is_end = False 
+            node.is_end = True 
+            node.is_start = False 
+            self.end_node = node 
+            logging.info(f"End set to: {node.row}, {node.col}")
+            
+    
     def handle_continuous_mouse(self, sidebar):
         """Handles painting terrain/start/end whild mouse is held down."""
         # Left click held: paint terrain or start/end

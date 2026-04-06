@@ -96,9 +96,13 @@ class PathFinderApp:
             self.sidebar.handle_events(event)
 
             # Pass the event to the grid to for "one-time" actions
-            # (like Right-Click release)
-            if not self.ui_manager.get_hovering_any_element():
-                self.grid.handle_mouse_event(event)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1: # left click
+                    if not self.ui_manager.get_hovering_any_element():
+                        # Only do single_click logic if a checkbox is active 
+                        if self.sidebar.start_checkbox.is_checked or \
+                            self.sidebar.end_checkbox.is_checked:
+                            self.grid.handle_click_event(self.sidebar)
 
 
     def _update(self):
@@ -176,6 +180,11 @@ class PathFinderApp:
 
 
     def start_search(self, algo_name):
+        
+        # Uncheck start/end boxes before starting search to avoid 
+        # accidentally changing during the search 
+        self.sidebar.uncheck_start_end()
+
         # Reset any previous search state
         self.grid.reset_search_data()
         
