@@ -59,8 +59,16 @@ class Node:
         rect = (self.x + x_offset, self.y + y_offset, self.size, self.size)
         pygame.draw.rect(surface, color, rect)
 
+    
+    def reset_all(self, default_terrain):
+        """Clears search state data, start/end state and resets terrain."""
+        self.reset_search_states()
+        self.terrain = default_terrain 
+        self.is_start = False 
+        self.is_end = False   
 
-    def reset_state(self):
+
+    def reset_search_states(self):
         """Clears search data but keeps terrain."""
         self.visited = False 
         self.closed = False 

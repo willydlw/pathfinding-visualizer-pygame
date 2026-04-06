@@ -275,8 +275,8 @@ class Sidebar:
                 self.app.step_requested = True 
             # clear the grid
             elif event.ui_element == self.clear_button:
+                self.grid.clear()
                 self.reset_start_end_selection_modes()
-                self.grid.clear_grid()
 
 
     def _handle_checkbox_checked_events(self, event):

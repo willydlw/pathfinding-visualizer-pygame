@@ -225,5 +225,5 @@ class Grid:
         """Clears search visuals (visited, path, closed, costs, parents) but keeps terrain."""
         for row in self.map:
             for node in row:
-                node.reset_state()
+                node.reset_search_states()
         
