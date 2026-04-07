@@ -43,6 +43,17 @@ TERRAIN_NAMES = {
 }
 
 
+# Algorithms 
+class ALGORITHMS(IntEnum):
+    BFS = 0
+    DFS = 1
+    ASTAR = 2 
+
+ALGORITHM_NAMES = {
+    ALGORITHMS.BFS: "BFS",
+    ALGORITHMS.DFS: "DFS",
+    ALGORITHMS.ASTAR: "ASTAR",
+}
 
 
 # Animation 

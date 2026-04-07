@@ -1,4 +1,17 @@
 {
+    "checkbox": {
+        "colours": {
+            "normal_bg": "#f0f0f0",
+            "hovered_bg": "#e0e0e0",
+            "clicked_bg": "#d0d0d0",
+            "normal_text": "#000000",
+            "selected_text": "#000000"
+        },
+        "misc": {
+            "text_shadow_size": "0"
+        }
+    },
+    
      "label": {
         "colours": {
             "normal_text": "#000000",

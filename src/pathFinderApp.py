@@ -2,6 +2,7 @@ import pygame
 import pygame_gui 
 from pygame_gui.elements import UIButton 
 
+import json
 import logging 
 
 from .grid import Grid 
@@ -9,10 +10,16 @@ from .sidebar import Sidebar
 from .algorithms import bfs, dfs 
 
 from .constants import (
+    ALGORITHMS,
+    ALGORITHM_NAMES,
     ANIMATION_MODE,
     ANIMATION_MODE_NAMES,
-    SPEED_OPTION_NAMES,
-    SPEED_OPTIONS
+    MAP_ACTION_TYPES,
+    MAP_ACTION_DICT,
+    TERRAIN_TYPES,
+    TERRAIN_NAMES,
+    SPEED_OPTIONS,
+    SPEED_OPTION_NAMES
 )
 
 logger = logging.getLogger(__name__)
@@ -75,9 +82,7 @@ class PathFinderApp:
             self.ui_manager,
             self.SIDEBAR_WIDTH,
             self.WINDOW_HEIGHT,
-            sidebar_x, 
-            self.grid,
-            self
+            sidebar_x
         )
         
         self.active_generator = None        # Holds the algorithms generator 
@@ -91,10 +96,53 @@ class PathFinderApp:
             if event.type == pygame.QUIT:
                 self.running = False 
 
-            # Process UI events 
+            # pygame_gui UIManager.process_events() handles input-based logic
+            # Call it for every event retrieved from the Pygame event queue.
             self.ui_manager.process_events(event) 
+
+            # Handles internal UI toggles
             self.sidebar.handle_events(event)
 
+            # --- Handle Buttons ---
+            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                # App decides what to do when Sidebar buttons are pressed 
+                if event.ui_element == self.sidebar.search_button:
+                    selected = self.sidebar.algo_dropdown.selected_option 
+                    algo_str = selected[0] if isinstance(selected, tuple) else selected 
+                    self.start_search(algo_str)
+                
+                elif event.ui_element == self.sidebar.clear_button:
+                     self.grid.clear() 
+                     self.sidebar.uncheck_start_end() 
+
+                elif event.ui_element == self.sidebar.next_step_button:
+                     self.step_requested = True 
+
+            # --- Handle File Dialog Logic --- 
+            elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
+                if self.current_file_action == MAP_ACTION_TYPES.LOAD:
+                    self.grid.load_from_file(event.text)
+                if self.current_file_action == MAP_ACTION_TYPES.SAVE:
+                    self.grid.save_to_file(event.text)
+
+            # --- Handle Dropdowns ---
+            elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                 # Terrain Brush
+                 if event.ui_element == self.sidebar.terrain_dropdown:
+                      reverse_lookup = {v: k for k, v in TERRAIN_NAMES.items()}
+                      self.grid.current_brush = reverse_lookup[event.text]
+                 # Map Actions
+                 elif event.ui_element == self.sidebar.map_dropdown:
+                    if event.text in MAP_ACTION_DICT[MAP_ACTION_TYPES.CREATE]:
+                        self.grid.clear() 
+                        self.sidebar.uncheck_start_end() 
+                    elif event.text in MAP_ACTION_DICT[MAP_ACTION_TYPES.LOAD]:
+                        self.grid.load_from_file(event.text)
+                    elif event.text in MAP_ACTION_DICT[MAP_ACTION_TYPES.SAVE]:
+                        self.grid.save_to_file(event.txt)
+                         
+
+            # TODO: Do we need this code for left clicks?
             # Pass the event to the grid to for "one-time" actions
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # left click
@@ -106,6 +154,13 @@ class PathFinderApp:
 
 
     def _update(self):
+
+        time_delta = self.clock.tick(self.FPS) / 1000.0 
+
+        # pygame_gui UIManager.update() handles time-based logic
+        # must be called once every frame 
+        self.ui_manager.update(time_delta)
+
 
         # Handle continuous painting only when NO search is running 
         if not self.active_generator:
@@ -170,29 +225,48 @@ class PathFinderApp:
 
     def run(self):
         while self.running:
-            time_delta = self.clock.tick(self.FPS) / 1000.0 
-
             self._handle_events()
-            self.ui_manager.update(time_delta)
             self._update()
-
             self._draw() 
 
 
     def start_search(self, algo_name):
+
+        # 1. Validation:Ensure start and end are set 
+        if not self.grid.start_node or not self.grid.end_node:
+            logging.warning("Select both a Start and End node first!")
+            return 
         
-        # Uncheck start/end boxes before starting search to avoid 
+        # 2. Validation: ensure start and end are on the same terrain type 
+        start_terrain = self.grid.start_node.terrain 
+        end_terrain = self.grid.end_node.terrain 
+
+        if start_terrain != end_terrain:
+            logging.error(
+                f"Terrain mismatch! Start is {TERRAIN_NAMES[start_terrain]}, "
+                f"End is {TERRAIN_NAMES[end_terrain]}. They must match."
+            )
+            return 
+        
+        # UI Cleanup: Uncheck start/end boxes before starting search to avoid 
         # accidentally changing during the search 
         self.sidebar.uncheck_start_end()
 
         # Reset any previous search state
         self.grid.reset_search_data()
-        
-        # Initialize the generator based on the dropdown choice
-        if algo_name == "BFS":
+
+        # In case there is any currently running search, set the generator to None
+        # before staring the new search 
+        self.active_generator = None 
+ 
+        # Initialize the generator
+        if algo_name == ALGORITHM_NAMES[ALGORITHMS.BFS]:
+            logging.info(f"Calling bfs()")
             self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node)
-        elif algo_name == "DFS":
+        elif algo_name == ALGORITHM_NAMES[ALGORITHMS.DFS]:
             self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node)
+        elif algo_name == ALGORITHM_NAMES[ALGORITHMS.ASTAR]:
+            logging.fatal("ASTAR not yet added")
         
         self.step_requested = False
         logging.info(f"Search started: {algo_name}")

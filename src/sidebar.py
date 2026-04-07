@@ -7,6 +7,8 @@ from pygame_gui.windows import UIFileDialog
 import logging 
 
 from .constants import (
+    ALGORITHMS,
+    ALGORITHM_NAMES,
     TERRAIN_TYPES, 
     TERRAIN_NAMES, 
     MAP_ACTION_TYPES, 
@@ -22,18 +24,18 @@ from .algorithms import bfs, dfs
 logger = logging.getLogger(__name__)
 
 class Sidebar:
-    def __init__(self, manager, width, height, x_offset, grid, app):
+    def __init__(self, manager, width, height, x_offset):
         self.manager = manager 
-        self.grid = grid
-        self.app = app
-
+        
         # Track the active dialog to distinguish between Load and Save actions
         self.active_file_dialog = None 
         self.current_action = None 
+        self.selected_algo = ALGORITHMS.BFS
 
         # UI Layout Constants 
         padding = 10 
         label_width = 110
+        checkbox_size = 25
         widget_height = 35 
         full_widget_width = width - (padding * 2)
         right_col_width = width - label_width - (padding * 3)
@@ -76,10 +78,10 @@ class Sidebar:
             manager=self.manager
         )
 
-        self.algorithms = ["BFS", "DFS", "A*"]
+       
         self.algo_dropdown = UIDropDownMenu(
-            options_list=self.algorithms,
-            starting_option=self.algorithms[0],
+            options_list=ALGORITHM_NAMES.values(),
+            starting_option=ALGORITHM_NAMES[ALGORITHMS.BFS],
             relative_rect=pygame.Rect((col2_x, 120), (right_col_width, widget_height)),
             manager=self.manager
         )
@@ -99,21 +101,32 @@ class Sidebar:
 
         # --- Row 5: Start/End Selection ---
         self.start_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col1_x, 280), (100, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 285), (checkbox_size, checkbox_size)),
+            text="",
+            manager=self.manager
+        )
+
+        self.start_lablel = UILabel(
+            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, 280), (80, widget_height)),
             text="Set Start",
             manager=self.manager
         )
 
-
         self.end_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col2_x, 280), (100, widget_height)),
+            relative_rect=pygame.Rect((col2_x, 285), (checkbox_size, checkbox_size)),
+            text="",
+            manager=self.manager
+        )
+
+        self.end_lablel = UILabel(
+            relative_rect=pygame.Rect((col2_x + checkbox_size + 5, 280), (80, widget_height)),
             text="Set End",
             manager=self.manager
         )
 
         # --- Row 6: Animation Mode ---
         self.anim_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 330), (label_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 380), (label_width, widget_height)),
             text="Animation: ",
             manager=self.manager
         )
@@ -122,7 +135,7 @@ class Sidebar:
         self.anim_dropdown = UIDropDownMenu(
             options_list=self.anim_modes,
             starting_option=self.anim_modes[0],  # default to "Animated"
-            relative_rect=pygame.Rect((col2_x, 330), (right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, 380), (right_col_width, widget_height)),
             manager=self.manager
         )
 
@@ -131,126 +144,22 @@ class Sidebar:
         self.speed_dropdown = UIDropDownMenu(
             options_list=self.speed_options,
             starting_option=self.speed_options[0], # default to 1x
-            relative_rect=pygame.Rect((col2_x, 380), (right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, 430), (right_col_width, widget_height)),
             manager=self.manager
         )
 
         # --- Row 8: Next Step Button (hidden by default) --- 
         self.next_step_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, 430), (full_widget_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 480), (full_widget_width, widget_height)),
             text="NEXT STEP",
             manager=self.manager,
             visible=0 # start hidden
         )
 
-        # Mapping 
-        # Label: Environment Map 
-        # Default (64x64) with a default map loaded
-        # Small (8x8)
-        # L-shaped wall (16 x 16)
-        # Sparse Canvas (128 x 128)
-        # Dense Canvas (256 x 256)
-        # Maze (128 x 128)
-        # ? (256 x 256)
-
-        # Legal Actions
-        # Object must be within the map bounds 
-        # Move in 4 directions Cardinal (4 neighbors)
-        # Move in 8 directions Diagonal (8 neighbors)
-        # Object can only move to a space if it is the same color as where it is currently
-        # Object cannot move off the map
-        # Action costs are all 100 for width, height and approx 141 for diagonal
-
-        # Toggle Grid button that turns displaying grid on/off
-
-        # Object Size
-        # TODO: Select size of object finding its path
-        # Examples: 1x1 Square, 2x2 square
-
-        # Animation Visualization Control
-        # TODO: Visualization Label
-        # Choice: Instant Path, 
-        #       Animated Search (select animation speed). When this option is selected
-        #       show another button with default of 1x Speed (which shows every iteration of the search)
-        #       and provides dropdown choices of 2x, 4x, 8x, 16x 32x speed
-        #           Draw path between start and current node when showing animation 
-        #           Show closed (visited) set in special color 
-        #           Show open set in special color
-
-        #       Single Step (click button for each iteration) (good for debugging)
-
-        # TODO: Button for "Rerun Previous Path"
-        # TODO: Button for Run Tests
-        #           Show test result stats
-        # TODO: Random Tests (maze generation with random start/stop?)
-
-        # TODO: Show Stats 
-        # Headings: Search(algo), Start (location), Goal(location), Cost, Closed (number in closed set?)
-        # Time, Node/sec?
-
-        # Show instructions
-        # Search Visualization Instructions 
-        # How to set start and goal tiles 
-        # Object can only move through same color tiles in the grid 
-        # Choose Animate Search visualization to see real-time search progress 
-        # Re-Run Previous - Performs previous search again (useful when animating)
-
-
-        # Visualization Legend 
-        # Blue/Green/Gray tiles: terrain type, object can move within a color 
-        # Red Tile - Node is in closed list (has been expanded)
-        # Orange Tile - Node is in open list (generated, but not expanded)
-        # White Tile - Node is on the generated path
-
-        # Do we need this?
-        self.selected_algo = self.algorithms[0]
-
-    def execute_map_action(self, action):
-        """Helper to trigger the file dialog based on dropdown selection."""
-        if action == "Small (8x8)":
-            logging.info("Loading Small (8x8) map...")
-            self.grid.load_from_file("maps/small_8x8.json")
-        
-        elif action == "L-Wall":
-            logging.info("Loading L-Wall map...")
-            self.grid.load_from_file("maps/L-Wall.json")
-
-        if action == "Save Map":
-            self.current_action = "SAVE"
-            self.active_file_dialog = UIFileDialog(
-                rect=pygame.Rect(160, 50, 440, 500),
-                manager=self.manager,
-                window_title="Save Map As...",
-                initial_file_path="maps/",
-                allow_existing_files_only=False  # Crucial for 'Save As' behavior
-            )
-        elif action == "Load Map":
-            self.current_action = "LOAD"
-            self.active_file_dialog = UIFileDialog(
-                rect=pygame.Rect(160, 50, 440, 500),
-                manager=self.manager,
-                window_title="Load Map...",
-                initial_file_path="maps/",
-                allow_existing_files_only=True   # Only pick files that exist
-            )
-        elif action == "Create New":
-            self.grid.clear()
-            # Reset selection(optional)
-            self.map_dropdown.selected_option = "Select Action..."
-            print("Logic for clearing grid...")
-        
-        else:
-            logging.error(f"unknown action: {action}")
-
-        # Reset dropdown to default text so user can click the same map again
-        self.map_dropdown.selected_option = "Select Action..."
-
 
     def handle_events(self, event):
-        if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            self._handle_button_events(event)
-
-        elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
+        
+        if event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
             self._handle_checkbox_toggle(event)
         
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
@@ -278,18 +187,6 @@ class Sidebar:
                 self.start_checkbox.rebuild()
 
 
-    def _handle_button_events(self, event):
-            # run selected search
-            if event.ui_element == self.search_button:
-                self.run_search() 
-            # set to single step mode
-            elif event.ui_element == self.next_step_button:
-                self.app.step_requested = True 
-            # clear the grid
-            elif event.ui_element == self.clear_button:
-                self.grid.clear()
-                self.reset_start_end_selection_modes()
-
     def _handle_dropdown_menu_events(self, event):
         if event.ui_element == self.anim_dropdown:
             # Next Step button visibility
@@ -304,29 +201,15 @@ class Sidebar:
                 self.selected_algo = event.text 
                 logging.info(f"Selected algorithm: {self.selected_algo}")
         
-        elif event.ui_element == self.terrain_dropdown:
-                # Dynamically map the Name back to the Enum Type ID
-                reverse_lookup = {name: type_id for type_id, name in TERRAIN_NAMES.items()}
-                new_brush = reverse_lookup.get(event.text)
-                
-                if new_brush is not None:
-                    self.grid.current_brush = new_brush 
-                    logging.info(f"Brush changed to: {event.text}")
-
         elif event.ui_element == self.map_dropdown:
             self._handle_map_action(event.text)
             
 
     def _handle_file_dialog_path_picked_events(self, event):
-        """ Handle File Selection """
+        """ Just close the dialog; let the App handle the grid logic."""
         if event.ui_element == self.active_file_dialog:
             if self.current_action == MAP_ACTION_TYPES.SAVE:
-                self.grid.save_to_file(event.text)
-                logging.info(f"Map saved to: {event.text}")
-            elif self.current_action == MAP_ACTION_TYPES.LOAD:
-                self.grid.load_from_file(event.text)
-                logging.info(f"Map loaded from: {event.text}")
-
+               self.active_file_dialog = None 
 
     def _handle_window_close_events(self, event):
         # Clean up dialog reference when closed
@@ -336,17 +219,15 @@ class Sidebar:
            
 
     def _handle_map_action(self, text):
+        """Trigger dialogs, but leave grid clearing to the App."""
         if text == MAP_ACTION_DICT[MAP_ACTION_TYPES.LOAD]:
                 self.open_file_dialog(MAP_ACTION_TYPES.LOAD)
         elif text == MAP_ACTION_DICT[MAP_ACTION_TYPES.SAVE]:
             self.open_file_dialog(MAP_ACTION_TYPES.SAVE)
-        elif text == MAP_ACTION_DICT[MAP_ACTION_TYPES.CREATE]:
-            self.grid.clear_grid()
-            self.reset_selection_modes()
-            logging.info("Grid cleared, start/end unchecked")
         
-
+        
     def open_file_dialog(self, action_type):
+        """Sidebar owns the dialog object, but the App uses the result"""
         if self.active_file_dialog is None:
             title = MAP_ACTION_DICT[action_type]
 
@@ -366,30 +247,4 @@ class Sidebar:
         self.start_checkbox.rebuild()
         self.end_checkbox.is_checked = False 
         self.end_checkbox.rebuild()
-    
-    
-    def run_search(self):
-
-        # 1. Validation:Ensure start and end are set 
-        if not self.grid.start_node or not self.grid.end_node:
-            logging.warning("Select both a Start and End node first!")
-            return 
-        
-        # 2. Validation: ensure start and end are on the same terrain type 
-        start_terrain = self.grid.start_node.terrain 
-        end_terrain = self.grid.end_node.terrain 
-
-        if start_terrain != end_terrain:
-            logging.error(
-                f"Terrain mismatch! Start is {TERRAIN_NAMES[start_terrain]}, "
-                f"End is {TERRAIN_NAMES[end_terrain]}. They must match."
-            )
-            return 
-        
-        # 2. Get current algo settings from UI 
-        algo_name = self.selected_algo 
-
-        # 3. Call the app to prepare the algorithm generator 
-        self.app.start_search(algo_name) 
-
             

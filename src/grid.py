@@ -239,8 +239,10 @@ class Grid:
         }
 
         try:
-            # Create directory if it doesn't exist (e.g., /maps/)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            dir_name = os.path.dirname(file_path)
+            if dir_name: # only create if there's actually a directory path
+                # Create directory if it doesn't exist (e.g., /maps/)
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
             
             with open(file_path, 'w') as f:
                 json.dump(grid_data, f) 
