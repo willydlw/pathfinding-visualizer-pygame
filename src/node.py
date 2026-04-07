@@ -35,6 +35,14 @@ class Node:
         # two objects are equal if they have same row, col positions
         return self.row == other.row and self.col == other.col
     
+
+    def __hash__(self):
+        """
+        Allows Node objects to be use as dictionary keys.
+        Hashed based on coordinates to match equality logic.
+        """
+        return hash((self.row, self.col))
+    
     def __str__(self):
         return (
             f"[row, col]: ({self.row}, {self.col}), [x,y]: ({self.x}, {self.y}), "

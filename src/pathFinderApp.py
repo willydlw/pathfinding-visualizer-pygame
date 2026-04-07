@@ -264,9 +264,11 @@ class PathFinderApp:
             logging.info(f"Calling bfs()")
             self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node)
         elif algo_name == ALGORITHM_NAMES[ALGORITHMS.DFS]:
+            logging.info(f"Calling dfs()")
             self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node)
         elif algo_name == ALGORITHM_NAMES[ALGORITHMS.ASTAR]:
-            logging.fatal("ASTAR not yet added")
+            logging.info("calling astar()")
+            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node)
         
         self.step_requested = False
         logging.info(f"Search started: {algo_name}")

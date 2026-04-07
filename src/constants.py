@@ -62,6 +62,12 @@ class ANIMATION_MODE(IntEnum):
     INSTANT = 201
     SINGLE_STEP = 202 
 
+ANIMATION_MODE_NAMES = {
+    ANIMATION_MODE.ANIMATED: "Animated",
+    ANIMATION_MODE.INSTANT: "Instant",
+    ANIMATION_MODE.SINGLE_STEP: "Single Step",
+}
+
 class SPEED_OPTIONS(IntEnum):
     ANIM_1x = 1
     ANIM_2X = 2
@@ -69,13 +75,6 @@ class SPEED_OPTIONS(IntEnum):
     ANIM_8X = 8
     ANIM_16x = 16
     ANIM_32x = 32
-
-
-ANIMATION_MODE_NAMES = {
-    ANIMATION_MODE.ANIMATED: "Animated",
-    ANIMATION_MODE.INSTANT: "Instant",
-    ANIMATION_MODE.SINGLE_STEP: "Single Step",
-}
 
 SPEED_OPTION_NAMES = {
     SPEED_OPTIONS.ANIM_1x: "1x",
@@ -98,3 +97,8 @@ MAP_ACTION_DICT = {
     MAP_ACTION_TYPES.LOAD:   "Load Map",
     MAP_ACTION_TYPES.SAVE:   "Save Map"
 }
+
+# Path Costs 
+class PATH_COST(IntEnum):
+    CARDINAL = 10
+    DIAGONAL = 14
