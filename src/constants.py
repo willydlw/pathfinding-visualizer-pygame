@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 
 FPS = 60
 
@@ -44,29 +44,41 @@ TERRAIN_NAMES = {
 
 
 # Algorithms 
-class ALGORITHMS(IntEnum):
+class Algo(IntEnum):
     BFS = 0
     DFS = 1
     ASTAR = 2 
 
-ALGORITHM_NAMES = {
-    ALGORITHMS.BFS: "BFS",
-    ALGORITHMS.DFS: "DFS",
-    ALGORITHMS.ASTAR: "ASTAR",
-}
+    @property 
+    def label(self):
+        return self.name.replace("_", " ").capitalize()
+    
+    def __str__(self):
+        return self.name.capitalize()
+    
+    # print(Algo.BFS.name) # "BFS"
 
 
 # Animation 
-class ANIMATION_MODE(IntEnum):
-    ANIMATED = 200
-    INSTANT = 201
-    SINGLE_STEP = 202 
+class Animation_Mode(IntEnum):
+    ANIMATED = 1
+    INSTANT = 2
+    SINGLE_STEP = 3
 
-ANIMATION_MODE_NAMES = {
-    ANIMATION_MODE.ANIMATED: "Animated",
-    ANIMATION_MODE.INSTANT: "Instant",
-    ANIMATION_MODE.SINGLE_STEP: "Single Step",
-}
+    @property 
+    def label(self):
+        # Converts "SINGLE_STEP" -> "Single Step"
+        return self.name.replace("_", " ").capitalize()
+    
+    def __str__(self):
+        return self.name.capitalize() 
+    
+    # Animation_Mode.SINGLE_STEP.name "SINGLE_STEP"
+    # Animation_Mode.SINGLE_STEP.label "Single Step"
+    # Animation_Mode.SINGLE_STEP.value is 3 
+
+
+
 
 class SPEED_OPTIONS(IntEnum):
     ANIM_1x = 1

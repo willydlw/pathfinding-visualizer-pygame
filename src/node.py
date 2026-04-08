@@ -1,4 +1,7 @@
 import pygame
+import logging 
+
+logger = logging.getLogger(__name__)
 
 from .constants import TERRAIN_COLORS, TERRAIN_TYPES, UI_COLORS
 
@@ -48,7 +51,7 @@ class Node:
             f"terrain: {self.terrain}, visited: {self.visited}"
         )
 
-    def draw(self, surface, x_offset, y_offset):
+    def draw(self, surface, font, x_offset, y_offset):
         
         if self.is_start:
             color = TERRAIN_COLORS[UI_COLORS.START]
@@ -65,6 +68,34 @@ class Node:
 
         rect = (self.x + x_offset, self.y + y_offset, self.size, self.size)
         pygame.draw.rect(surface, color, rect)
+
+        #logger.info(f"row: {self.row}, col: {self.col}, f: {self.f}, g: {self.g}, h: {self.h}")
+
+        text_color = (255, 255, 255)
+
+        if self.g < float('inf'):
+            # Convert to string FIRST to avoid OverflowError on float('inf')
+            g_str = str(int(self.g)) if self.g != float('inf') else 'inf'
+            f_str = str(int(self.f)) if self.f != float('inf') else 'inf'
+            h_str = str(int(self.h)) if self.h != float('inf') else 'inf'
+
+      
+            # Render and Blit
+            # f: top left, g: bottom left, h: bottom right
+            f_text = font.render(f"f:{f_str}", True, text_color)
+            g_text = font.render(f"g:{g_str}", True, text_color)
+            h_text = font.render(f"h:{h_str}", True, text_color)
+
+            # position relative to the cell 
+            surface.blit(f_text, (rect[0] + 5, rect[1] + 5))
+            surface.blit(g_text, (rect[0] + 5, rect[1] + self.size - 20))
+            surface.blit(h_text, (rect[0] + self.size - 35, rect[1] + self.size - 20))
+
+        """
+        test_surface = font.render("TEST", True, (0,0,0))
+        surface.blit(test_surface, (rect[0] + 5, rect[1] + 5))
+        """
+            
 
     
     def reset_all(self, default_terrain):

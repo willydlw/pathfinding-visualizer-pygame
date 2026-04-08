@@ -7,7 +7,7 @@ import logging
 
 from .grid import Grid 
 from .sidebar import Sidebar
-from .algorithms import bfs, dfs 
+from .algorithms import bfs, dfs, astar
 
 from .constants import (
     ALGORITHMS,
@@ -55,6 +55,14 @@ class PathFinderApp:
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Pathfinding Visualizer")
 
+        pygame.font.init() 
+        self.font = pygame.font.SysFont('Arial', 14)
+
+        if self.font is None:
+            logger.fatal(f"Font failed to load")
+        else:
+            logger.info(f"Font loaded successfully: {pygame.font.get_default_font()}")
+
         # application state 
         self.clock = pygame.time.Clock() 
         self.running = True 
@@ -87,6 +95,7 @@ class PathFinderApp:
         
         self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
+        self.searching = False
         logging.info(f"PathFinderApp initialized")
 
     
@@ -168,8 +177,14 @@ class PathFinderApp:
                 self.grid.handle_continuous_mouse(self.sidebar)
             return 
         
-        current_mode_str = self.sidebar.anim_dropdown.selected_option
+        # selected option is returning a list
+        selected = self.sidebar.anim_dropdown.selected_option
+        current_mode_str = selected[0] if isinstance(selected, (tuple, list)) else selected
+        logging.debug(f"Type(selected): {type(selected)}, selected: {selected}")
+        logging.debug(f"Current mode string: '{current_mode_str}'")
+
         current_mode = next((k for k, v in ANIMATION_MODE_NAMES.items() if v == current_mode_str), ANIMATION_MODE.ANIMATED)
+        logging.debug(f"Current mode enum: {current_mode}")
 
         if current_mode == ANIMATION_MODE.INSTANT:
             try:
@@ -201,15 +216,17 @@ class PathFinderApp:
                     finished = next(self.active_generator)
                     if finished:
                         self.active_generator = None 
+                        self.searching = False 
                 except StopIteration:
-                    self.active_generator = None 
+                    self.active_generator = None
+                    self.searching = False  
 
-                self.step_requested = False # reset the flag after one step
+            self.step_requested = False # reset the flag after one step
 
 
     def _draw(self):
         self.screen.fill(self.COLOR_BG)
-        self.grid.draw(self.screen)
+        self.grid.draw(self.screen, self.font)
 
         # draw sidebar background with padding
         sidebar_x = self.GRID_WIDTH + (self.PADDING * 2)
@@ -231,6 +248,8 @@ class PathFinderApp:
 
 
     def start_search(self, algo_name):
+
+        logging.info(f"algo_name: {algo_name}")
 
         # 1. Validation:Ensure start and end are set 
         if not self.grid.start_node or not self.grid.end_node:
@@ -268,8 +287,10 @@ class PathFinderApp:
             self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node)
         elif algo_name == ALGORITHM_NAMES[ALGORITHMS.ASTAR]:
             logging.info("calling astar()")
-            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node)
+            self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node)
+            self.searching = True
         
+        logging.info(f"will set step_requested to False next, is timing correct? Is generator done?")
         self.step_requested = False
         logging.info(f"Search started: {algo_name}")
 

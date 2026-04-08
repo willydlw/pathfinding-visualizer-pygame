@@ -144,11 +144,11 @@ class Grid:
                 else:
                     node.terrain = TERRAIN_TYPES.DEFAULT 
 
-    def draw(self, surface):
+    def draw(self, surface, font):
         # Draw the colored cell blocks
         for row in self.map:
              for node in row:
-                node.draw(surface, self.rect.x, self.rect.y)
+                node.draw(surface, font, self.rect.x, self.rect.y)
 
         # Draw grid lines (square grid: rows equal cols)
         for i in range(self.rows + 1):
