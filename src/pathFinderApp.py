@@ -149,6 +149,10 @@ class PathFinderApp:
                         self.grid.load_from_file(event.text)
                     elif event.text in MAP_ACTION_DICT[MAP_ACTION_TYPES.SAVE]:
                         self.grid.save_to_file(event.txt)
+                    elif event.ui_element == self.sidebar.anim_dropdown:
+                        self.current_mode_str = event.text 
+                        
+                
                          
 
             # TODO: Do we need this code for left clicks?
