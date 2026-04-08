@@ -71,3 +71,43 @@ SideBar class
         # Red Tile - Node is in closed list (has been expanded)
         # Orange Tile - Node is in open list (generated, but not expanded)
         # White Tile - Node is on the generated path
+
+
+## A* (A-star) Algorithm 
+
+A* is an informed path finding and graph traversal algorithm used to find the shortest path between two nodes. It is considered an extension of Dijkstra's algorithm that uses **heuristics** to prioritize nodes, making it significantly faster and more efficient than non-informed pathfinding algorithms.
+
+### Core Function: The Evaluation Function 
+
+A* evaluates node using the following formula: **f(n) = g(n) + h(n)**
+
+- **g(n)**: The actual cost of the path from the starting node to the current node n.
+- **h(n)**: The estimated *heuristic* cost to get from node n to the goal.
+- **f(n)**: The total estimated cost of the lowest-cost path through node n.
+
+### How the Algorithm Works 
+
+The algorithm maintains two sets: an **open List** (nodes to be explored) and a **closed list** (nodes that are already evaluated).
+
+1. **Initialize**: Place the start node in the Open List.
+2. **Selection**: Pick the node in hte Open list with the lowest f(n) value.
+3. **Expansion**: Check all neighbors of that node. Calculate their f(n) values and add them to the open list if they haven't been visited or if a better path to them is found.
+4. **Completion**: Repeat until the goal node is reached or the open list is empty (meaning no path exists).
+
+
+### Common Heuristics
+
+The choice of h(n) depends on the type of movement allowed:
+
+- **Manhattan Distance**: Used when movement is restricted to four directions (up, downn, left, right).
+- **Euclidean Distance**: Used for straight-line movement in any direction.
+- **Chebyshev Distance**: Used when 8-way diagonal movement is allowed.
+
+### Key Properties 
+
+- **Optimality**: A* is guaranteed to find the shortest path if the heuristic is **admissible** (it nover overestimates the actual cost to the goal.)
+
+- **Completeness**: It will always find a path if one exists.
+
+- **Efficiency**: By using a heuristic, it avoids exploring unnecessary directions, unlike Breadh-First Search (BFS) or Dijkstra.
+

@@ -20,9 +20,8 @@ class Node:
         self.is_start = False 
         self.is_end = False 
       
-    
 
-        # For A* later 
+        # Costs for A* 
         self.g = float('inf')
         self.h = 0 
         self.f = 0 

@@ -110,77 +110,122 @@ def dfs(grid, start_node, end_node):
     logging.info("DFS No path exists")
     yield True 
 
-    def heuristic(p1, p2):
+
+
+    def manhattan_distance(p1, p2):
         """Manhattan distance: |x1 - x2| + |y1 - y2|"""
-        (r1, c1) = p1 
-        (r2, c2) = p2
-        return abs(r1 - r2) + abs(c1 - c2)
+        return abs(p1.row - p2.row) + abs(p1.col - p2.col)
 
 
-    def astar(grid, start, end):
-        allowed_terrain = start.terrain
+    def astar(grid, start, end, cost_estimate):
 
-        # The count variable ensures that if two nodes have the same f-score, 
-        # the algorithm picks the one added first rather than trying to compare 
-        # the Node objects
-        count = 0       # tie-breaker for nodes with same f-score 
-        open_set = [] 
+        # Path can only traverse the same terrain as the start and end nodes.
+        allowed_terrain = start.terrain 
 
-        # priority queue stores (f_score, count, node) 
-        # heapq is a min-heap. Always returns the item with the lowest value
-        # compares index 0 values (f_score).
-        # If two tuples have the same f_score, it moves to index 1 (count) 
+        # Reset grid states 
+        for row in grid.map:
+            for node in row:
+                node.g = float("inf")
+                node.f = float("inf")
+                node.visited = False 
+                node.closed = False 
+                node.parent = None 
+       
+
+        # Start node setup
+        start.g = 0     # g is cost from start to current node 
+        start.h = manhattan_distance(start, end) * cost_estimate  # estimate of cost from current node to the goal
+        start.f = start.g + start.h 
+
+        # Used as priority queue tie-breaker when f and h costs are equal
+        count = 0       
+
+        # Initialize empty list
+        open_list = [] 
+
+        # To optimize checking for node in open_list, use open_set in tandem 
+        # Searching a python list is 0(n) and checking a set is 0(1) constant time
+        # Note: __eq__ and __hash__ implemented in Node class
+        open_set = {start}      # hash set for fast lookups 
+
+       
+        # Place start node into the priority queue 
+        # heapq manages a standard python list as a binary heap.
+        # heappush(open_list, item) adds the item and rearranges the list 
+        # to ensure the lowest cost is at open_list[0]
+
+        # tuple ordering: The open_list usually stores tuples such as (total_cost, position).
+        # heapq compares tuples lexicographically
+
+        # heapq is a min-heap. 
+        # Always returns the item with the lowest value by comparing tuple values
+        # Our tuple: (f_cost, h_cost, count, neighbor_node)
+        # 1st priority: lowest total cost (f)
+        # 2nd priority: lowest distance to goal (h)
+        # 3rd priority: oldest node (count)   
+
+        # To determine lowest value, f_costs (tuple index 0) are compared
+        # If there is a tie with more than one item in the list having the same 
+        # lowest f_cost, then the 2nd priority comparison of h_cost is used 
+        # to find the item with the lowest value.
+        
+        # If two tuples have the same f_cost and h_cost, it then compares
         # and picks the one with the lower count (one added to queue first)
         # Count prevents comparing node objecst for node1 < node2
-        h_start = heuristic((start.row, start.col), (end.row, end.col)) * PATH_COST.DIAGONAL
-        heapq.heappush(open_set, (h_start, h_start, count, start))
 
-        came_from = {} 
-        g_score = {node: float("inf") for row in grid.map for node in row}
-        g_score[start] = 0 
+        # Places start node in the open list
+        heapq.heappush(open_list, (start.f, start.h, count, start))
+   
 
-        f_score = {node: float("inf") for row in grid.map for node in row}
-        f_score[start] = heuristic((start.row, start.col), (end.row, end.col))
+        while open_list:
 
-        open_set_hash = {start}  # to check if node is already in priority queue
+            # Find the node in open list with the lowest f(n) value
+            # pop off lowest cost node
+            current = heapq.heappop(open_list)[3]        # Tuple index 3 location of stored node
 
-        while open_set:
-            # pop tuple with the lowest f_score
-            current = heapq.heappop(open_set)[3]        # gets node object stored in tuple
-            if current in open_set_hash:
-                open_set_hash.remove(current)
-            logging.info(f"current: {current}")
+            if current in open_set:
+                open_set.remove(current)
 
-            if current == end:
-                logging.info(f"A* path found!")
-                reconstruct_path(end)
-                yield True 
-                return 
-            
+            # Optimization: Skip if we have already closed this node 
+            # Handles duplicates from the lazy neighbor removal strategy 
+            if current.closed:
+                continue 
+
+            # Get current's sucessor neighbor nodes
             for neighbor in get_neighbors(current, grid):
                 if neighbor.terrain != allowed_terrain or neighbor.closed:
                     continue
 
-                tentative_g_score = g_score[current] + PATH_COST.CARDINAL
+                # Check if this neighbor is the end node
+                if neighbor == end:
+                    logging.info(f"A* path found")
+                    reconstruct_path(end)
+                    yield True 
+                    return
+                
+                # Calculate tentative g score (cost from start to this neighbor)
+                tentative_g = current.g + 10
 
-                if tentative_g_score < g_score[neighbor]:
-                    came_from[neighbor] = current 
+                # Update costs if this new path is better
+                if tentative_g < neighbor.g:
                     neighbor.parent = current 
-                    g_score[neighbor]  = tentative_g_score 
-                    h_score = heuristic((neighbor.row, neighbor.col), (end.row, end.col)) * PATH_COST.DIAGONAL
-                    f_score[neighbor] = tentative_g_score + h_score 
-                    count += 1 
-                    # Store: (f_score, h_score, count, neighbor)
-                    # 1st priority: lowest total cost (f)
-                    # 2nd priority: lowest distance to goal (h)
-                    # 3rd priority: oldest node (count)
-                    heapq.heappush(open_set, (f_score[neighbor], h_score, count, neighbor))
+                    neighbor.g = tentative_g 
+                    neighbor.h = manhattan_distance(neighbor, end) * cost_estimate
+                    neighbor.f = neighbor.g + neighbor.h 
 
-                    if neighbor not in open_set_hash:
-                        open_set_hash.add(neighbor) 
-                        neighbor.visited = True  
+
+                    # Push the new, better path into the heap.
+                    # Even if the neighbor is already in the open list, this new 
+                    # entry will have a lower f cost and be processed first. (Lazy removal)
+                    # Later when the higher f cost of this same neighbor is remove from 
+                    # the open list, it will be marked as closed and not processed again.
+                    count += 1 
+                    heapq.heappush(open_list, (neighbor.f, neighbor.h, count, neighbor))
+                    neighbor.visited = True  # for visualizing the open set
             
-            yield False # signal that we took one step
+            yield False # Signal visualization one step taken 
+
+            # Mark closed only after all neighbors are processed
             if current != start:
                 current.closed = True 
         
