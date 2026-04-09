@@ -7,7 +7,6 @@ class PATH_COST(IntEnum):
     CARDINAL = 10
     DIAGONAL = 14
 
-FPS = 60
 
 # Notes: 
 # Using auto() for values to let python handle the numbering 
