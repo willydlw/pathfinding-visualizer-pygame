@@ -188,6 +188,31 @@ class Map_Actions(IntEnum):
         return {m.label: m for m in cls}
 
 
+@unique
+class Search_Bias(IntEnum):
+    RANDOM = auto()
+    CLOCKWISE = auto()
+    COUNTER_CLOCKWISE = auto()
+    PREFER_VERTICAL = auto()
+    PREFER_HORIZONTAL = auto()
+    
+    
+    @property 
+    def label(self):
+        return self.name.replace("_", " ").title()
+    
+    def __str__(self):
+        return self.label 
+    
+    def __repr__(self):
+        return f"<{self.__class__.__name__}.{self.name}>"
+
+    @classmethod 
+    def list_labels(cls):
+        """Returns a list of all human-readable labels."""
+        return [member.label for member in cls]
+
+
 
 @unique 
 class Speed_Options(IntEnum):

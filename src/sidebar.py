@@ -18,6 +18,7 @@ from .constants import (
     Animation_Mode,
     Map_Actions,
     Terrain_Type, 
+    Search_Bias,
     Speed_Options
 )
 
@@ -33,6 +34,7 @@ class Sidebar:
         self.active_file_dialog = None 
         self.current_action = None 
         self.selected_algo = Algorithm_Type.BFS
+        self.search_bias = Search_Bias.RANDOM
 
         # UI Layout Constants 
         padding = 10 
@@ -80,7 +82,6 @@ class Sidebar:
             manager=self.manager
         )
 
-       
         self.algo_dropdown = UIDropDownMenu(
             options_list=[algo.name for algo in Algorithm_Type],
             starting_option=Algorithm_Type.BFS.name,
@@ -88,47 +89,64 @@ class Sidebar:
             manager=self.manager
         )
 
-        # --- Row 4: Action Buttons 
+        # --- Row 4: Search Bias --- 
+        self.search_bias_lable = UILabel(
+            relative_rect=pygame.Rect((col1_x, 170), (label_width, widget_height)),
+            text="Search Bias:",
+            manager=self.manager
+        )
+
+        logging.info(f"Search_Bias.list_labels: {Search_Bias.list_labels()}")
+        logging.info(f"list: {[sb.name for sb in Search_Bias]}")
+
+        self.search_bias_dropdown = UIDropDownMenu(
+            options_list=[sb.name for sb in Search_Bias],
+            starting_option=Search_Bias.RANDOM.name,
+            relative_rect=pygame.Rect((col2_x, 170), (right_col_width, widget_height)),
+            manager=self.manager
+        )
+
+        # --- Row 5: Action Buttons 
         self.search_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, 180), (full_widget_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 220), (full_widget_width, widget_height)),
             text="RUN SEARCH",  
             manager=self.manager
         )
 
         self.clear_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, 230), (full_widget_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 220), (full_widget_width, widget_height)),
             text="CLEAR GRID",
             manager=self.manager
         )
 
-        # --- Row 5: Start/End Selection ---
+        # --- Row 6: Start/End Selection ---
         self.start_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col1_x, 285), (checkbox_size, checkbox_size)),
+            relative_rect=pygame.Rect((col1_x, 275), (checkbox_size, checkbox_size)),
             text="",
             manager=self.manager
         )
 
         self.start_lablel = UILabel(
-            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, 280), (80, widget_height)),
+            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, 270), (80, widget_height)),
             text="Set Start",
             manager=self.manager
         )
 
         self.end_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col2_x, 285), (checkbox_size, checkbox_size)),
+            relative_rect=pygame.Rect((col2_x, 275), (checkbox_size, checkbox_size)),
             text="",
             manager=self.manager
         )
 
         self.end_lablel = UILabel(
-            relative_rect=pygame.Rect((col2_x + checkbox_size + 5, 280), (80, widget_height)),
+            relative_rect=pygame.Rect((col2_x + checkbox_size + 5, 270), (80, widget_height)),
             text="Set End",
             manager=self.manager
         )
 
-        # --- Row 6: Animation Mode ---
+        # --- Row 7: Animation Mode ---
         self.anim_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 330), (label_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 320), (label_width, widget_height)),
             text="Animation: ",
             manager=self.manager
         )
@@ -136,14 +154,14 @@ class Sidebar:
         self.anim_dropdown = UIDropDownMenu(
             options_list=[anim.name for anim in Animation_Mode],
             starting_option=Animation_Mode.ANIMATED.name,  
-            relative_rect=pygame.Rect((col2_x, 330), (right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, 320), (right_col_width, widget_height)),
             manager=self.manager
         )
 
-        # --- Row 7/8: Shared position of Speed Multiplier (Hidden unless "Animated" is selected) 
+        # --- Row 8: Shared position of Speed Multiplier (Hidden unless "Animated" is selected) 
         #     and Next Step Button ---
 
-        shared_rect = pygame.Rect((col1_x, 380), (full_widget_width, widget_height))
+        shared_rect = pygame.Rect((col1_x, 370), (full_widget_width, widget_height))
 
         self.speed_options = Speed_Options.list_labels()
         self.speed_dropdown = UIDropDownMenu(
@@ -164,7 +182,7 @@ class Sidebar:
         # --- Row 9: Status Message --- 
         self.status_label = UITextBox(
             html_text="Ready",
-            relative_rect=pygame.Rect((col1_x, 430), (full_widget_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 420), (full_widget_width, widget_height)),
             manager=self.manager,
             object_id="#status_label"
         )
@@ -217,7 +235,15 @@ class Sidebar:
         
         elif event.ui_element == self.map_dropdown:
             self._handle_map_action(event.text)
+
+        elif event.ui_element == self.search_bias_dropdown:
+            self._handle_search_bias(event.text)
             
+
+    def _handle_search_bias(self, event):
+        self.search_bias = event
+        logging.info(f"TODO: add code for search_bias, self.search_bias: {self.search_bias}")
+
 
     def _handle_file_dialog_path_picked_events(self, event):
         """ Just close the dialog; let the App handle the grid logic."""

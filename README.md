@@ -111,3 +111,13 @@ The choice of h(n) depends on the type of movement allowed:
 
 - **Efficiency**: By using a heuristic, it avoids exploring unnecessary directions, unlike Breadh-First Search (BFS) or Dijkstra.
 
+
+### Search Bias
+UI Implementation (Pygame GUI)
+Since you are already using a dropdown for "Algorithm," you can add a second dropdown for "Search Bias":
+Dropdown Options: ["Random", "Clockwise", "Counter-Clockwise", "Prefer Vertical", "Prefer Horizontal"]
+The "Pop" Logic: Remind users (via a tooltip or label) that in a Stack (DFS), the last neighbor added is the first one visited. So, if they want to go "Right," they should ensure "Right" is at the end of the neighbor list.
+Why this is helpful for the user:
+Random: Shows a "drunkard's walk" path.
+Clockwise: Shows the algorithm perfectly hugging the "outside" of every obstacle it encounters.
+Horizontal/Vertical Bias: Shows how DFS can be "tricked" into exploring the entire map inefficiently if the goal is in the opposite direction.

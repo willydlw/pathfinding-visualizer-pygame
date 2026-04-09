@@ -1,11 +1,22 @@
 from collections import deque 
 import heapq 
 import logging 
+import random 
 
 from .grid import Grid 
+from .constants import Search_Bias
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_ordered_neighbors(current, grid, strategy=Search_Bias.RANDOM):
+    neighbors = get_neighbors(current, grid)
+
+    if strategy == Search_Bias.RANDOM:
+        random.shuffle(neighbors)
+    
+    return neighbors
 
 
 def get_neighbors(node, grid):
@@ -48,7 +59,6 @@ def bfs(grid, start_node, end_node):
     # enqueue the starting node and mark as visited
     queue =deque([start_node]) 
     start_node.visited = True 
-
     allowed_terrain = start_node.terrain 
    
     while queue:
@@ -82,6 +92,7 @@ def dfs(grid, start_node, end_node):
 
     # Use a list as a stack (LIFO)
     stack = [start_node]
+    start_node.visite = True 
     allowed_terrain = start_node.terrain       
 
     while stack:
