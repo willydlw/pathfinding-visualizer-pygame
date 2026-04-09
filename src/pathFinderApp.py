@@ -241,7 +241,7 @@ class PathFinderApp:
                         self.active_generator = None 
                         #self.searching = False
                     else:
-                        self.set_status("Stepping...")
+                        self.sidebar.set_status("Stepping...")
                 except StopIteration:
                     self.sidebar.set_status("No Path Possible")
                     self.active_generator = None
