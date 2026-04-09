@@ -10,14 +10,10 @@ from .sidebar import Sidebar
 from .algorithms import bfs, dfs, astar
 
 from .constants import (
-    ALGORITHMS,
-    ALGORITHM_NAMES,
-    ANIMATION_MODE,
-    ANIMATION_MODE_NAMES,
-    MAP_ACTION_TYPES,
-    MAP_ACTION_DICT,
-    TERRAIN_TYPES,
-    TERRAIN_NAMES,
+    Algorithm_Type,
+    Animation_Mode,
+    Map_Actions,
+    Terrain_Type,
     SPEED_OPTIONS,
     SPEED_OPTION_NAMES
 )
@@ -136,18 +132,24 @@ class PathFinderApp:
 
             # --- Handle Dropdowns ---
             elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                 logging.debug(f"event.text: {event.text}")
                  # Terrain Brush
                  if event.ui_element == self.sidebar.terrain_dropdown:
-                      reverse_lookup = {v: k for k, v in TERRAIN_NAMES.items()}
-                      self.grid.current_brush = reverse_lookup[event.text]
+                      terrain = Terrain_Type[event.text].value
+                      logging.debug(f"terrain: {terrain}")
+                      self.grid.current_brush = terrain 
                  # Map Actions
                  elif event.ui_element == self.sidebar.map_dropdown:
-                    if event.text in MAP_ACTION_DICT[MAP_ACTION_TYPES.CREATE]:
+                    logging.debug(f"Map_Actions.CREATE_MAP.name: {Map_Actions.CREATE_MAP.name}")
+                    logging.debug(f"Map_Actions.LOAD_MAP.name:   {Map_Actions.LOAD_MAP.name}")
+                    logging.debug(f"Map_Actions.SAVE_MAP.name:   {Map_Actions.SAVE_MAP.name}")
+
+                    if event.text == Map_Actions.CREATE_MAP.name:
                         self.grid.clear() 
                         self.sidebar.uncheck_start_end() 
-                    elif event.text in MAP_ACTION_DICT[MAP_ACTION_TYPES.LOAD]:
+                    elif event.text == Map_Actions.LOAD_MAP.name:
                         self.grid.load_from_file(event.text)
-                    elif event.text in MAP_ACTION_DICT[MAP_ACTION_TYPES.SAVE]:
+                    elif event.text == Map_Actions.SAVE_MAP.name:
                         self.grid.save_to_file(event.txt)
                     elif event.ui_element == self.sidebar.anim_dropdown:
                         self.current_mode_str = event.text 
@@ -187,10 +189,10 @@ class PathFinderApp:
         logging.debug(f"Type(selected): {type(selected)}, selected: {selected}")
         logging.debug(f"Current mode string: '{current_mode_str}'")
 
-        current_mode = next((k for k, v in ANIMATION_MODE_NAMES.items() if v == current_mode_str), ANIMATION_MODE.ANIMATED)
+        current_mode = Animation_Mode[current_mode_str].value 
         logging.debug(f"Current mode enum: {current_mode}")
 
-        if current_mode == ANIMATION_MODE.INSTANT:
+        if current_mode == Animation_Mode.INSTANT:
             try:
                 # run until the generator signals True (finished)
                 while next(self.active_generator) is False:
@@ -200,7 +202,7 @@ class PathFinderApp:
                 self.active_generator = None 
                 logging.info("Active Generation is done.")
 
-        elif current_mode == ANIMATION_MODE.ANIMATED:
+        elif current_mode == Animation_Mode.ANIMATED:
             speed_str = self.sidebar.speed_dropdown.selected_option 
             multiplier = next((k.value for k, v in SPEED_OPTION_NAMES.items() if v == speed_str), 1)
 
@@ -213,7 +215,7 @@ class PathFinderApp:
                     self.active_generator = None 
                     break 
 
-        elif current_mode == ANIMATION_MODE.SINGLE_STEP:
+        elif current_mode == Animation_Mode.SINGLE_STEP:
             # Handle manual step logic
             if self.step_requested:
                 try:
@@ -266,8 +268,8 @@ class PathFinderApp:
 
         if start_terrain != end_terrain:
             logging.error(
-                f"Terrain mismatch! Start is {TERRAIN_NAMES[start_terrain]}, "
-                f"End is {TERRAIN_NAMES[end_terrain]}. They must match."
+                f"Terrain mismatch! Start is {start_terrain}, "
+                f"End is {end_terrain}. They must match."
             )
             return 
         
@@ -283,13 +285,14 @@ class PathFinderApp:
         self.active_generator = None 
  
         # Initialize the generator
-        if algo_name == ALGORITHM_NAMES[ALGORITHMS.BFS]:
+        logging.debug(f"algo_name: {algo_name}, Algorithm_Type.BFS.name: {Algorithm_Type.BFS.name}")
+        if algo_name == Algorithm_Type.BFS.name:
             logging.info(f"Calling bfs()")
             self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node)
-        elif algo_name == ALGORITHM_NAMES[ALGORITHMS.DFS]:
+        elif algo_name == Algorithm_Type.DFS.name:
             logging.info(f"Calling dfs()")
             self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node)
-        elif algo_name == ALGORITHM_NAMES[ALGORITHMS.ASTAR]:
+        elif algo_name == Algorithm_Type.ASTAR.name:
             logging.info("calling astar()")
             self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node)
             self.searching = True

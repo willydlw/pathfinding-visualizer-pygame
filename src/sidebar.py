@@ -7,19 +7,16 @@ from pygame_gui.windows import UIFileDialog
 import logging 
 
 from .constants import (
-    ALGORITHMS,
-    ALGORITHM_NAMES,
-    TERRAIN_TYPES, 
-    TERRAIN_NAMES, 
-    MAP_ACTION_TYPES, 
-    MAP_ACTION_DICT, 
-    ANIMATION_MODE,
-    ANIMATION_MODE_NAMES, 
+    Algorithm_Type,
+    Animation_Mode,
+    Map_Actions,
+    Terrain_Type, 
+    
     SPEED_OPTIONS,
     SPEED_OPTION_NAMES
 )
 
-from .algorithms import bfs, dfs
+from .algorithms import bfs, dfs, astar
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +27,7 @@ class Sidebar:
         # Track the active dialog to distinguish between Load and Save actions
         self.active_file_dialog = None 
         self.current_action = None 
-        self.selected_algo = ALGORITHMS.BFS
+        self.selected_algo = Algorithm_Type.BFS
 
         # UI Layout Constants 
         padding = 10 
@@ -51,8 +48,8 @@ class Sidebar:
         )
 
         self.map_dropdown = UIDropDownMenu(
-            options_list=list(MAP_ACTION_DICT.values()),
-            starting_option=MAP_ACTION_DICT[MAP_ACTION_TYPES.CREATE],
+            options_list=[action.name for action in Map_Actions],
+            starting_option=Map_Actions.CREATE_MAP.name,
             relative_rect=pygame.Rect((col2_x, 20),(right_col_width, widget_height)),
             manager=self.manager
         )
@@ -65,8 +62,8 @@ class Sidebar:
         )
 
         self.terrain_dropdown = UIDropDownMenu(
-            options_list=list(TERRAIN_NAMES.values()),
-            starting_option=TERRAIN_NAMES[TERRAIN_TYPES.GRASS],
+            options_list=[terrain.name for terrain in Terrain_Type],
+            starting_option=Terrain_Type.GRASS.name,
             relative_rect=pygame.Rect((col2_x, 70), (right_col_width, widget_height)),
             manager=self.manager
         )
@@ -80,8 +77,8 @@ class Sidebar:
 
        
         self.algo_dropdown = UIDropDownMenu(
-            options_list=ALGORITHM_NAMES.values(),
-            starting_option=ALGORITHM_NAMES[ALGORITHMS.BFS],
+            options_list=[algo.name for algo in Algorithm_Type],
+            starting_option=Algorithm_Type.BFS.name,
             relative_rect=pygame.Rect((col2_x, 120), (right_col_width, widget_height)),
             manager=self.manager
         )
@@ -131,10 +128,9 @@ class Sidebar:
             manager=self.manager
         )
 
-        self.anim_modes = list(ANIMATION_MODE_NAMES.values())
         self.anim_dropdown = UIDropDownMenu(
-            options_list=self.anim_modes,
-            starting_option=self.anim_modes[0],  # default to "Animated"
+            options_list=[anim.name for anim in Animation_Mode],
+            starting_option=Animation_Mode.ANIMATED.name,  
             relative_rect=pygame.Rect((col2_x, 380), (right_col_width, widget_height)),
             manager=self.manager
         )

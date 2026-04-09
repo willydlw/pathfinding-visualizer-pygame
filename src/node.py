@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .constants import TERRAIN_COLORS, TERRAIN_TYPES, UI_COLORS
+from .constants import TERRAIN_COLORS, Terrain_Type, UI_COLORS
 
 class Node:
     def __init__(self, row, col, size, terrain):

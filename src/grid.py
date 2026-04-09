@@ -4,7 +4,7 @@ import os
 
 import logging 
 
-from .constants import TERRAIN_TYPES, TERRAIN_COLORS, UI_COLORS
+from .constants import Terrain_Type, TERRAIN_COLORS, UI_COLORS
 from .node import Node
 
 logger = logging.getLogger(__name__)
@@ -22,13 +22,13 @@ class Grid:
         self.rect = pygame.Rect(x, y, self.grid_size, self.grid_size)   # grid rectangle
 
         
-        self.current_brush = TERRAIN_TYPES.GRASS             # default brush color
+        self.current_brush = Terrain_Type.GRASS             # default brush color
 
         self.start_node = None                       
         self.end_node = None 
         
         # init 2D list
-        self.map = [[Node(r, c, self.cell_size, TERRAIN_TYPES.GRASS) for c in range(self.cols)] 
+        self.map = [[Node(r, c, self.cell_size, Terrain_Type.GRASS) for c in range(self.cols)] 
                     for r in range(self.rows)
         ]
 
@@ -39,7 +39,7 @@ class Grid:
     def clear(self):
         """Resets the grid map to all DEFAULT (0)."""
         self.map = [
-            [Node(r, c, self.cell_size, TERRAIN_TYPES.GRASS) for c in range(self.cols)] 
+            [Node(r, c, self.cell_size, Terrain_Type.GRASS) for c in range(self.cols)] 
             for r in range(self.rows)
         ]
         self.start_node = None 
@@ -142,7 +142,7 @@ class Grid:
                     node.is_end = False 
                     self.end_node = None 
                 else:
-                    node.terrain = TERRAIN_TYPES.DEFAULT 
+                    node.terrain = Terrain_Type.DEFAULT 
 
     def draw(self, surface, font):
         # Draw the colored cell blocks

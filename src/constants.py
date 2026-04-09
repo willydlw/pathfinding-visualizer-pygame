@@ -3,10 +3,18 @@ from enum import IntEnum, StrEnum
 FPS = 60
 
 # Walkable Surfaces 
-class TERRAIN_TYPES(IntEnum): 
+class Terrain_Type(IntEnum): 
     GRASS = 0
     SAND = 1
     WATER = 2
+
+    @property 
+    def label(self):
+        return self.name.replace("_", " ").capitalize()
+    
+    def __str__(self):
+        return self.name.capitalize()
+    
 
 
 # UI/Status Indicators
@@ -18,13 +26,21 @@ class UI_COLORS(IntEnum):
     PATH = 104
     GRID_LINE = 105
 
+    @property 
+    def label(self):
+        return self.name.replace("_", " ").capitalize()
+    
+    def __str__(self):
+        return self.name.capitalize()
+    
+
 
 # Use enum members as keys
 TERRAIN_COLORS = {
     # Walkable Terrains (muted background tones)
-    TERRAIN_TYPES.GRASS: (119, 158, 133),   # soft sage green 
-    TERRAIN_TYPES.SAND:  (236, 217, 198),   # pale sand/Tan
-    TERRAIN_TYPES.WATER: (162, 192, 201),   # dusty blue  
+    Terrain_Type.GRASS: (119, 158, 133),   # soft sage green 
+    Terrain_Type.SAND:  (236, 217, 198),   # pale sand/Tan
+    Terrain_Type.WATER: (162, 192, 201),   # dusty blue  
    
 
     # UI Overlays (High-Contrast "Action" Colors)
@@ -36,15 +52,9 @@ TERRAIN_COLORS = {
     UI_COLORS.GRID_LINE: ( 44,  62,  80),   # Dark Midnight Blue
 }
 
-TERRAIN_NAMES = {
-    TERRAIN_TYPES.GRASS: "Grass",
-    TERRAIN_TYPES.SAND:  "Sand",
-    TERRAIN_TYPES.WATER: "Water",
-}
-
 
 # Algorithms 
-class Algo(IntEnum):
+class Algorithm_Type(IntEnum):
     BFS = 0
     DFS = 1
     ASTAR = 2 
@@ -61,9 +71,9 @@ class Algo(IntEnum):
 
 # Animation 
 class Animation_Mode(IntEnum):
-    ANIMATED = 1
-    INSTANT = 2
-    SINGLE_STEP = 3
+    ANIMATED = 0
+    INSTANT = 1
+    SINGLE_STEP = 2
 
     @property 
     def label(self):
@@ -99,16 +109,20 @@ SPEED_OPTION_NAMES = {
 
 
 # Mapping 
-class MAP_ACTION_TYPES(IntEnum):
-    CREATE = 0
-    LOAD = 1
-    SAVE = 2 
+class Map_Actions(IntEnum):
+    CREATE_MAP = 1
+    LOAD_MAP = 2
+    SAVE_MAP = 3 
 
-MAP_ACTION_DICT = {
-    MAP_ACTION_TYPES.CREATE: "Create New",
-    MAP_ACTION_TYPES.LOAD:   "Load Map",
-    MAP_ACTION_TYPES.SAVE:   "Save Map"
-}
+    @property 
+    def label(self):
+        # Converts "SINGLE_STEP" -> "Single Step"
+        return self.name.replace("_", " ").capitalize()
+    
+    def __str__(self):
+        return self.name.capitalize() 
+
+
 
 # Path Costs 
 class PATH_COST(IntEnum):
