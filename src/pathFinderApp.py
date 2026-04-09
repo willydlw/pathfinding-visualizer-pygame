@@ -14,8 +14,7 @@ from .constants import (
     Animation_Mode,
     Map_Actions,
     Terrain_Type,
-    SPEED_OPTIONS,
-    SPEED_OPTION_NAMES
+    Speed_Options,
 )
 
 logger = logging.getLogger(__name__)
@@ -204,7 +203,7 @@ class PathFinderApp:
 
         elif current_mode == Animation_Mode.ANIMATED:
             speed_str = self.sidebar.speed_dropdown.selected_option 
-            multiplier = next((k.value for k, v in SPEED_OPTION_NAMES.items() if v == speed_str), 1)
+            multiplier = Speed_Options.get_lookup().get(speed_str, Speed_Options.ANIM_1x).value
 
             for _ in range(multiplier):
                 try:

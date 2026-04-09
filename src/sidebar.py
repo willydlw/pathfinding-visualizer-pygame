@@ -11,9 +11,7 @@ from .constants import (
     Animation_Mode,
     Map_Actions,
     Terrain_Type, 
-    
-    SPEED_OPTIONS,
-    SPEED_OPTION_NAMES
+    Speed_Options
 )
 
 from .algorithms import bfs, dfs, astar
@@ -136,7 +134,7 @@ class Sidebar:
         )
 
         # --- Row 7: Speed Multiplier (Hidden unless "Animated" is selected) ---
-        self.speed_options = list(SPEED_OPTION_NAMES.values())
+        self.speed_options = Speed_Options.list_labels()
         self.speed_dropdown = UIDropDownMenu(
             options_list=self.speed_options,
             starting_option=self.speed_options[0], # default to 1x

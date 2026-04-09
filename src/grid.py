@@ -4,7 +4,7 @@ import os
 
 import logging 
 
-from .constants import Terrain_Type, TERRAIN_COLORS, UI_COLORS
+from .constants import Draw_State, Terrain_Type
 from .node import Node
 
 logger = logging.getLogger(__name__)
@@ -155,13 +155,13 @@ class Grid:
                 offset = i * self.cell_size
 
                 #vertical lines
-                pygame.draw.line(surface, TERRAIN_COLORS[UI_COLORS.GRID_LINE], 
+                pygame.draw.line(surface, Draw_State.GRID_LINE.color,
                                  (self.rect.x + offset, self.rect.y), 
                                  (self.rect.x + offset, self.rect.y + self.grid_size)
                                 )
                 
                 # horizontal lines
-                pygame.draw.line(surface, TERRAIN_COLORS[UI_COLORS.GRID_LINE], 
+                pygame.draw.line(surface, Draw_State.GRID_LINE.color, 
                                  (self.rect.x, self.rect.y + offset), 
                                  (self.rect.x + self.grid_size, self.rect.y + offset)
                                 )

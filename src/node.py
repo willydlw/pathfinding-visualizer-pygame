@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .constants import TERRAIN_COLORS, Terrain_Type, UI_COLORS
+from .constants import Draw_State, Terrain_Type
 
 class Node:
     def __init__(self, row, col, size, terrain):
@@ -52,19 +52,19 @@ class Node:
         )
 
     def draw(self, surface, font, x_offset, y_offset):
-        
+    
         if self.is_start:
-            color = TERRAIN_COLORS[UI_COLORS.START]
+            color = Draw_State.START.color
         elif self.is_end:
-            color = TERRAIN_COLORS[UI_COLORS.END]
+            color = Draw_State.END.color
         elif self.path:
-            color = TERRAIN_COLORS[UI_COLORS.PATH]
+            color = Draw_State.PATH.color
         elif self.visited:
-            color = TERRAIN_COLORS[UI_COLORS.VISITED]
+            color = Draw_State.VISITED.color
         elif self.closed:
-            color = TERRAIN_COLORS[UI_COLORS.CLOSED]
+            color = Draw_State.CLOSED.color
         else:
-            color = TERRAIN_COLORS[self.terrain]
+            color = self.terrain.color
 
         rect = (self.x + x_offset, self.y + y_offset, self.size, self.size)
         pygame.draw.rect(surface, color, rect)

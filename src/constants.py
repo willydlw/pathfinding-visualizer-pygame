@@ -201,7 +201,7 @@ class Speed_Options(IntEnum):
     @property 
     def label(self):
         """Returns the human-readable strine like '1x', '2x', etc."""
-        return f"(self.value)x"
+        return f"{self.value}x"
 
     def __str__(self):
         return self.label 
@@ -278,5 +278,4 @@ class Terrain_Type(IntEnum):
     
     @classmethod 
     def list_labels(cls):
-        """Returns ['1x', '2x', '4x', '8x', '16x', '32x']"""
         return [m.label for m in cls]  
