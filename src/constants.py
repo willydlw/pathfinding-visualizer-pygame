@@ -208,6 +208,19 @@ class Speed_Options(IntEnum):
     
     def __repr__(self):
         return f"<{self.__class__.__name__}.{self.name}: {self.value}>"
+    
+    @classmethod 
+    def list_labels(cls):
+        """Returns a list of all human-readable labels."""
+        return [member.label for member in cls]
+    
+    @classmethod 
+    def from_label(cls, label_text):
+        """Finds an enum member by its label string (case-insensitive)."""
+        for member in cls:
+            if member.label.lower() == label_text.lower():
+                return member 
+        raise ValueError(f"Invalid label: {label_text}")
 
     @classmethod 
     @lru_cache(maxsize=None)
