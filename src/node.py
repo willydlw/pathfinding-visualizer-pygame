@@ -59,10 +59,10 @@ class Node:
             color = Draw_State.END.color
         elif self.path:
             color = Draw_State.PATH.color
+        elif self.closed:  
+            color = Draw_State.CLOSED.color
         elif self.visited:
             color = Draw_State.VISITED.color
-        elif self.closed:
-            color = Draw_State.CLOSED.color
         else:
             color = Terrain_Type(self.terrain).color
 
