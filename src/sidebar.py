@@ -234,16 +234,18 @@ class Sidebar:
 
     def _handle_map_action(self, text):
         """Trigger dialogs, but leave grid clearing to the App."""
-        if text == MAP_ACTION_DICT[MAP_ACTION_TYPES.LOAD]:
-                self.open_file_dialog(MAP_ACTION_TYPES.LOAD)
-        elif text == MAP_ACTION_DICT[MAP_ACTION_TYPES.SAVE]:
-            self.open_file_dialog(MAP_ACTION_TYPES.SAVE)
+
+        logging.info("map action text: {text}")
+        if text == Map_Actions.LOAD_MAP.name:
+                self.open_file_dialog(Map_Actions.LOAD_MAP)
+        elif text == Map_Actions.SAVE_MAP.name:
+            self.open_file_dialog(Map_Actions.SAVE_MAP)
         
         
     def open_file_dialog(self, action_type):
         """Sidebar owns the dialog object, but the App uses the result"""
         if self.active_file_dialog is None:
-            title = MAP_ACTION_DICT[action_type]
+            title = action_type.label
 
             self.active_file_dialog = UIFileDialog(
                 rect=pygame.Rect(160, 50, 440, 500),

@@ -90,7 +90,7 @@ class PathFinderApp:
         
         self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
-        #self.searching = False
+        self.current_file_action = None 
         logging.info(f"PathFinderApp initialized")
 
     
@@ -124,10 +124,12 @@ class PathFinderApp:
 
             # --- Handle File Dialog Logic --- 
             elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
-                if self.current_file_action == MAP_ACTION_TYPES.LOAD:
+                if self.current_file_action == Map_Actions.LOAD_MAP:
                     self.grid.load_from_file(event.text)
-                if self.current_file_action == MAP_ACTION_TYPES.SAVE:
+                if self.current_file_action == Map_Actions.SAVE_MAP:
                     self.grid.save_to_file(event.text)
+
+                self.current_file_action = None
 
             # --- Handle Dropdowns ---
             elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
@@ -146,13 +148,12 @@ class PathFinderApp:
                     if event.text == Map_Actions.CREATE_MAP.name:
                         self.grid.clear() 
                         self.sidebar.uncheck_start_end() 
-                    elif event.text == Map_Actions.LOAD_MAP.name:
-                        self.grid.load_from_file(event.text)
-                    elif event.text == Map_Actions.SAVE_MAP.name:
-                        self.grid.save_to_file(event.txt)
-                    elif event.ui_element == self.sidebar.anim_dropdown:
-                        self.current_mode_str = event.text 
-                        
+                    else:
+                        # 1. Set the state so UI_FILE_DIALOG_PATH_PICKED knows what to do 
+                        self.current_file_action = Map_Actions[event.text]
+                        # 2. Opend the dialog via the sidebar
+                        self.sidebar._handle_map_action(event.text)
+                    
 
             # TODO: Do we need this code for left clicks?
             # Pass the event to the grid to for "one-time" actions
