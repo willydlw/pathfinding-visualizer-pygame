@@ -1,8 +1,15 @@
 import pygame 
 import pygame_gui 
-from pygame_gui.elements import UIDropDownMenu, UILabel, UIButton, UICheckBox
-from pygame_gui.windows import UIFileDialog 
 
+from pygame_gui.elements import (
+    UIDropDownMenu, 
+    UILabel, 
+    UIButton, 
+    UICheckBox, 
+    UITextBox 
+)
+
+from pygame_gui.windows import UIFileDialog 
 
 import logging 
 
@@ -121,7 +128,7 @@ class Sidebar:
 
         # --- Row 6: Animation Mode ---
         self.anim_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 380), (label_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 330), (label_width, widget_height)),
             text="Animation: ",
             manager=self.manager
         )
@@ -129,25 +136,37 @@ class Sidebar:
         self.anim_dropdown = UIDropDownMenu(
             options_list=[anim.name for anim in Animation_Mode],
             starting_option=Animation_Mode.ANIMATED.name,  
-            relative_rect=pygame.Rect((col2_x, 380), (right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, 330), (right_col_width, widget_height)),
             manager=self.manager
         )
 
-        # --- Row 7: Speed Multiplier (Hidden unless "Animated" is selected) ---
+        # --- Row 7/8: Shared position of Speed Multiplier (Hidden unless "Animated" is selected) 
+        #     and Next Step Button ---
+
+        shared_rect = pygame.Rect((col1_x, 380), (full_widget_width, widget_height))
+
         self.speed_options = Speed_Options.list_labels()
         self.speed_dropdown = UIDropDownMenu(
             options_list=self.speed_options,
             starting_option=self.speed_options[0], # default to 1x
-            relative_rect=pygame.Rect((col2_x, 430), (right_col_width, widget_height)),
+            relative_rect=shared_rect,
             manager=self.manager
         )
 
         # --- Row 8: Next Step Button (hidden by default) --- 
         self.next_step_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, 480), (full_widget_width, widget_height)),
+            relative_rect=shared_rect,
             text="NEXT STEP",
             manager=self.manager,
             visible=0 # start hidden
+        )
+
+        # --- Row 9: Status Message --- 
+        self.status_label = UITextBox(
+            html_text="Ready",
+            relative_rect=pygame.Rect((col1_x, 430), (full_widget_width, widget_height)),
+            manager=self.manager,
+            object_id="#status_label"
         )
 
 
@@ -184,7 +203,8 @@ class Sidebar:
     def _handle_dropdown_menu_events(self, event):
         if event.ui_element == self.anim_dropdown:
             # Next Step button visibility
-            if event.text == ANIMATION_MODE_NAMES[ANIMATION_MODE.SINGLE_STEP]:
+            logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
+            if event.text == Animation_Mode.SINGLE_STEP.name:
                 self.next_step_button.show() 
                 self.speed_dropdown.hide() # hide speed as it's irrelevant 
             else:
@@ -202,7 +222,7 @@ class Sidebar:
     def _handle_file_dialog_path_picked_events(self, event):
         """ Just close the dialog; let the App handle the grid logic."""
         if event.ui_element == self.active_file_dialog:
-            if self.current_action == MAP_ACTION_TYPES.SAVE:
+            if self.current_action == Map_Actions.SAVE_MAP:
                self.active_file_dialog = None 
 
     def _handle_window_close_events(self, event):
@@ -234,6 +254,8 @@ class Sidebar:
 
             self.current_action = action_type
 
+    def set_status(self, message):
+        self.status_label.set_text(message)
     
     def uncheck_start_end(self):
         """Unchecks both start and end boxes."""

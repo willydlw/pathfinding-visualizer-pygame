@@ -90,7 +90,7 @@ class PathFinderApp:
         
         self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
-        self.searching = False
+        #self.searching = False
         logging.info(f"PathFinderApp initialized")
 
     
@@ -153,8 +153,6 @@ class PathFinderApp:
                     elif event.ui_element == self.sidebar.anim_dropdown:
                         self.current_mode_str = event.text 
                         
-                
-                         
 
             # TODO: Do we need this code for left clicks?
             # Pass the event to the grid to for "one-time" actions
@@ -175,6 +173,12 @@ class PathFinderApp:
         # must be called once every frame 
         self.ui_manager.update(time_delta)
 
+        # Enable the next step button only if a search is actually in progress 
+        if self.active_generator:
+            self.sidebar.next_step_button.enable() 
+        else:
+            self.sidebar.next_step_button.disable()
+
 
         # Handle continuous painting only when NO search is running 
         if not self.active_generator:
@@ -193,39 +197,56 @@ class PathFinderApp:
 
         if current_mode == Animation_Mode.INSTANT:
             try:
+                self.sidebar.set_status("Searching...")
+
                 # run until the generator signals True (finished)
-                while next(self.active_generator) is False:
-                    pass     
+                while True:
+                    finished = next(self.active_generator)
+                    if finished:
+                        self.sidebar.set_status("<font color='#00FF00'>Path Found!</font>")
+                        break 
                 self.active_generator = None 
             except StopIteration:
+                self.sidebar.set_status("<font color='#FF0000'>No Path Possible</font>")
                 self.active_generator = None 
-                logging.info("Active Generation is done.")
-
+            
         elif current_mode == Animation_Mode.ANIMATED:
             speed_str = self.sidebar.speed_dropdown.selected_option 
             multiplier = Speed_Options.get_lookup().get(speed_str, Speed_Options.ANIM_1x).value
 
+            if self.active_generator:
+                self.sidebar.set_status("Searching...")
+
             for _ in range(multiplier):
                 try:
                     if next(self.active_generator) is True:
+                        self.sidebar.set_status("<font color='#00FF00'>Path Found!</font>")
                         self.active_generator = None 
                         break 
                 except StopIteration:
+                    self.sidebar.set_status("<font color='#FF0000'>No Path Possible</font>")
                     self.active_generator = None 
                     break 
 
         elif current_mode == Animation_Mode.SINGLE_STEP:
-            # Handle manual step logic
+            logging.info("TRUE current_mode == Animation_Mode.SINGLE_STEP")
+
             if self.step_requested:
                 try:
+                    # Step the algorithm once
                     finished = next(self.active_generator)
                     if finished:
+                        self.sidebar.set_status("Path Found!")
                         self.active_generator = None 
-                        self.searching = False 
+                        #self.searching = False
+                    else:
+                        self.set_status("Stepping...")
                 except StopIteration:
+                    self.sidebar.set_status("No Path Possible")
                     self.active_generator = None
-                    self.searching = False  
+                    #self.searching = False  
 
+            # Critical: Reset the flag so it waits for the next button press
             self.step_requested = False # reset the flag after one step
 
 
@@ -282,6 +303,8 @@ class PathFinderApp:
         # In case there is any currently running search, set the generator to None
         # before staring the new search 
         self.active_generator = None 
+
+        self.sidebar.set_status("Searching...")
  
         # Initialize the generator
         logging.debug(f"algo_name: {algo_name}, Algorithm_Type.BFS.name: {Algorithm_Type.BFS.name}")
@@ -294,9 +317,7 @@ class PathFinderApp:
         elif algo_name == Algorithm_Type.ASTAR.name:
             logging.info("calling astar()")
             self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node)
-            self.searching = True
-        
-        logging.info(f"will set step_requested to False next, is timing correct? Is generator done?")
+           
         self.step_requested = False
         logging.info(f"Search started: {algo_name}")
 
