@@ -125,13 +125,10 @@ class PathFinderApp:
 
                 elif event.ui_element == self.sidebar.clear_order_button:
                     # Clear the order
-                    self.sidebar.neighbor_order_labels.clear()
+                    self.sidebar.neighbor_order_list.clear()
                     self.sidebar.neighbor_order_display.set_item_list([])
+                    self.sidebar.refresh_available_list()
                     
-                    # Restore all cardinal options to Available
-                    cardinals = ['North', 'East', 'South', 'West']
-                    self.sidebar.available_list.set_item_list(cardinals)
-
                     
 
             # --- Handle File Dialog Logic --- 
@@ -202,14 +199,12 @@ class PathFinderApp:
                         self.sidebar.neighbor_order_display.set_item_list(self.sidebar.neighbor_order_list)
                     
                     # Add back to Available list
-                    current_available_strings = [item['text'] for item in self.sidebar.available_list.item_list]
-                    current_available_strings.append(selection)
+                    current_available = [item['text'] for item in self.sidebar.available_list.item_list]
+                    current_available.append(selection)
 
                     # Sort it so the order stays 'North, East, South, West'
-
-                    natural_order = ["North", "East", "South", "West"]
-                    current_available_strings.sort(key=lambda x: natural_order.index(x)) 
-                    self.sidebar.available_list.set_item_list(current_available_strings)
+                    sorted_available = Neighbor_Direction.sort_labels(current_available)
+                    self.sidebar.available_list.set_item_list(sorted_available)
                                 
                                     
 

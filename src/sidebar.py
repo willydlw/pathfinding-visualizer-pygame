@@ -101,6 +101,21 @@ class Sidebar:
         draw_row += row_offset
         list_height = 100 
 
+        # Diagonal Toggle Checkbox 
+        self.diagonal_checkbox = UICheckBox(
+            relative_rect=pygame.Rect((col1_x, draw_row), (checkbox_size, checkbox_size)),
+            text="",
+            manager=self.manager 
+        )
+
+        self.diagonal_label = UILabel(
+            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, draw_row), (width - label_width, widget_height)),
+            text="Include Diagonals",
+            manager=self.manager
+        )
+
+        draw_row += 30
+
         # Label to explain lists purpose 
         self.direction_label = UILabel(
             relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
@@ -223,11 +238,13 @@ class Sidebar:
 
 
 
-
     def handle_events(self, event):
         
         if event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
-            self._handle_checkbox_toggle(event)
+            self._handle_checkbox_checked(event)
+
+        elif event.type == pygame_gui.UI_CHECK_BOX_UNCHECKED:
+            self._handle_checkbox_unchecked(event)
         
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
             self._handle_dropdown_menu_events(event)
@@ -239,7 +256,22 @@ class Sidebar:
             self._handle_window_close_events(event)
 
 
-    def _handle_checkbox_toggle(self, event):
+
+    def _handle_checkbox_unchecked(self, event):
+        if event.ui_element == self.diagonal_checkbox:
+            diagonals = Neighbor_Direction.get_diagonal_labels()
+
+            # 1. Remove diagonals from the available list 
+            current_available = [item['text'] for item in self.available_list.item_list]
+            new_available = [d for d in current_available if d not in diagonals]
+            self.available_list.set_item_list(new_available)
+
+            # 2. Also remove them from the Order list if they were already selected 
+            self.neighbor_order_list = [d for d in self.neighbor_order_list if d not in diagonals]
+            self.neighbor_order_display.set_item_list(self.neighbor_order_list)
+
+
+    def _handle_checkbox_checked(self, event):
         """Handles mutual exclusivity in Pygame Gui 0.6.14"""
         if event.ui_element == self.start_checkbox:
             if self.start_checkbox.is_checked:
@@ -251,7 +283,10 @@ class Sidebar:
             if self.end_checkbox.is_checked:
                 # force uncheck the other 
                 self.start_checkbox.is_checked = False 
-                self.start_checkbox.rebuild()
+                self.start_checkbox.rebuild() 
+
+        elif event.ui_element == self.diagonal_checkbox:
+            self.refresh_available_list()
 
 
     def _handle_dropdown_menu_events(self, event):
@@ -317,6 +352,18 @@ class Sidebar:
             )
 
             self.current_action = action_type
+
+
+    def refresh_available_list(self):
+        # Base set of directions
+        all_allowed = Neighbor_Direction.get_labels(
+            include_diagonals=self.diagonal_checkbox.is_checked
+        )
+
+        # Filter out what's already in the custom order 
+        sorted_available = [d for d in all_allowed if d not in self.neighbor_order_list]
+        self.available_list.set_item_list(sorted_available)
+
 
     def set_status(self, message):
         self.status_label.set_text(message)

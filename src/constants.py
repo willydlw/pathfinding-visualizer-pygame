@@ -208,6 +208,22 @@ class Neighbor_Direction(Enum):
         """Returns a GUI-friendly string like 'North West'"""
         return self.name.replace("_", " ").title()
     
+    
+    @classmethod
+    def get_diagonal_labels(cls):
+        """Returns the list of Diagonal order labels."""
+        diagonals = [cls.NORTH_EAST, cls.SOUTH_EAST, cls.SOUTH_WEST, cls.NORTH_WEST]
+        return [m.label for m in diagonals]
+    
+    @classmethod 
+    def get_labels(cls, include_diagonals=False):
+        """Returns labels. If include_diagonals is False, returns only Cardinals."""
+        if include_diagonals:
+            return [m.label for m in cls]
+        cardinals = [cls.NORTH, cls.EAST, cls.SOUTH, cls.WEST]
+        return [m.label for m in cardinals]
+       
+    
     @property
     def vector(self) -> tuple:
         """Returns the (dr, dc) tuple"""
@@ -218,7 +234,20 @@ class Neighbor_Direction(Enum):
     
     def __repr__(self):
         return f"<{self.__class__.__name__}.{self.name}>, <{self.value}>"
-
+    
+    @classmethod
+    def get_natural_order(cls):
+        """The master sorting order for the UI."""
+        return ["North", "North East", "East", "South East",
+                "South", "South West", "West", "North West"]
+    
+    @classmethod 
+    def sort_labels(cls, label_list):
+        """Sorts a list of labels based on the natural order."""
+        order = cls.get_natural_order() 
+        label_list.sort(key=lambda x: order.index(x) if x in order else 999)
+        return label_list
+       
     @classmethod 
     def list_labels(cls):
         """Returns a list of all human-readable labels."""
