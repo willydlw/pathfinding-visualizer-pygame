@@ -360,9 +360,13 @@ class Sidebar:
             include_diagonals=self.diagonal_checkbox.is_checked
         )
 
-        # Filter out what's already in the custom order 
-        sorted_available = [d for d in all_allowed if d not in self.neighbor_order_list]
+        # Available side gets filtered and sorted
+        new_available = [d for d in all_allowed if d not in self.neighbor_order_list]
+        sorted_available = Neighbor_Direction.sort_labels(new_available)
         self.available_list.set_item_list(sorted_available)
+
+        # Order side gets updated but stays in the order items were clicked 
+        self.neighbor_order_display.set_item_list(self.neighbor_order_list)
 
 
     def set_status(self, message):
