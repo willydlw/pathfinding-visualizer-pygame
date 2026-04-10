@@ -316,13 +316,13 @@ class PathFinderApp:
         logging.debug(f"algo_name: {algo_name}, Algorithm_Type.BFS.name: {Algorithm_Type.BFS.name}")
         if algo_name == Algorithm_Type.BFS.name:
             logging.info(f"Calling bfs()")
-            self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node, self.search_bias)
+            self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node, self.neighbor_order)
         elif algo_name == Algorithm_Type.DFS.name:
             logging.info(f"Calling dfs()")
-            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node, self.search_bias)
+            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node, self.neighbor_order)
         elif algo_name == Algorithm_Type.ASTAR.name:
             logging.info("calling astar()")
-            self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node, self.search_bias)
+            self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node, self.neighbor_order)
            
         self.step_requested = False
         logging.info(f"Search started: {algo_name}")
