@@ -6,6 +6,7 @@ from pygame_gui.elements import (
     UILabel, 
     UIButton, 
     UICheckBox, 
+    UISelectionList,
     UITextBox 
 )
 
@@ -14,10 +15,11 @@ from pygame_gui.windows import UIFileDialog
 import logging 
 
 from .constants import (
-    Adjacency_Order,
     Algorithm_Type,
     Animation_Mode,
     Map_Actions,
+    Neighbor_Direction,
+    Speed_Options,
     Terrain_Type, 
     Speed_Options
 )
@@ -34,7 +36,7 @@ class Sidebar:
         self.active_file_dialog = None 
         self.current_action = None 
         self.selected_algo = Algorithm_Type.BFS
-        self.neigbor_order = Adjacency_Order.RANDOM
+        self.neighbor_order_list = []
 
         # UI Layout Constants 
         padding = 10 
@@ -48,8 +50,11 @@ class Sidebar:
         col2_x = col1_x + label_width + padding 
 
         # --- Row 1: Environment Map ---
+        draw_row = 20 
+        row_offset = 50
+
         self.map_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 20), (label_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, draw_row), (label_width, widget_height)),
             text="Map Actions:",
             manager=self.manager
         )
@@ -57,13 +62,14 @@ class Sidebar:
         self.map_dropdown = UIDropDownMenu(
             options_list=[action.name for action in Map_Actions],
             starting_option=Map_Actions.CREATE_MAP.name,
-            relative_rect=pygame.Rect((col2_x, 20),(right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, draw_row),(right_col_width, widget_height)),
             manager=self.manager
         )
 
         # --- Row 2: Terrain ---
+        draw_row += row_offset
         self.terrain_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 70), (label_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, draw_row), (label_width, widget_height)),
             text="Terrain Type:",
             manager=self.manager
         )
@@ -71,13 +77,14 @@ class Sidebar:
         self.terrain_dropdown = UIDropDownMenu(
             options_list=[terrain.name for terrain in Terrain_Type],
             starting_option=Terrain_Type.GRASS.name,
-            relative_rect=pygame.Rect((col2_x, 70), (right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, draw_row), (right_col_width, widget_height)),
             manager=self.manager
         )
 
         # --- Row 3: Algorithm --- 
+        draw_row += row_offset
         self.algo_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 120), (label_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, draw_row), (label_width, widget_height)),
             text="Algorithm:",
             manager=self.manager
         )
@@ -85,68 +92,93 @@ class Sidebar:
         self.algo_dropdown = UIDropDownMenu(
             options_list=[algo.name for algo in Algorithm_Type],
             starting_option=Algorithm_Type.BFS.name,
-            relative_rect=pygame.Rect((col2_x, 120), (right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, draw_row), (right_col_width, widget_height)),
             manager=self.manager
         )
 
-        # --- Row 4: Search Bias --- 
-        self.adjacency_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 170), (label_width, widget_height)),
-            text="Neighbor Order:",
+
+        # --- Row 4: Neighbor Direction --- 
+        draw_row += row_offset
+        list_height = 100 
+
+        # Label to explain lists purpose 
+        self.direction_label = UILabel(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
+            text="Neighbor Search Order (Click to add):",
             manager=self.manager
         )
 
-        logging.info(f".list_labels: {Adjacency_Order.list_labels()}")
-        logging.info(f"list: {[sb.name for sb in Adjacency_Order]}")
+        draw_row += 30  # smaller offset for label
 
-        self.adjacency_order_dropdown = UIDropDownMenu(
-            options_list=[sb.name for sb in Adjacency_Order],
-            starting_option=Adjacency_Order.RANDOM.name,
-            relative_rect=pygame.Rect((col2_x, 170), (right_col_width, widget_height)),
+        # Available Directions (Cardinal Only)
+        self.available_list = UISelectionList(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, list_height)),
+            item_list=['North', 'East', 'South', 'West'],
             manager=self.manager
         )
+
+        draw_row += list_height + 10
+        self.neighbor_order_display = UISelectionList(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, list_height)),
+            item_list=[],
+            manager=self.manager
+        )
+
+        draw_row += list_height + 5 
+        self.clear_order_button = UIButton(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
+            text="Clear Order",
+            manager=self.manager
+        )
+
+        draw_row += 30
 
         # --- Row 5: Action Buttons 
-        self.search_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, 220), (full_widget_width, widget_height)),
+        draw_row += list_height + 20
+        self.run_search_button = UIButton(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, widget_height)),
             text="RUN SEARCH",  
             manager=self.manager
         )
 
+        draw_row += row_offset
+
         self.clear_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, 270), (full_widget_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, widget_height)),
             text="CLEAR GRID",
             manager=self.manager
         )
 
         # --- Row 6: Start/End Selection ---
+        draw_row += row_offset
         self.start_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col1_x, 325), (checkbox_size, checkbox_size)),
+            relative_rect=pygame.Rect((col1_x, draw_row + 5), (checkbox_size, checkbox_size)),
             text="",
             manager=self.manager
         )
 
         self.start_lablel = UILabel(
-            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, 320), (80, widget_height)),
+            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, draw_row), (80, widget_height)),
             text="Set Start",
             manager=self.manager
         )
 
         self.end_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col2_x, 325), (checkbox_size, checkbox_size)),
+            relative_rect=pygame.Rect((col2_x, draw_row + 5), (checkbox_size, checkbox_size)),
             text="",
             manager=self.manager
         )
 
-        self.end_lablel = UILabel(
-            relative_rect=pygame.Rect((col2_x + checkbox_size + 5, 320), (80, widget_height)),
+        self.end_label = UILabel(
+            relative_rect=pygame.Rect((col2_x + checkbox_size + 5, draw_row), (80, widget_height)),
             text="Set End",
             manager=self.manager
         )
 
         # --- Row 7: Animation Mode ---
+        draw_row += row_offset
         self.anim_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 370), (label_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, draw_row), (label_width, widget_height)),
             text="Animation: ",
             manager=self.manager
         )
@@ -154,14 +186,16 @@ class Sidebar:
         self.anim_dropdown = UIDropDownMenu(
             options_list=[anim.name for anim in Animation_Mode],
             starting_option=Animation_Mode.ANIMATED.name,  
-            relative_rect=pygame.Rect((col2_x, 370), (right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, draw_row), (right_col_width, widget_height)),
             manager=self.manager
         )
 
         # --- Row 8: Shared position of Speed Multiplier (Hidden unless "Animated" is selected) 
         #     and Next Step Button ---
 
-        shared_rect = pygame.Rect((col1_x, 420), (full_widget_width, widget_height))
+        draw_row += row_offset
+
+        shared_rect = pygame.Rect((col1_x, draw_row), (full_widget_width, widget_height))
 
         self.speed_options = Speed_Options.list_labels()
         self.speed_dropdown = UIDropDownMenu(
@@ -182,10 +216,12 @@ class Sidebar:
         # --- Row 9: Status Message --- 
         self.status_label = UITextBox(
             html_text="Ready",
-            relative_rect=pygame.Rect((col1_x, 470), (full_widget_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, widget_height)),
             manager=self.manager,
             object_id="#status_label"
         )
+
+
 
 
     def handle_events(self, event):
@@ -236,13 +272,13 @@ class Sidebar:
         elif event.ui_element == self.map_dropdown:
             self._handle_map_action(event.text)
 
-        elif event.ui_element == self.adjacency_order_dropdown:
-            self._handle_adjacency_order(event.text)
+        elif event.ui_element == self.neighbor_order_dropdown:
+            self._handle_neighbor_order(event.text)
             
 
-    def _handle_adjacency_order(self, event):
-        self.neigbor_order = event
-        logging.info(f"self.neighbor_order: {self.neigbor_order}")
+    def _handle_neighbor_order(self, event):
+        self.neighbor_order = event
+        logging.info(f"self.neighbor_order: {self.neighbor_order}")
 
 
     def _handle_file_dialog_path_picked_events(self, event):

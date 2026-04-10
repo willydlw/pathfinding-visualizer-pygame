@@ -10,10 +10,10 @@ from .sidebar import Sidebar
 from .algorithms import bfs, dfs, astar
 
 from .constants import (
-    Adjacency_Order,
     Algorithm_Type,
     Animation_Mode,
     Map_Actions,
+    Neighbor_Direction,
     Speed_Options,
     Terrain_Type,
 )
@@ -92,7 +92,6 @@ class PathFinderApp:
         self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
         self.current_file_action = None 
-        self.neighbor_order = Adjacency_Order.RANDOM
         logging.info(f"PathFinderApp initialized")
 
     
@@ -112,7 +111,7 @@ class PathFinderApp:
             # --- Handle Buttons ---
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 # App decides what to do when Sidebar buttons are pressed 
-                if event.ui_element == self.sidebar.search_button:
+                if event.ui_element == self.sidebar.run_search_button:
                     selected = self.sidebar.algo_dropdown.selected_option 
                     algo_str = selected[0] if isinstance(selected, tuple) else selected 
                     self.start_search(algo_str)
@@ -123,6 +122,17 @@ class PathFinderApp:
 
                 elif event.ui_element == self.sidebar.next_step_button:
                      self.step_requested = True 
+
+                elif event.ui_element == self.sidebar.clear_order_button:
+                    # Clear the order
+                    self.sidebar.neighbor_order_labels.clear()
+                    self.sidebar.neighbor_order_display.set_item_list([])
+                    
+                    # Restore all cardinal options to Available
+                    cardinals = ['North', 'East', 'South', 'West']
+                    self.sidebar.available_list.set_item_list(cardinals)
+
+                    
 
             # --- Handle File Dialog Logic --- 
             elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
@@ -155,9 +165,52 @@ class PathFinderApp:
                         self.current_file_action = Map_Actions[event.text]
                         # 2. Opend the dialog via the sidebar
                         self.sidebar._handle_map_action(event.text)
-                elif event.ui_element == self.sidebar.adjacency_order_dropdown:
+                elif event.ui_element == self.sidebar.neighbor_order_dropdown:
                     self.search_bias = event.text
                     logging.debug(f"setting self.neighbor_order: {self.neighbor_order}")
+
+            # Selection List 
+            elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+                # 1. User clicks an available direction
+                if event.ui_element == self.sidebar.available_list:                   
+                    selection = event.text
+                    
+                    # 1. Update Available list
+                    # Extract only the string 'text' from the dictionaries in the list 
+                    current_available_strings = [item['text'] for item in self.sidebar.available_list.item_list]
+
+                    # Filter the strings
+                    new_available = [text for text in current_available_strings if text != selection]
+
+                    # Pass the list of strings to set_item_list
+                    self.sidebar.available_list.set_item_list(new_available)
+
+                    # 2. Update Order List
+                    # Ensure you are using the correct variable name (you had a typo in neigbor)
+                    if selection not in self.sidebar.neighbor_order_list:
+                        self.sidebar.neighbor_order_list.append(selection)
+                        self.sidebar.neighbor_order_display.set_item_list(self.sidebar.neighbor_order_list)
+
+               
+                # 2. (Optional) User clicks an item in the 'Order' list to move it BACK
+                elif event.ui_element == self.sidebar.neighbor_order_display:
+                    selection = event.text
+                    
+                    # Remove from Order list
+                    if selection in self.sidebar.neighbor_order_list:
+                        self.sidebar.neighbor_order_list.remove(selection)
+                        self.sidebar.neighbor_order_display.set_item_list(self.sidebar.neighbor_order_list)
+                    
+                    # Add back to Available list
+                    current_available_strings = [item['text'] for item in self.sidebar.available_list.item_list]
+                    current_available_strings.append(selection)
+
+                    # Sort it so the order stays 'North, East, South, West'
+
+                    natural_order = ["North", "East", "South", "West"]
+                    current_available_strings.sort(key=lambda x: natural_order.index(x)) 
+                    self.sidebar.available_list.set_item_list(current_available_strings)
+                                
                                     
 
             # TODO: Do we need this code for left clicks?
@@ -310,19 +363,29 @@ class PathFinderApp:
         # before staring the new search 
         self.active_generator = None 
 
+        # Neighbor Search Directions 
+        lookup = Neighbor_Direction.get_lookup() 
+
+        # Fallback to a default order if the list is empty 
+        if not self.sidebar.neigbor_order_list:
+            search_order = [d.vector for d in [Neighbor_Direction.NORTH, Neighbor_Direction.SOUTH,
+                                               Neighbor_Direction.EAST, Neighbor_Direction.WEST]]
+        else:
+            search_order = [lookup[label].vector for label in self.sidebar.neigbor_order_list]
+
         self.sidebar.set_status("Searching...")
  
         # Initialize the generator
         logging.debug(f"algo_name: {algo_name}, Algorithm_Type.BFS.name: {Algorithm_Type.BFS.name}")
         if algo_name == Algorithm_Type.BFS.name:
             logging.info(f"Calling bfs()")
-            self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node, self.neighbor_order)
+            self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node, search_order)
         elif algo_name == Algorithm_Type.DFS.name:
             logging.info(f"Calling dfs()")
-            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node, self.neighbor_order)
+            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node, search_order)
         elif algo_name == Algorithm_Type.ASTAR.name:
             logging.info("calling astar()")
-            self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node, self.neighbor_order)
+            self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node, search_order)
            
         self.step_requested = False
         logging.info(f"Search started: {algo_name}")

@@ -5,6 +5,7 @@ logger = logging.getLogger(__name__)
 
 from .constants import Draw_State, Terrain_Type
 
+
 class Node:
     def __init__(self, row, col, size, terrain):
         self.row = row 
@@ -22,6 +23,8 @@ class Node:
         self.parent = None 
         self.is_start = False 
         self.is_end = False 
+
+        self.draw_parent = True 
       
 
         # Costs for A* 
@@ -90,6 +93,7 @@ class Node:
             surface.blit(f_text, (rect[0] + 5, rect[1] + 5))
             surface.blit(g_text, (rect[0] + 5, rect[1] + self.size - 20))
             surface.blit(h_text, (rect[0] + self.size - 35, rect[1] + self.size - 20))
+
 
         """
         test_surface = font.render("TEST", True, (0,0,0))

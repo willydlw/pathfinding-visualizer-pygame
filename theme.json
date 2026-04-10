@@ -1,4 +1,20 @@
 {
+    "selection_list": {
+        "colours": {
+            "dark_bg": "#ffffff",
+            "normal_border": "#999999"
+        }
+    },
+    "selection_list.@selection_list_item": {
+        "colours": {
+            "normal_bg": "#ffffff",
+            "normal_text": "#000000",
+            "hovered_bg": "#e0e0e0",
+            "selected_bg": "#d8e2f2",
+            "selected_text": "#000000"
+        }
+    },
+    
     "checkbox": {
         "colours": {
             "normal_bg": "#f0f0f0",

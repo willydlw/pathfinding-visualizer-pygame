@@ -1,4 +1,4 @@
-from enum import IntEnum, unique, auto 
+from enum import Enum, IntEnum, unique, auto 
 from functools import lru_cache 
 
 
@@ -188,8 +188,62 @@ class Map_Actions(IntEnum):
         return {m.label: m for m in cls}
 
 
+
+class Neighbor_Direction(Enum):
+    # Cardinal Directions
+    NORTH = (-1,  0)        # (row, col) -1 is row above, 0 is same column
+    EAST =  ( 0,  1)
+    SOUTH = ( 1,  0)
+    WEST =  ( 0, -1)
+
+    # Ordinal (Diagonal) Directions 
+    NORTH_EAST = (-1,  1)
+    NORTH_WEST = (-1, -1)
+    SOUTH_EAST = ( 1,  1)
+    SOUTH_WEST = ( 1, -1)
+    
+
+    @property 
+    def label(self) -> str:
+        """Returns a GUI-friendly string like 'North West'"""
+        return self.name.replace("_", " ").title()
+    
+    @property
+    def vector(self) -> tuple:
+        """Returns the (dr, dc) tuple"""
+        return self.value 
+    
+    def __str__(self):
+        return self.label 
+    
+    def __repr__(self):
+        return f"<{self.__class__.__name__}.{self.name}>, <{self.value}>"
+
+    @classmethod 
+    def list_labels(cls):
+        """Returns a list of all human-readable labels."""
+        return [member.label for member in cls]
+    
+    @classmethod 
+    def from_label(cls, label_text):
+        """Finds an enum member by its label string (case-insensitive)."""
+        for member in cls:
+            if member.label.lower() == label_text.lower():
+                return member 
+        raise ValueError(f"Invalid label: {label_text}")
+
+    @classmethod 
+    @lru_cache(maxsize=None)
+    def get_lookup(cls):
+        """Creates a mapping: {"North" : NeighborDirection.NORTH, ...}"""
+        return {m.label: m for m in cls}
+
+    
+
+
+
 @unique
-class Adjacency_Order(IntEnum):
+class Neighbor_Order(IntEnum):
     RANDOM = auto()
     CLOCKWISE = auto()
     COUNTER_CLOCKWISE = auto()
@@ -211,6 +265,20 @@ class Adjacency_Order(IntEnum):
     def list_labels(cls):
         """Returns a list of all human-readable labels."""
         return [member.label for member in cls]
+    
+    @classmethod 
+    def from_label(cls, label_text):
+        """Finds an enum member by its label string (case-insensitive)."""
+        for member in cls:
+            if member.label.lower() == label_text.lower():
+                return member 
+        raise ValueError(f"Invalid label: {label_text}")
+
+    @classmethod 
+    @lru_cache(maxsize=None)
+    def get_lookup(cls):
+        """Creates a mapping: {"1x" : Speed_Options.ANIM_1x, ...}"""
+        return {m.label: m for m in cls}
 
 
 
