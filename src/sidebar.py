@@ -114,39 +114,39 @@ class Sidebar:
         )
 
         self.clear_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, 220), (full_widget_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 270), (full_widget_width, widget_height)),
             text="CLEAR GRID",
             manager=self.manager
         )
 
         # --- Row 6: Start/End Selection ---
         self.start_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col1_x, 275), (checkbox_size, checkbox_size)),
+            relative_rect=pygame.Rect((col1_x, 325), (checkbox_size, checkbox_size)),
             text="",
             manager=self.manager
         )
 
         self.start_lablel = UILabel(
-            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, 270), (80, widget_height)),
+            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, 320), (80, widget_height)),
             text="Set Start",
             manager=self.manager
         )
 
         self.end_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col2_x, 275), (checkbox_size, checkbox_size)),
+            relative_rect=pygame.Rect((col2_x, 325), (checkbox_size, checkbox_size)),
             text="",
             manager=self.manager
         )
 
         self.end_lablel = UILabel(
-            relative_rect=pygame.Rect((col2_x + checkbox_size + 5, 270), (80, widget_height)),
+            relative_rect=pygame.Rect((col2_x + checkbox_size + 5, 320), (80, widget_height)),
             text="Set End",
             manager=self.manager
         )
 
         # --- Row 7: Animation Mode ---
         self.anim_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, 320), (label_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 370), (label_width, widget_height)),
             text="Animation: ",
             manager=self.manager
         )
@@ -154,14 +154,14 @@ class Sidebar:
         self.anim_dropdown = UIDropDownMenu(
             options_list=[anim.name for anim in Animation_Mode],
             starting_option=Animation_Mode.ANIMATED.name,  
-            relative_rect=pygame.Rect((col2_x, 320), (right_col_width, widget_height)),
+            relative_rect=pygame.Rect((col2_x, 370), (right_col_width, widget_height)),
             manager=self.manager
         )
 
         # --- Row 8: Shared position of Speed Multiplier (Hidden unless "Animated" is selected) 
         #     and Next Step Button ---
 
-        shared_rect = pygame.Rect((col1_x, 370), (full_widget_width, widget_height))
+        shared_rect = pygame.Rect((col1_x, 420), (full_widget_width, widget_height))
 
         self.speed_options = Speed_Options.list_labels()
         self.speed_dropdown = UIDropDownMenu(
@@ -182,7 +182,7 @@ class Sidebar:
         # --- Row 9: Status Message --- 
         self.status_label = UITextBox(
             html_text="Ready",
-            relative_rect=pygame.Rect((col1_x, 420), (full_widget_width, widget_height)),
+            relative_rect=pygame.Rect((col1_x, 470), (full_widget_width, widget_height)),
             manager=self.manager,
             object_id="#status_label"
         )
