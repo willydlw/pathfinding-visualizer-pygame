@@ -4,16 +4,16 @@ import logging
 import random 
 
 from .grid import Grid 
-from .constants import Search_Bias
+from .constants import Adjacency_Order
 
 
 logger = logging.getLogger(__name__)
 
 
-def get_ordered_neighbors(current, grid, strategy=Search_Bias.RANDOM):
+def get_ordered_neighbors(current, grid, strategy=Adjacency_Order.RANDOM):
     neighbors = get_neighbors(current, grid)
 
-    if strategy == Search_Bias.RANDOM:
+    if strategy == Adjacency_Order.RANDOM:
         random.shuffle(neighbors)
     
     return neighbors
@@ -50,7 +50,7 @@ def reconstruct_path(end_node):
         curr = curr.parent 
 
 
-def bfs(grid, start_node, end_node):
+def bfs(grid, start_node, end_node, adjacency_order):
     """
     Performs a Breadth-First-Search on the grid.
     Returns the end node if path found, else None
@@ -85,7 +85,7 @@ def bfs(grid, start_node, end_node):
     yield True 
 
 
-def dfs(grid, start_node, end_node):
+def dfs(grid, start_node, end_node, adjacency_order):
     """
     Performs a Depth-First Search on the grid.
     """
@@ -125,7 +125,7 @@ def manhattan_distance(p1, p2):
     return abs(p1.row - p2.row) + abs(p1.col - p2.col)
 
 
-def astar(grid, start, end):
+def astar(grid, start, end, adjacency_order):
 
     # Path can only traverse the same terrain as the start and end nodes.
     allowed_terrain = start.terrain 

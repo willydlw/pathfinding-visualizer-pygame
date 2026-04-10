@@ -10,11 +10,12 @@ from .sidebar import Sidebar
 from .algorithms import bfs, dfs, astar
 
 from .constants import (
+    Adjacency_Order,
     Algorithm_Type,
     Animation_Mode,
     Map_Actions,
-    Terrain_Type,
     Speed_Options,
+    Terrain_Type,
 )
 
 logger = logging.getLogger(__name__)
@@ -91,6 +92,7 @@ class PathFinderApp:
         self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
         self.current_file_action = None 
+        self.neighbor_order = Adjacency_Order.RANDOM
         logging.info(f"PathFinderApp initialized")
 
     
@@ -133,14 +135,14 @@ class PathFinderApp:
 
             # --- Handle Dropdowns ---
             elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-                 logging.debug(f"event.text: {event.text}")
-                 # Terrain Brush
-                 if event.ui_element == self.sidebar.terrain_dropdown:
+                logging.debug(f"event.text: {event.text}")
+                # Terrain Brush
+                if event.ui_element == self.sidebar.terrain_dropdown:
                       terrain = Terrain_Type[event.text].value
                       logging.debug(f"terrain: {terrain}")
                       self.grid.current_brush = terrain 
-                 # Map Actions
-                 elif event.ui_element == self.sidebar.map_dropdown:
+                # Map Actions
+                elif event.ui_element == self.sidebar.map_dropdown:
                     logging.debug(f"Map_Actions.CREATE_MAP.name: {Map_Actions.CREATE_MAP.name}")
                     logging.debug(f"Map_Actions.LOAD_MAP.name:   {Map_Actions.LOAD_MAP.name}")
                     logging.debug(f"Map_Actions.SAVE_MAP.name:   {Map_Actions.SAVE_MAP.name}")
@@ -153,7 +155,10 @@ class PathFinderApp:
                         self.current_file_action = Map_Actions[event.text]
                         # 2. Opend the dialog via the sidebar
                         self.sidebar._handle_map_action(event.text)
-                    
+                elif event.ui_element == self.sidebar.adjacency_order_dropdown:
+                    self.search_bias = event.text
+                    logging.debug(f"setting self.neighbor_order: {self.neighbor_order}")
+                                    
 
             # TODO: Do we need this code for left clicks?
             # Pass the event to the grid to for "one-time" actions
@@ -311,13 +316,13 @@ class PathFinderApp:
         logging.debug(f"algo_name: {algo_name}, Algorithm_Type.BFS.name: {Algorithm_Type.BFS.name}")
         if algo_name == Algorithm_Type.BFS.name:
             logging.info(f"Calling bfs()")
-            self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node)
+            self.active_generator = bfs(self.grid, self.grid.start_node, self.grid.end_node, self.search_bias)
         elif algo_name == Algorithm_Type.DFS.name:
             logging.info(f"Calling dfs()")
-            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node)
+            self.active_generator = dfs(self.grid, self.grid.start_node, self.grid.end_node, self.search_bias)
         elif algo_name == Algorithm_Type.ASTAR.name:
             logging.info("calling astar()")
-            self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node)
+            self.active_generator = astar(self.grid, self.grid.start_node, self.grid.end_node, self.search_bias)
            
         self.step_requested = False
         logging.info(f"Search started: {algo_name}")

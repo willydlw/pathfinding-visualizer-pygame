@@ -121,3 +121,23 @@ Why this is helpful for the user:
 Random: Shows a "drunkard's walk" path.
 Clockwise: Shows the algorithm perfectly hugging the "outside" of every obstacle it encounters.
 Horizontal/Vertical Bias: Shows how DFS can be "tricked" into exploring the entire map inefficiently if the goal is in the opposite direction.
+
+
+## Breadth-First Search
+
+In a Breadth-First Search (BFS) on a 2D grid, search "bias" refers to the non-random order in which the algorithm explores cells that are at the same distance from the starting point. While BFS is mathematically guaranteed to find the shortest path in an unweighted grid, the specific sequence it uses to visit equidistant neighbors introduces subtle directional biases. 
+
+Directional Bias (Adjacency Ordering)
+The most common bias in a 2D grid search is determined by the order in which a cell's neighbors are added to the queue data structure. 
+Fixed Sequence: Developers typically define a direction vector like [Up, Right, Down, Left].
+Exploration Pattern: If multiple paths to a target have the same length, BFS will consistently return the one that follows this predefined order. For example, if "Right" is enqueued before "Down," the algorithm will systematically favor horizontal expansion over vertical when both are equally viable.
+
+Lack of Heuristic Bias (Uninformed Search) 
+Unlike A* Search, BFS is an uninformed search. 
+
+Radial Expansion: It expands in all directions equally (forming a diamond or circle shape) because it has no "bias" toward the goal.
+
+Inefficiency: This lack of goal-oriented bias means it must visit every node at distance before it can even consider a node at distance, making it slower for simple point-to-point pathfinding on large grids. 
+
+Implementation-Specific Biases
+Tie-Breaking: If two different paths reach the same cell at the same time, the one added to the queue first (based on the neighbor-processing loop) becomes the "official" shortest path in the parent-tracking map.

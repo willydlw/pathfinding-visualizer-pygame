@@ -189,7 +189,7 @@ class Map_Actions(IntEnum):
 
 
 @unique
-class Search_Bias(IntEnum):
+class Adjacency_Order(IntEnum):
     RANDOM = auto()
     CLOCKWISE = auto()
     COUNTER_CLOCKWISE = auto()

@@ -14,11 +14,11 @@ from pygame_gui.windows import UIFileDialog
 import logging 
 
 from .constants import (
+    Adjacency_Order,
     Algorithm_Type,
     Animation_Mode,
     Map_Actions,
     Terrain_Type, 
-    Search_Bias,
     Speed_Options
 )
 
@@ -34,7 +34,7 @@ class Sidebar:
         self.active_file_dialog = None 
         self.current_action = None 
         self.selected_algo = Algorithm_Type.BFS
-        self.search_bias = Search_Bias.RANDOM
+        self.neigbor_order = Adjacency_Order.RANDOM
 
         # UI Layout Constants 
         padding = 10 
@@ -90,18 +90,18 @@ class Sidebar:
         )
 
         # --- Row 4: Search Bias --- 
-        self.search_bias_lable = UILabel(
+        self.adjacency_label = UILabel(
             relative_rect=pygame.Rect((col1_x, 170), (label_width, widget_height)),
-            text="Search Bias:",
+            text="Neighbor Order:",
             manager=self.manager
         )
 
-        logging.info(f"Search_Bias.list_labels: {Search_Bias.list_labels()}")
-        logging.info(f"list: {[sb.name for sb in Search_Bias]}")
+        logging.info(f".list_labels: {Adjacency_Order.list_labels()}")
+        logging.info(f"list: {[sb.name for sb in Adjacency_Order]}")
 
-        self.search_bias_dropdown = UIDropDownMenu(
-            options_list=[sb.name for sb in Search_Bias],
-            starting_option=Search_Bias.RANDOM.name,
+        self.adjacency_order_dropdown = UIDropDownMenu(
+            options_list=[sb.name for sb in Adjacency_Order],
+            starting_option=Adjacency_Order.RANDOM.name,
             relative_rect=pygame.Rect((col2_x, 170), (right_col_width, widget_height)),
             manager=self.manager
         )
@@ -236,13 +236,13 @@ class Sidebar:
         elif event.ui_element == self.map_dropdown:
             self._handle_map_action(event.text)
 
-        elif event.ui_element == self.search_bias_dropdown:
-            self._handle_search_bias(event.text)
+        elif event.ui_element == self.adjacency_order_dropdown:
+            self._handle_adjacency_order(event.text)
             
 
-    def _handle_search_bias(self, event):
-        self.search_bias = event
-        logging.info(f"TODO: add code for search_bias, self.search_bias: {self.search_bias}")
+    def _handle_adjacency_order(self, event):
+        self.neigbor_order = event
+        logging.info(f"self.neighbor_order: {self.neigbor_order}")
 
 
     def _handle_file_dialog_path_picked_events(self, event):
