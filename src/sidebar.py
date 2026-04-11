@@ -369,6 +369,194 @@ class Sidebar:
             elif event.ui_element == self.btn_viz:
                 self._switch_tab(self.viz_panel)
 
+        elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
+            self._handle_checkbox_checked(event)
+
+        elif event.type == pygame_gui.UI_CHECK_BOX_UNCHECKED:
+            self._handle_checkbox_unchecked(event)
+        
+        elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+            self._handle_dropdown_menu_events(event)
+
+        elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
+            self._handle_file_dialog_path_picked_events(event)
+
+        elif event.type == pygame_gui.UI_WINDOW_CLOSE:
+            self._handle_window_close_events(event)
+
+    
+    def _handle_checkbox_unchecked(self, event):
+        if event.ui_element == self.size_checkbox:
+            self.size_dropdown.disable()
+
+        elif event.ui_element == self.diagonal_checkbox:
+            diagonals = Neighbor_Direction.get_diagonal_labels()
+
+            # 1. Remove diagonals from the available list 
+            current_available = [item['text'] for item in self.available_list.item_list]
+            new_available = [d for d in current_available if d not in diagonals]
+            self.available_list.set_item_list(new_available)
+
+            # 2. Also remove them from the Order list if they were already selected 
+            self.neighbor_order_list = [d for d in self.neighbor_order_list if d not in diagonals]
+            self.neighbor_order_display.set_item_list(self.neighbor_order_list)
+
+
+    def _handle_checkbox_checked(self, event):
+
+        if event.type == self.start_checkbox:
+            self.end_checkbox.is_checked = False 
+            self.end_checkbox.rebuild()
+        
+        elif event.type == self.end_checkbox:
+            self.start_checkbox.is_checked = False 
+            self.start_checkbox.rebuild()
+
+        elif event.ui_element == self.start_checkbox:
+            if self.start_checkbox.is_checked:
+                # Force uncheck the other 
+                self.end_checkbox.is_checked = False 
+                self.end_checkbox.rebuild()
+
+        elif event.ui_element == self.end_checkbox:
+            if self.end_checkbox.is_checked:
+                # force uncheck the other 
+                self.start_checkbox.is_checked = False 
+                self.start_checkbox.rebuild() 
+
+        elif event.ui_element == self.diagonal_checkbox:
+            self.refresh_available_list()
+
+    
+               
+
+    def _handle_dropdown_menu_events(self, event):
+
+        if event.ui_element == self.map_dropdown:
+            self.update_visibility(event.text)
+      
+        elif event.ui_element == self.grid_size_dropdown:
+
+            # Store the intended size but don't apply it yet 
+            self.pending_grid_size = event.text 
+
+            # Create the confirmation dialog 
+            # Create the confirmation dialog
+            self.confirmation_dialog = UIConfirmationDialog(
+                rect=pygame.Rect((400, 200), (300, 200)), # Center this as needed
+                manager=self.manager,
+                window_title="Confirm Resize",
+                action_long_desc="Resizing the grid will <b>clear all current drawings</b>. Do you want to proceed?",
+                action_short_name="Yes, Resize",
+                blocking=True
+            )
+
+    
+        elif event.ui_element == self.anim_dropdown:
+            # Next Step button visibility
+            logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
+            if event.text == Animation_Mode.SINGLE_STEP.name:
+                self.next_step_button.show() 
+                self.speed_dropdown.hide() # hide speed as it's irrelevant 
+            else:
+                self.next_step_button.hide() 
+                self.speed_dropdown.show()
+
+        elif event.ui_element == self.algo_dropdown:
+                self.selected_algo = event.text 
+                logging.info(f"Selected algorithm: {self.selected_algo}")
+        
+        elif event.ui_element == self.map_dropdown:
+            self._handle_map_action(event.text)
+
+        elif event.ui_element == self.neighbor_order_dropdown:
+            self._handle_neighbor_order(event.text)
+        """
+            
+
+    def _handle_neighbor_order(self, event):
+        self.neighbor_order = event
+        logging.info(f"self.neighbor_order: {self.neighbor_order}")
+
+
+    def _handle_file_dialog_path_picked_events(self, event):
+        """ Just close the dialog; let the App handle the grid logic."""
+        if event.ui_element == self.active_file_dialog:
+            if self.current_action == Map_Actions.SAVE_MAP:
+               self.active_file_dialog = None 
+
+    def _handle_window_close_events(self, event):
+        # Clean up dialog reference when closed
+        if event.ui_element == self.active_file_dialog:
+            self.active_file_dialog = None
+            self.current_action = None
+           
+
+       
+    def open_file_dialog(self, action_type):
+        """Sidebar owns the dialog object, but the App uses the result"""
+        if self.active_file_dialog is None:
+            title = action_type.label
+
+            self.active_file_dialog = UIFileDialog(
+                rect=pygame.Rect(160, 50, 440, 500),
+                manager=self.manager,
+                window_title=title,
+                initial_file_path="maps/"
+            )
+
+            self.current_action = action_type
+
+
+    def refresh_available_list(self):
+        # Base set of directions
+        all_allowed = Neighbor_Direction.get_labels(
+            include_diagonals=self.diagonal_checkbox.is_checked
+        )
+
+        # Available side gets filtered and sorted
+        new_available = [d for d in all_allowed if d not in self.neighbor_order_list]
+        sorted_available = Neighbor_Direction.sort_labels(new_available)
+        self.available_list.set_item_list(sorted_available)
+
+        # Order side gets updated but stays in the order items were clicked 
+        self.neighbor_order_display.set_item_list(self.neighbor_order_list)
+
+
+    def set_status(self, message):
+        self.status_label.set_text(message)
+    
+    def uncheck_start_end(self):
+        """Unchecks both start and end boxes."""
+        self.start_checkbox.is_checked = False 
+        self.start_checkbox.rebuild()
+        self.end_checkbox.is_checked = False 
+        self.end_checkbox.rebuild()
+
+    def update_visibility(self, label_text):
+        current_action = Map_Actions.from_label(label_text)
+        is_editing = (current_action == Map_Actions.CREATE_MAP)
+        
+        # Use the specific names you defined in _init_ui_grid_settings
+        widgets = [
+            self.grid_size_label, 
+            self.grid_size_dropdown,
+            self.terrain_label,
+            self.terrain_dropdown,
+            self.start_label,
+            self.start_checkbox,
+            self.end_label,
+            self.end_checkbox,
+            self.clear_grid_button
+        ]
+
+        for widget in widgets:
+            widget.show() if is_editing else widget.hide()
+
+
+
+
+
     def _switch_tab(self, target_panel):
         self.map_panel.hide()
         self.algo_panel.hide()
