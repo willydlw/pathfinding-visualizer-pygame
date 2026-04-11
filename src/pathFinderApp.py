@@ -98,18 +98,18 @@ class PathFinderApp:
                 logging.fatal(f"Uncomment run_search_button")
                 logging.fatal(f"Uncomment next_step_button")
                 logging.fatal(f"Uncomment clear_order_button")
+                logging.fatal(f"Uncomment clear_grid_button")
 
+                """
                 if event.ui_element == self.sidebar.clear_grid_button:
                      self.grid.clear() 
                      self.sidebar.uncheck_start_end() 
-                """
+                
                 if event.ui_element == self.sidebar.run_search_button:
                     selected = self.sidebar.algo_dropdown.selected_option 
                     algo_str = selected[0] if isinstance(selected, tuple) else selected 
                     self.start_search(algo_str)
                 
-                
-
                 elif event.ui_element == self.sidebar.next_step_button:
                      self.step_requested = True 
 

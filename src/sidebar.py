@@ -250,7 +250,99 @@ class Sidebar:
 
 
     def _init_algo_tab(self):
-        pass 
+        # 1. Algorithm Selection 
+        self.algo_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.label_width, self.ui_layout.widget_height)),
+            text="Algorithm:",
+            manager=self.manager,
+            container=self.algo_panel 
+        )
+
+        self.algo_dropdown = UIDropDownMenu(
+            options_list=[algo.label for algo in Algorithm_Type],
+            starting_option=Algorithm_Type.BFS.label,
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col2x, self.ui_layout.draw_row), 
+                (self.ui_layout.col2_width, self.ui_layout.widget_height)),
+            manager=self.manager,
+            container=self.algo_panel 
+        )
+
+        self.ui_layout.draw_row += self.config.ROW_SPACING
+
+        # 2. Neighbor Direction Priority 
+                 
+        # Diagonal Toggle Checkbox 
+        self.diagonal_checkbox = UICheckBox(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
+            text="",
+            manager=self.manager,
+            container=self.algo_panel 
+        )
+
+        self.diagonal_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x + self.config.CHECKBOX_SIZE + 5, self.ui_layout.draw_row), 
+                (self.ui_layout.width - self.ui_layout.label_width, self.ui_layout.widget_height)),
+            text="Include Diagonals",
+            manager=self.manager,
+            container=self.algo_panel 
+        )
+
+        self.ui_layout.draw_row += self.config.ROW_SPACING
+
+
+        # Search Order Instructions
+       
+        self.direction_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_widget_width, self.ui_layout.widget_height)
+            ),
+            text="Neighbor Search Order (Click to add):",
+            manager=self.manager,
+            container=self.algo_panel 
+        )
+
+        self.ui_layout.draw_row += self.ui_layout.widget_height 
+
+        # Selection Lists
+        list_height = 100 
+        self.available_list = UISelectionList(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_widget_width, list_height)),
+            item_list=Neighbor_Direction.get_labels(include_diagonals=False),
+            manager=self.manager,
+            container=self.algo_panel 
+        )
+
+        self.ui_layout.draw_row += list_height + 10
+        self.neighbor_order_display = UISelectionList(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_widget_width, list_height)),
+            item_list=[],
+            manager=self.manager,
+            container=self.algo_panel 
+        )
+
+        self.ui_layout.draw_row += list_height + 10
+        
+        self.clear_order_button = UIButton(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_widget_width, self.ui_layout.widget_height)),
+            text="Clear Order",
+            manager=self.manager,
+            container=self.algo_panel 
+        )
+
+
 
     def _init_viz_tab(self):
         pass
