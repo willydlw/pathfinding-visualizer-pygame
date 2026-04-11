@@ -1,4 +1,5 @@
 
 from .pathFinderApp import PathFinderApp
+from .appConfig import AppConfig
 
-__all__ = ["PathFinderApp"]
+__all__ = [ "AppConfig", "PathFinderApp"]

@@ -2,7 +2,7 @@ import logging
 import pygame
 from pathlib import Path 
 
-from src import PathFinderApp 
+from src import AppConfig, PathFinderApp
 
 def configure_logger():
     # define absolute path of the log file 
@@ -28,13 +28,12 @@ def configure_logger():
 
 
 def main():
-    print("Hello from pathfinding-visualizer-pygame!")
-    #print("*** Fonts ***")
-    #print(pygame.font.get_fonts())
+    
     configure_logger() 
     
     try:
-        app = PathFinderApp()
+        config = AppConfig()
+        app = PathFinderApp(config=config)
         app.run()
     finally:
         pygame.quit() 
