@@ -16,6 +16,8 @@ class PATH_COST(IntEnum):
 # @unique Decorator ensures no two members have the same value.
 
 
+
+
 @unique
 class Algorithm_Type(IntEnum):
     BFS = auto()
@@ -152,9 +154,10 @@ class Draw_State(IntEnum):
 
 @unique
 class Map_Actions(IntEnum):
-    CREATE_MAP = auto()
-    LOAD_MAP = auto()
-    SAVE_MAP = auto()
+    SELECT_NODES = 0
+    CREATE_MAP = 1
+    LOAD_MAP = 2
+    SAVE_MAP = 3
 
     @property 
     def label(self):
@@ -187,6 +190,32 @@ class Map_Actions(IntEnum):
         """Creates a mapping: {"Create Map" : Map_Actions.CREATE_MAP, ...}"""
         return {m.label: m for m in cls}
 
+
+class Map_Dimension(IntEnum):
+    MD8 =  8
+    MD16 = 16
+    MD32 = 32
+    MD64 = 64
+    MD128 = 128 
+    MD256 = 256
+
+    @property 
+    def label(self) -> str:
+        """Returns a string for the UI dropdown (e.g. '64 x 64')."""
+        return f"{self.value} x {self.value}"
+    
+    @classmethod
+    def get_ui_labels(cls) -> list[str]:
+        """Returns a list of all dimension labels for the dropdown."""
+        return [dim.label for dim in cls] 
+    
+    @classmethod 
+    def from_label(cls, label: str) -> "Map Dimension":
+        """Converts a UI string back into an Enum member."""
+        # Extracts the number from '64 x 64' ->64 
+        value = int(label.split(' x ')[0])
+        return cls(value)
+    
 
 
 class Neighbor_Direction(Enum):

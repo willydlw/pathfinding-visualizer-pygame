@@ -1,5 +1,13 @@
 import pygame 
 import pygame_gui 
+import logging 
+
+
+from pygame_gui.windows import (
+    UIConfirmationDialog,
+    UIFileDialog 
+)
+
 
 from pygame_gui.elements import (
     UIDropDownMenu, 
@@ -10,142 +18,93 @@ from pygame_gui.elements import (
     UITextBox 
 )
 
-from pygame_gui.windows import UIFileDialog 
-
-import logging 
-
 from .constants import (
     Algorithm_Type,
     Animation_Mode,
     Map_Actions,
+    Map_Dimension,
     Neighbor_Direction,
     Speed_Options,
     Terrain_Type, 
     Speed_Options
 )
 
-from .algorithms import bfs, dfs, astar
+
+from .algorithms import (
+    bfs, dfs, astar
+)
+
 
 logger = logging.getLogger(__name__)
+
+class UI_Layout:
+
+    def __init__(self, x_offset, y_offset, start_row, padding, label_width, checkbox_size, widget_height, width):
+        self.x_offset = x_offset 
+        self.y_offset = y_offset
+        self.draw_row = start_row
+        self.padding  = padding 
+        self.label_width = label_width 
+        self.checkbox_size = checkbox_size 
+        self.widget_height = widget_height
+        self.width = width 
+        self.full_widget_width = width - (padding * 2)
+        self.right_col_width = width - label_width - (padding * 3)
+
+        self.col1_x = x_offset + padding 
+        self.col2_x = self.col1_x + label_width + padding 
+    
+
 
 class Sidebar:
     def __init__(self, manager, width, height, x_offset):
         self.manager = manager 
+        self.pending_grid_size = None 
+        self.confirmation_dialog = None 
         
         # Track the active dialog to distinguish between Load and Save actions
         self.active_file_dialog = None 
         self.current_action = None 
+        
         self.selected_algo = Algorithm_Type.BFS
         self.neighbor_order_list = []
 
-        # UI Layout Constants 
-        padding = 10 
-        label_width = 110
-        checkbox_size = 25
-        widget_height = 35 
-        full_widget_width = width - (padding * 2)
-        right_col_width = width - label_width - (padding * 3)
-
-        col1_x = x_offset + padding 
-        col2_x = col1_x + label_width + padding 
-
-        # --- Row 1: Environment Map ---
-        draw_row = 20 
-        row_offset = 50
-
-        self.map_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, draw_row), (label_width, widget_height)),
-            text="Map Actions:",
-            manager=self.manager
+        self.ui_layout = UI_Layout(
+            x_offset=x_offset, 
+            y_offset=50,
+            start_row=20,
+            padding=10,
+            label_width=110,
+            checkbox_size=25,
+            widget_height=35,
+            width=width
         )
 
-        self.map_dropdown = UIDropDownMenu(
-            options_list=[action.name for action in Map_Actions],
-            starting_option=Map_Actions.CREATE_MAP.name,
-            relative_rect=pygame.Rect((col2_x, draw_row),(right_col_width, widget_height)),
-            manager=self.manager
-        )
+
+         # --- Map Actions---
+        self._init_ui_map_actions()
+        self._init_ui_grid_settings()  # grid size toggle
 
         # --- Row 2: Terrain ---
-        draw_row += row_offset
-        self.terrain_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, draw_row), (label_width, widget_height)),
-            text="Terrain Type:",
-            manager=self.manager
-        )
+        self._init_ui_terrain()
 
-        self.terrain_dropdown = UIDropDownMenu(
-            options_list=[terrain.name for terrain in Terrain_Type],
-            starting_option=Terrain_Type.GRASS.name,
-            relative_rect=pygame.Rect((col2_x, draw_row), (right_col_width, widget_height)),
-            manager=self.manager
-        )
+        # Start/End Selection 
+        self._init_ui_start_end_markers()
+
+        self._init_ui_clear_grid_button()
+
+        # Initial visibility: everything for 'Create Map' will be hidden
+        self.update_visibility(Map_Actions.SELECT_NODES.label)
+
 
         # --- Row 3: Algorithm --- 
-        draw_row += row_offset
-        self.algo_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, draw_row), (label_width, widget_height)),
-            text="Algorithm:",
-            manager=self.manager
-        )
-
-        self.algo_dropdown = UIDropDownMenu(
-            options_list=[algo.name for algo in Algorithm_Type],
-            starting_option=Algorithm_Type.BFS.name,
-            relative_rect=pygame.Rect((col2_x, draw_row), (right_col_width, widget_height)),
-            manager=self.manager
-        )
-
+        #self._init_algorithm_selection()
 
         # --- Row 4: Neighbor Direction --- 
-        draw_row += row_offset
-        list_height = 100 
-
-        # Diagonal Toggle Checkbox 
-        self.diagonal_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col1_x, draw_row), (checkbox_size, checkbox_size)),
-            text="",
-            manager=self.manager 
-        )
-
-        self.diagonal_label = UILabel(
-            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, draw_row), (width - label_width, widget_height)),
-            text="Include Diagonals",
-            manager=self.manager
-        )
-
-        draw_row += 30
-
-        # Label to explain lists purpose 
-        self.direction_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
-            text="Neighbor Search Order (Click to add):",
-            manager=self.manager
-        )
-
-        draw_row += 30  # smaller offset for label
-
-        # Available Directions (Cardinal Only)
-        self.available_list = UISelectionList(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, list_height)),
-            item_list=['North', 'East', 'South', 'West'],
-            manager=self.manager
-        )
-
-        draw_row += list_height + 10
-        self.neighbor_order_display = UISelectionList(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, list_height)),
-            item_list=[],
-            manager=self.manager
-        )
-
-        draw_row += list_height + 5 
-        self.clear_order_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
-            text="Clear Order",
-            manager=self.manager
-        )
-
+        #self._init_ui_neighbor_direction()
+       
+        
+        """
         draw_row += 30
 
         # --- Row 5: Action Buttons 
@@ -156,39 +115,10 @@ class Sidebar:
             manager=self.manager
         )
 
-        draw_row += row_offset
 
-        self.clear_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, widget_height)),
-            text="CLEAR GRID",
-            manager=self.manager
-        )
 
         # --- Row 6: Start/End Selection ---
-        draw_row += row_offset
-        self.start_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col1_x, draw_row + 5), (checkbox_size, checkbox_size)),
-            text="",
-            manager=self.manager
-        )
-
-        self.start_lablel = UILabel(
-            relative_rect=pygame.Rect((col1_x + checkbox_size + 5, draw_row), (80, widget_height)),
-            text="Set Start",
-            manager=self.manager
-        )
-
-        self.end_checkbox = UICheckBox(
-            relative_rect=pygame.Rect((col2_x, draw_row + 5), (checkbox_size, checkbox_size)),
-            text="",
-            manager=self.manager
-        )
-
-        self.end_label = UILabel(
-            relative_rect=pygame.Rect((col2_x + checkbox_size + 5, draw_row), (80, widget_height)),
-            text="Set End",
-            manager=self.manager
-        )
+        
 
         # --- Row 7: Animation Mode ---
         draw_row += row_offset
@@ -235,11 +165,221 @@ class Sidebar:
             manager=self.manager,
             object_id="#status_label"
         )
+        
+        """
 
+    def _init_ui_clear_grid_button(self):
+
+        self.clear_grid_button = UIButton(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_widget_width, self.ui_layout.widget_height)
+            ),
+            text="CLEAR GRID",
+            manager=self.manager
+        )
+
+        self.ui_layout.draw_row += self.ui_layout.y_offset
+    
+
+    def _init_ui_map_actions(self):
+        
+        self.map_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x, self.ui_layout.draw_row), 
+                (self.ui_layout.label_width, self.ui_layout.widget_height)),
+            text="Map Actions:",
+            manager=self.manager
+        )
+
+        self.map_dropdown = UIDropDownMenu(
+            options_list=Map_Actions.list_labels(),
+            starting_option=Map_Actions.SELECT_NODES.label,
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col2_x, self.ui_layout.draw_row),
+                (self.ui_layout.right_col_width, self.ui_layout.widget_height)),
+            manager=self.manager
+        )
+        
+        self.ui_layout.draw_row += self.ui_layout.y_offset
+        
+
+
+    def _init_ui_terrain(self):
+       
+        self.terrain_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x, self.ui_layout.draw_row), 
+                (self.ui_layout.label_width, self.ui_layout.widget_height)),
+            text="Terrain Type:",
+            manager=self.manager
+        )
+
+        self.terrain_dropdown = UIDropDownMenu(
+            options_list=[terrain.name for terrain in Terrain_Type],
+            starting_option=Terrain_Type.GRASS.name,
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col2_x, self.ui_layout.draw_row), 
+                (self.ui_layout.right_col_width, self.ui_layout.widget_height)),
+            manager=self.manager
+        )
+
+        self.ui_layout.draw_row += self.ui_layout.y_offset
+
+
+    def _init_ui_grid_settings(self):
+        # Checkbox to enable size selection
+        options = Map_Dimension.get_ui_labels() 
+
+        self.grid_size_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x, self.ui_layout.draw_row),
+                (self.ui_layout.label_width, self.ui_layout.widget_height)
+            ),
+            text="Set Grid Size:",
+            manager=self.manager
+        )
+
+        self.grid_size_dropdown = UIDropDownMenu(
+            options_list=options,
+            starting_option=Map_Dimension.MD16.label,
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col2_x, self.ui_layout.draw_row),
+                (self.ui_layout.right_col_width, self.ui_layout.widget_height)
+            ),
+            manager=self.manager
+        )
+
+        self.ui_layout.draw_row += self.ui_layout.y_offset 
+
+    
+    def _init_ui_start_end_markers(self):
+       
+        self.start_checkbox = UICheckBox(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x, self.ui_layout.draw_row + 5), 
+                (self.ui_layout.checkbox_size, self.ui_layout.checkbox_size)),
+            text="",
+            manager=self.manager
+        )
+
+        self.start_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x + self.ui_layout.checkbox_size + 5, self.ui_layout.draw_row), 
+                (80, self.ui_layout.widget_height)),
+            text="Set Start",
+            manager=self.manager
+        )
+
+        self.end_checkbox = UICheckBox(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col2_x, self.ui_layout.draw_row + 5), 
+                (self.ui_layout.checkbox_size, self.ui_layout.checkbox_size)),
+            text="",
+            manager=self.manager
+        )
+
+        self.end_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col2_x + self.ui_layout.checkbox_size + 5, self.ui_layout.draw_row), 
+                (80,self.ui_layout. widget_height)),
+            text="Set End",
+            manager=self.manager
+        )
+
+        self.ui_layout.draw_row += self.ui_layout.y_offset
+
+
+    def _init_ui_algorithm_selection(self):
+       
+        self.algo_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x, self.ui_layout.draw_row), 
+                (self.ui_layout.label_width, self.ui_layout.widget_height)),
+            text="Algorithm:",
+            manager=self.manager
+        )
+
+        self.algo_dropdown = UIDropDownMenu(
+            options_list=[algo.name for algo in Algorithm_Type],
+            starting_option=Algorithm_Type.BFS.name,
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col2_x, self.ui_layout.draw_row), 
+                (self.ui_layout.right_col_width, self.ui_layout.widget_height)),
+            manager=self.manager
+        )
+
+        self.ui_layout.draw_row += self.ui_layout.y_offset
+
+
+    def _init_ui_neighbor_direction(self):
+         
+        list_height = 100 
+
+        # Diagonal Toggle Checkbox 
+        self.diagonal_checkbox = UICheckBox(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x, self.ui_layout.draw_row), 
+                (self.ui_layout.checkbox_size, self.ui_layout.checkbox_size)),
+            text="",
+            manager=self.manager 
+        )
+
+        self.diagonal_label = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1_x + self.ui_layout.checkbox_size + 5, self.ui_layout.draw_row), 
+                (self.ui_layout.width - self.ui_layout.label_width, self.ui_layout.widget_height)),
+            text="Include Diagonals",
+            manager=self.manager
+        )
+
+        self.ui_layout.draw_row += self.ui_layout.y_offset
+
+        draw_row += 30
+
+        # Label to explain lists purpose 
+        self.direction_label = UILabel(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
+            text="Neighbor Search Order (Click to add):",
+            manager=self.manager
+        )
+
+        draw_row += 30  # smaller offset for label
+
+        # Available Directions (Cardinal Only)
+        self.available_list = UISelectionList(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, list_height)),
+            item_list=['North', 'East', 'South', 'West'],
+            manager=self.manager
+        )
+
+        draw_row += list_height + 10
+        self.neighbor_order_display = UISelectionList(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, list_height)),
+            item_list=[],
+            manager=self.manager
+        )
+
+        draw_row += list_height + 5 
+        self.clear_order_button = UIButton(
+            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
+            text="Clear Order",
+            manager=self.manager
+        )
 
 
     def handle_events(self, event):
-        
+
+        # Listen for the actual confirmation
+        if event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
+            if event.ui_element == self.confirmation_dialog:
+                selected_dim = Map_Dimension.from_label(self.pending_grid_size)
+                print(f"Applying new grid size: {selected_dim.value}")
+                # CALL YOUR ACTUAL RESIZE LOGIC HERE
+                # self.app.resize_grid(selected_dim.value)
+                logging.fatal(f"Missing logic to resize grid to {selected_dim} rows and columns")
+
+    
         if event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
             self._handle_checkbox_checked(event)
 
@@ -258,7 +398,10 @@ class Sidebar:
 
 
     def _handle_checkbox_unchecked(self, event):
-        if event.ui_element == self.diagonal_checkbox:
+        if event.ui_element == self.size_checkbox:
+            self.size_dropdown.disable()
+
+        elif event.ui_element == self.diagonal_checkbox:
             diagonals = Neighbor_Direction.get_diagonal_labels()
 
             # 1. Remove diagonals from the available list 
@@ -272,8 +415,16 @@ class Sidebar:
 
 
     def _handle_checkbox_checked(self, event):
-        """Handles mutual exclusivity in Pygame Gui 0.6.14"""
-        if event.ui_element == self.start_checkbox:
+
+        if event.type == self.start_checkbox:
+            self.end_checkbox.is_checked = False 
+            self.end_checkbox.rebuild()
+        
+        elif event.type == self.end_checkbox:
+            self.start_checkbox.is_checked = False 
+            self.start_checkbox.rebuild()
+
+        elif event.ui_element == self.start_checkbox:
             if self.start_checkbox.is_checked:
                 # Force uncheck the other 
                 self.end_checkbox.is_checked = False 
@@ -288,9 +439,31 @@ class Sidebar:
         elif event.ui_element == self.diagonal_checkbox:
             self.refresh_available_list()
 
+        
 
     def _handle_dropdown_menu_events(self, event):
-        if event.ui_element == self.anim_dropdown:
+
+        if event.ui_element == self.map_dropdown:
+            self.update_visibility(event.text)
+      
+        elif event.ui_element == self.grid_size_dropdown:
+
+            # Store the intended size but don't apply it yet 
+            self.pending_grid_size = event.text 
+
+            # Create the confirmation dialog 
+            # Create the confirmation dialog
+            self.confirmation_dialog = UIConfirmationDialog(
+                rect=pygame.Rect((400, 200), (300, 200)), # Center this as needed
+                manager=self.manager,
+                window_title="Confirm Resize",
+                action_long_desc="Resizing the grid will <b>clear all current drawings</b>. Do you want to proceed?",
+                action_short_name="Yes, Resize",
+                blocking=True
+            )
+
+        """
+        elif event.ui_element == self.anim_dropdown:
             # Next Step button visibility
             logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
             if event.text == Animation_Mode.SINGLE_STEP.name:
@@ -309,6 +482,7 @@ class Sidebar:
 
         elif event.ui_element == self.neighbor_order_dropdown:
             self._handle_neighbor_order(event.text)
+        """
             
 
     def _handle_neighbor_order(self, event):
@@ -378,4 +552,23 @@ class Sidebar:
         self.start_checkbox.rebuild()
         self.end_checkbox.is_checked = False 
         self.end_checkbox.rebuild()
-            
+
+    def update_visibility(self, label_text):
+        current_action = Map_Actions.from_label(label_text)
+        is_editing = (current_action == Map_Actions.CREATE_MAP)
+        
+        # Use the specific names you defined in _init_ui_grid_settings
+        widgets = [
+            self.grid_size_label, 
+            self.grid_size_dropdown,
+            self.terrain_label,
+            self.terrain_dropdown,
+            self.start_label,
+            self.start_checkbox,
+            self.end_label,
+            self.end_checkbox,
+            self.clear_grid_button
+        ]
+
+        for widget in widgets:
+            widget.show() if is_editing else widget.hide()

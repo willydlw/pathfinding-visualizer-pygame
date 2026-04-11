@@ -111,14 +111,20 @@ class PathFinderApp:
             # --- Handle Buttons ---
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 # App decides what to do when Sidebar buttons are pressed 
+                logging.fatal(f"Uncomment run_search_button")
+                logging.fatal(f"Uncomment next_step_button")
+                logging.fatal(f"Uncomment clear_order_button")
+
+                if event.ui_element == self.sidebar.clear_grid_button:
+                     self.grid.clear() 
+                     self.sidebar.uncheck_start_end() 
+                """
                 if event.ui_element == self.sidebar.run_search_button:
                     selected = self.sidebar.algo_dropdown.selected_option 
                     algo_str = selected[0] if isinstance(selected, tuple) else selected 
                     self.start_search(algo_str)
                 
-                elif event.ui_element == self.sidebar.clear_button:
-                     self.grid.clear() 
-                     self.sidebar.uncheck_start_end() 
+                
 
                 elif event.ui_element == self.sidebar.next_step_button:
                      self.step_requested = True 
@@ -128,7 +134,7 @@ class PathFinderApp:
                     self.sidebar.neighbor_order_list.clear()
                     self.sidebar.neighbor_order_display.set_item_list([])
                     self.sidebar.refresh_available_list()
-                    
+                """
                     
 
             # --- Handle File Dialog Logic --- 
@@ -159,14 +165,18 @@ class PathFinderApp:
                         self.sidebar.uncheck_start_end() 
                     else:
                         # 1. Set the state so UI_FILE_DIALOG_PATH_PICKED knows what to do 
-                        self.current_file_action = Map_Actions[event.text]
+                        self.current_file_action = Map_Actions.from_label(event.text)
                         # 2. Opend the dialog via the sidebar
                         self.sidebar._handle_map_action(event.text)
+                """
                 elif event.ui_element == self.sidebar.neighbor_order_dropdown:
                     self.search_bias = event.text
                     logging.debug(f"setting self.neighbor_order: {self.neighbor_order}")
+                """
 
             # Selection List 
+            logging.fatal(f"Uncomments UI_SELECTION_LIST_NEW_SELECTION")
+            """
             elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
                 # 1. User clicks an available direction
                 if event.ui_element == self.sidebar.available_list:                   
@@ -206,17 +216,21 @@ class PathFinderApp:
                     sorted_available = Neighbor_Direction.sort_labels(current_available)
                     self.sidebar.available_list.set_item_list(sorted_available)
                                 
-                                    
+                """
 
+            logging.fatal("uncomment start_checkbox logic")
             # TODO: Do we need this code for left clicks?
             # Pass the event to the grid to for "one-time" actions
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # left click
                     if not self.ui_manager.get_hovering_any_element():
                         # Only do single_click logic if a checkbox is active 
+                        logging.fatal("uncomment start_checkbox logic")
+                        """
                         if self.sidebar.start_checkbox.is_checked or \
                             self.sidebar.end_checkbox.is_checked:
                             self.grid.handle_click_event(self.sidebar)
+                        """
 
 
     def _update(self):
@@ -229,9 +243,11 @@ class PathFinderApp:
 
         # Enable the next step button only if a search is actually in progress 
         if self.active_generator:
-            self.sidebar.next_step_button.enable() 
+            #self.sidebar.next_step_button.enable() 
+            logging.fatal(f"Uncomment next_step_button.enable")
         else:
-            self.sidebar.next_step_button.disable()
+            #self.sidebar.next_step_button.disable()
+            logging.fatal(f"Uncomment next_step_button.disable")
 
 
         # Handle continuous painting only when NO search is running 
