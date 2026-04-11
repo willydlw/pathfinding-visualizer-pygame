@@ -248,6 +248,18 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.ROW_SPACING 
 
+        self.clear_grid_button = UIButton(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_widget_width, self.ui_layout.widget_height)
+            ),
+            text="CLEAR GRID",
+            manager=self.manager,
+            container=self.map_panel 
+        )
+
+        self.ui_layout.draw_row += self.config.ROW_SPACING  
+
 
     def _init_algo_tab(self):
         # 1. Algorithm Selection 
@@ -332,7 +344,7 @@ class Sidebar:
         )
 
         self.ui_layout.draw_row += list_height + 10
-        
+
         self.clear_order_button = UIButton(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 

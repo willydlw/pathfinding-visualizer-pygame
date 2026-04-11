@@ -14,35 +14,14 @@ Initializing
         self.neighbor_order_list = []
 
     
-        
-        
-
 
          # --- Map Actions---
-        self._init_ui_map_actions()
-        self._init_ui_grid_settings()  # grid size toggle
-
-        # --- Row 2: Terrain ---
-        self._init_ui_terrain()
-
-        # Start/End Selection 
-        self._init_ui_start_end_markers()
-
+       
         self._init_ui_clear_grid_button()
 
         # Initial visibility: everything for 'Create Map' will be hidden
         self.update_visibility(Map_Actions.SELECT_NODES.label)
 
-
-        # --- Row 3: Algorithm --- 
-        #self._init_algorithm_selection()
-
-        # --- Row 4: Neighbor Direction --- 
-        #self._init_ui_neighbor_direction()
-       
-        
-    
-        draw_row += 30
 
         # --- Row 5: Action Buttons 
         draw_row += list_height + 20
@@ -121,82 +100,9 @@ Initializing
         self.ui_layout.draw_row += self.ui_layout.y_offset 
 
 
-    def _init_ui_algorithm_selection(self):
-       
-        self.algo_label = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1_x, self.ui_layout.draw_row), 
-                (self.ui_layout.label_width, self.ui_layout.widget_height)),
-            text="Algorithm:",
-            manager=self.manager
-        )
-
-        self.algo_dropdown = UIDropDownMenu(
-            options_list=[algo.name for algo in Algorithm_Type],
-            starting_option=Algorithm_Type.BFS.name,
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col2_x, self.ui_layout.draw_row), 
-                (self.ui_layout.right_col_width, self.ui_layout.widget_height)),
-            manager=self.manager
-        )
-
-        self.ui_layout.draw_row += self.ui_layout.y_offset
 
 
-    def _init_ui_neighbor_direction(self):
-         
-        list_height = 100 
 
-        # Diagonal Toggle Checkbox 
-        self.diagonal_checkbox = UICheckBox(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1_x, self.ui_layout.draw_row), 
-                (self.ui_layout.checkbox_size, self.ui_layout.checkbox_size)),
-            text="",
-            manager=self.manager 
-        )
-
-        self.diagonal_label = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1_x + self.ui_layout.checkbox_size + 5, self.ui_layout.draw_row), 
-                (self.ui_layout.width - self.ui_layout.label_width, self.ui_layout.widget_height)),
-            text="Include Diagonals",
-            manager=self.manager
-        )
-
-        self.ui_layout.draw_row += self.ui_layout.y_offset
-
-        draw_row += 30
-
-        # Label to explain lists purpose 
-        self.direction_label = UILabel(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
-            text="Neighbor Search Order (Click to add):",
-            manager=self.manager
-        )
-
-        draw_row += 30  # smaller offset for label
-
-        # Available Directions (Cardinal Only)
-        self.available_list = UISelectionList(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, list_height)),
-            item_list=['North', 'East', 'South', 'West'],
-            manager=self.manager
-        )
-
-        draw_row += list_height + 10
-        self.neighbor_order_display = UISelectionList(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, list_height)),
-            item_list=[],
-            manager=self.manager
-        )
-
-        draw_row += list_height + 5 
-        self.clear_order_button = UIButton(
-            relative_rect=pygame.Rect((col1_x, draw_row), (full_widget_width, 25)),
-            text="Clear Order",
-            manager=self.manager
-        )
 
 
    
