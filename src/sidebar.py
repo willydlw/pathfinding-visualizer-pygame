@@ -311,6 +311,7 @@ class Sidebar:
             text="CLEAR GRID",
             manager=self.manager,
             container=self.map_panel,
+            object_id="#clear_grid_button",
             tool_tip_object_id="Click here to reset the entire drawing area."
         )
 
@@ -555,10 +556,10 @@ class Sidebar:
     
     def uncheck_start_end(self):
         #Unchecks both start and end boxes.
-        self.start_checkbox.is_checked = False 
-        self.start_checkbox.rebuild()
-        self.end_checkbox.is_checked = False 
-        self.end_checkbox.rebuild()
+        self.start_marker_checkbox.is_checked = False 
+        self.start_marker_checkbox.rebuild()
+        self.end_marker_checkbox.is_checked = False 
+        self.end_marker_checkbox.rebuild()
 
 
 
@@ -602,8 +603,6 @@ class Sidebar:
                 allow_existing_files_only=(action_type == Map_Actions.LOAD_MAP)
             )
 
-
-        
 
     def _switch_tab(self, target_panel):
         self.map_panel.hide()

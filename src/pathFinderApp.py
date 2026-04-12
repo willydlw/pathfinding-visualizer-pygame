@@ -97,16 +97,13 @@ class PathFinderApp:
             # --- Handle Buttons ---
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 # App decides what to do when Sidebar buttons are pressed 
-                #logging.fatal(f"Uncomment run_search_button")
-                #logging.fatal(f"Uncomment next_step_button")
-                #logging.fatal(f"Uncomment clear_order_button")
-                #logging.fatal(f"Uncomment clear_grid_button")
+                
+                if event.ui_object_id.endswith("#clear_grid_button"):
+                    self.grid.clear()
+                    self.sidebar.uncheck_start_end()
 
                 """
-                if event.ui_element == self.sidebar.clear_grid_button:
-                     self.grid.clear() 
-                     self.sidebar.uncheck_start_end() 
-                
+
                 if event.ui_element == self.sidebar.run_search_button:
                     selected = self.sidebar.algo_dropdown.selected_option 
                     algo_str = selected[0] if isinstance(selected, tuple) else selected 
@@ -220,20 +217,6 @@ class PathFinderApp:
                     self.sidebar.available_list.set_item_list(sorted_available)
                                 
                 """
-
-            #logging.fatal("uncomment start_checkbox logic")
-            # TODO: Do we need this code for left clicks?
-            # Pass the event to the grid to for "one-time" actions
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1: # left click
-                    if not self.ui_manager.get_hovering_any_element():
-                        # Only do single_click logic if a checkbox is active 
-                        logging.fatal("uncomment start_checkbox logic")
-                        """
-                        if self.sidebar.start_checkbox.is_checked or \
-                            self.sidebar.end_checkbox.is_checked:
-                            self.grid.handle_click_event(self.sidebar)
-                        """
 
 
     def _update(self):
