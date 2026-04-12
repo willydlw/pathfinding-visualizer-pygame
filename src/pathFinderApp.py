@@ -1,9 +1,11 @@
 import pygame 
 import pygame_gui 
-from pygame_gui.elements import UIButton 
+from pygame_gui.elements import UIButton
+from pygame_gui.windows import UIConfirmationDialog 
 
 import json
 import logging 
+import os 
 
 from .appConfig import AppConfig
 from .grid import Grid 
@@ -75,7 +77,7 @@ class PathFinderApp:
         
         self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
-        self.current_file_action = None 
+        self.pending_save_path = None
         logging.info(f"PathFinderApp initialized")
 
     
@@ -95,10 +97,10 @@ class PathFinderApp:
             # --- Handle Buttons ---
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 # App decides what to do when Sidebar buttons are pressed 
-                logging.fatal(f"Uncomment run_search_button")
-                logging.fatal(f"Uncomment next_step_button")
-                logging.fatal(f"Uncomment clear_order_button")
-                logging.fatal(f"Uncomment clear_grid_button")
+                #logging.fatal(f"Uncomment run_search_button")
+                #logging.fatal(f"Uncomment next_step_button")
+                #logging.fatal(f"Uncomment clear_order_button")
+                #logging.fatal(f"Uncomment clear_grid_button")
 
                 """
                 if event.ui_element == self.sidebar.clear_grid_button:
@@ -123,12 +125,33 @@ class PathFinderApp:
 
             # --- Handle File Dialog Logic --- 
             elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
-                if self.current_file_action == Map_Actions.LOAD_MAP:
-                    self.grid.load_from_file(event.text)
-                if self.current_file_action == Map_Actions.SAVE_MAP:
-                    self.grid.save_to_file(event.text)
+                # Use the window title to decide what to do 
+                dialog_title = event.ui_element.window_display_title 
 
-                self.current_file_action = None
+                if dialog_title == Map_Actions.LOAD_MAP.label:
+                    logging.info(f"Loading map from {event.text}")
+                    self.grid.load_from_file(event.text)
+                elif dialog_title == Map_Actions.SAVE_MAP.label:
+                    logging.info(f"Saving map to {event.text}")
+                    if os.path.exists(event.text):
+                        self.pending_save_path = event.text 
+                        UIConfirmationDialog(
+                            rect=pygame.Rect(250, 200, 300, 200),
+                            manager=self.ui_manager,
+                            action_long_desc=f"The file '{os.path.basename(event.text)}' already exists. Overwrite?",
+                            window_title="Confirm Overwrite",
+                            action_short_name="Overwrite",
+                            blocking=True
+                        )
+                    else:
+                        self.grid.save_to_file(event.text)
+
+            elif event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
+                if self.pending_save_path:
+                    logging.info(f"Overwriting file {self.pending_save_path}")
+                    self.grid.save_to_file(self.pending_save_path)
+                    self.pending_save_path = None 
+
 
             # --- Handle Dropdowns ---
             elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
@@ -136,32 +159,26 @@ class PathFinderApp:
 
                 # Terrain Brush
                 if event.ui_element == self.sidebar.terrain_type_dropdown:
-                      terrain = Terrain_Type[event.text].value
-                      logging.debug(f"terrain: {terrain}")
-                      self.grid.current_brush = terrain 
-                      
+                    terrain = Terrain_Type[event.text].value
+                    self.grid.current_brush = terrain 
+
+                elif event.ui_element == self.sidebar.grid_dimensions_dropdown:
+                    logging.fatal(f"need logic for changing grid dimensions")
+
                 # Map Actions
                 elif event.ui_element == self.sidebar.map_dropdown:
-                    logging.debug(f"Map_Actions.CREATE_MAP.name: {Map_Actions.CREATE_MAP.name}")
-                    logging.debug(f"Map_Actions.LOAD_MAP.name:   {Map_Actions.LOAD_MAP.name}")
-                    logging.debug(f"Map_Actions.SAVE_MAP.name:   {Map_Actions.SAVE_MAP.name}")
+                    logging.debug(f"map_dropdown event: {event.text}")
+                    #logging.debug(f"Map_Actions.CREATE_MAP.name: {Map_Actions.CREATE_MAP.name}")
+                    #logging.debug(f"Map_Actions.LOAD_MAP.name:   {Map_Actions.LOAD_MAP.name}")
+                    #logging.debug(f"Map_Actions.SAVE_MAP.name:   {Map_Actions.SAVE_MAP.name}")
 
                     if event.text == Map_Actions.CREATE_MAP.name:
                         self.grid.clear() 
                         self.sidebar.uncheck_start_end() 
-                    else:
-                        # 1. Set the state so UI_FILE_DIALOG_PATH_PICKED knows what to do 
-                        self.current_file_action = Map_Actions.from_label(event.text)
-                        # 2. Opend the dialog via the sidebar
-                        self.sidebar._handle_map_action(event.text)
-                """
-                elif event.ui_element == self.sidebar.neighbor_order_dropdown:
-                    self.search_bias = event.text
-                    logging.debug(f"setting self.neighbor_order: {self.neighbor_order}")
-                """
+              
 
             # Selection List 
-            logging.fatal(f"Uncomments UI_SELECTION_LIST_NEW_SELECTION")
+            #logging.fatal(f"Uncomments UI_SELECTION_LIST_NEW_SELECTION")
             """
             elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
                 # 1. User clicks an available direction
@@ -204,7 +221,7 @@ class PathFinderApp:
                                 
                 """
 
-            logging.fatal("uncomment start_checkbox logic")
+            #logging.fatal("uncomment start_checkbox logic")
             # TODO: Do we need this code for left clicks?
             # Pass the event to the grid to for "one-time" actions
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -228,12 +245,12 @@ class PathFinderApp:
         self.ui_manager.update(time_delta)
 
         # Enable the next step button only if a search is actually in progress 
-        if self.active_generator:
+        #if self.active_generator:
             #self.sidebar.next_step_button.enable() 
-            logging.fatal(f"Uncomment next_step_button.enable")
-        else:
+            #logging.fatal(f"Uncomment next_step_button.enable")
+        #else:
             #self.sidebar.next_step_button.disable()
-            logging.fatal(f"Uncomment next_step_button.disable")
+            #logging.fatal(f"Uncomment next_step_button.disable")
 
 
         # Handle continuous painting only when NO search is running 

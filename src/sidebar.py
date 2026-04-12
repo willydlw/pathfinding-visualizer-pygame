@@ -142,6 +142,13 @@ class Sidebar:
 
 
 
+        # Other 
+        # Need a file dialog when user selects Save map or Load Map
+        self.active_file_dialog = None 
+        self.current_action = None 
+
+
+
 
     def _init_tabs(self):
         """Create the Tab Buttons."""
@@ -205,7 +212,8 @@ class Sidebar:
                 (self.ui_layout.col2x, self.ui_layout.draw_row),
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
             manager=self.manager,
-            container=self.map_panel 
+            container=self.map_panel,
+            object_id="#map_action_selector"
         )
         
         self.ui_layout.draw_row += self.config.ROW_SPACING 
@@ -425,10 +433,8 @@ class Sidebar:
             self._handle_checkbox_unchecked(event)
         
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+            logging.info(f"detected drop_down_menu_changed")
             self._handle_dropdown_menu_events(event)
-
-        elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
-            self._handle_file_dialog_path_picked_events(event)
 
         elif event.type == pygame_gui.UI_WINDOW_CLOSE:
             self._handle_window_close_events(event)
@@ -475,7 +481,10 @@ class Sidebar:
 
     def _handle_dropdown_menu_events(self, event):
 
-        if event.ui_element == self.map_dropdown:
+        logging.info(f"event: {event}")
+
+        if event.ui_object_id.endswith("#map_action_selector"):
+            logging.info(f"Map action dropdown changed")
             self._handle_map_action(event.text)
       
         elif event.ui_element == self.grid_dimensions_dropdown:
@@ -523,33 +532,7 @@ class Sidebar:
         logging.info(f"self.neighbor_order: {self.neighbor_order}")
 
 
-    def _handle_file_dialog_path_picked_events(self, event):
-        # Just close the dialog; let the App handle the grid logic.
-        if event.ui_element == self.active_file_dialog:
-            if self.current_action == Map_Actions.SAVE_MAP:
-               self.active_file_dialog = None 
 
-    def _handle_window_close_events(self, event):
-        # Clean up dialog reference when closed
-        if event.ui_element == self.active_file_dialog:
-            self.active_file_dialog = None
-            self.current_action = None
-           
-
-       
-    def open_file_dialog(self, action_type):
-        #Sidebar owns the dialog object, but the App uses the result
-        if self.active_file_dialog is None:
-            title = action_type.label
-
-            self.active_file_dialog = UIFileDialog(
-                rect=pygame.Rect(160, 50, 440, 500),
-                manager=self.manager,
-                window_title=title,
-                initial_file_path="maps/"
-            )
-
-            self.current_action = action_type
 
 
     def refresh_available_list(self):
@@ -581,13 +564,44 @@ class Sidebar:
 
 
     def _handle_map_action(self, text):
-        #Trigger dialogs, but leave grid clearing to the App.
-
+       
         logging.info("map action text: {text}")
-        if text == Map_Actions.LOAD_MAP.name:
-                self.open_file_dialog(Map_Actions.LOAD_MAP)
-        elif text == Map_Actions.SAVE_MAP.name:
+
+        if text == Map_Actions.LOAD_MAP.label:
+            self.open_file_dialog(Map_Actions.LOAD_MAP)
+        elif text == Map_Actions.SAVE_MAP.label:
             self.open_file_dialog(Map_Actions.SAVE_MAP)
+
+
+    def _handle_window_close_events(self, event):
+        # Clean up dialog reference when closed
+        if event.ui_element == self.active_file_dialog:
+            self.active_file_dialog = None
+
+
+    def open_file_dialog(self, action_type):
+        #Sidebar owns the dialog object, but the App uses the result
+        if self.active_file_dialog is None:
+            # Default name for saving
+            
+            if action_type == Map_Actions.SAVE_MAP:
+                title = "Save Map (Type name in path bar above)"
+                path = "maps/new_map.json"
+            else:
+                title = action_type.label
+                path = "maps/"
+
+
+            self.active_file_dialog = UIFileDialog(
+                rect=pygame.Rect(160, 50, 440, 500),
+                manager=self.manager,
+                window_title=title,
+                initial_file_path=path,
+                object_id="#map_file_dialog",
+                allowed_suffixes={".json"},
+                allow_existing_files_only=(action_type == Map_Actions.LOAD_MAP)
+            )
+
 
         
 
