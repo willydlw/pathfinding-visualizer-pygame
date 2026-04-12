@@ -125,6 +125,22 @@ class Sidebar:
         self.algo_panel.hide()
         self.viz_panel.hide()
 
+        # 5. Initialize map panel with ui elements
+        self.label_map = None
+        self.map_dropdown = None 
+        self.terrain_label = None 
+        self.terrain_dropdown = None 
+        self.grid_size_label = None 
+        self.grid_size_dropdown = None 
+        self.start_marker_checkbox = None
+        self.start_marker_label = None 
+        self.end_marker_checkbox = None
+        self.end_marker_label = None 
+        self._init_map_tab()
+
+        # 6. Initialze algorithm panel with ui elements 
+
+
 
 
     def _init_tabs(self):
@@ -165,9 +181,15 @@ class Sidebar:
 
 
     def _init_map_tab(self):
-
+        """
+        Create UI elements for 
+            1. Map actions: create map, load map, save map
+            2. Terrain type, 
+            3. Setting grid dimensions
+            4. Setting start, end locations 
+        """
         # 1. Map Actions 
-        self.label_map = UILabel(
+        self.map_action_label = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.label_width, self.ui_layout.widget_height)),
@@ -176,7 +198,7 @@ class Sidebar:
             container=self.map_panel 
         )
 
-        self.map_dropdown = UIDropDownMenu(
+        self.map_action_dropdown = UIDropDownMenu(
             options_list=Map_Actions.list_labels(),
             starting_option=Map_Actions.SELECT_NODES.label,
             relative_rect=pygame.Rect(
@@ -189,7 +211,7 @@ class Sidebar:
         self.ui_layout.draw_row += self.config.ROW_SPACING 
 
         # 2. Terrain        
-        self.terrain_label = UILabel(
+        self.terrain_type_label = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.label_width, self.ui_layout.widget_height)),
@@ -198,7 +220,7 @@ class Sidebar:
             container=self.map_panel 
         )
 
-        self.terrain_dropdown = UIDropDownMenu(
+        self.terrain_type_dropdown = UIDropDownMenu(
             options_list=[terrain.name for terrain in Terrain_Type],
             starting_option=Terrain_Type.GRASS.name,
             relative_rect=pygame.Rect(
@@ -211,7 +233,7 @@ class Sidebar:
         self.ui_layout.draw_row += self.config.ROW_SPACING 
     
         # Grid Settings
-        self.grid_size_label = UILabel(
+        self.grid_dimensions_label = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row),
                 (self.ui_layout.label_width, self.ui_layout.widget_height)
@@ -221,7 +243,7 @@ class Sidebar:
             container=self.map_panel 
         )
 
-        self.grid_size_dropdown = UIDropDownMenu(
+        self.grid_dimensions_dropdown = UIDropDownMenu(
             options_list=Map_Dimension.get_ui_labels(),
             starting_option=Map_Dimension.MD8.label,
             relative_rect=pygame.Rect(
@@ -235,7 +257,7 @@ class Sidebar:
         self.ui_layout.draw_row += self.config.ROW_SPACING 
 
         # Start/End Markers     
-        self.start_checkbox = UICheckBox(
+        self.start_marker_checkbox = UICheckBox(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row + 5), 
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
@@ -244,7 +266,7 @@ class Sidebar:
             container=self.map_panel 
         )
 
-        self.start_label = UILabel(
+        self.start_marker_label = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x + self.config.CHECKBOX_SIZE + 5, self.ui_layout.draw_row), 
                 (80, self.ui_layout.widget_height)),
@@ -253,7 +275,7 @@ class Sidebar:
             container=self.map_panel 
         )
 
-        self.end_checkbox = UICheckBox(
+        self.end_marker_checkbox = UICheckBox(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row + 5), 
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
@@ -262,7 +284,7 @@ class Sidebar:
             container=self.map_panel 
         )
 
-        self.end_label = UILabel(
+        self.end_marker_label = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x + self.config.CHECKBOX_SIZE + 5, self.ui_layout.draw_row), 
                 (80, self.ui_layout. widget_height)),
@@ -280,7 +302,8 @@ class Sidebar:
             ),
             text="CLEAR GRID",
             manager=self.manager,
-            container=self.map_panel 
+            container=self.map_panel,
+            tool_tip_object_id="Click here to reset the entire drawing area."
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING  
@@ -412,10 +435,10 @@ class Sidebar:
 
     
     def _handle_checkbox_unchecked(self, event):
-        if event.ui_element == self.size_checkbox:
-            self.size_dropdown.disable()
 
-        elif event.ui_element == self.diagonal_checkbox:
+        logging.info(f"checkbox_checked event type: {event.type} ")
+        
+        if event.ui_element == self.diagonal_checkbox:
             diagonals = Neighbor_Direction.get_diagonal_labels()
 
             # 1. Remove diagonals from the available list 
@@ -430,28 +453,23 @@ class Sidebar:
 
     def _handle_checkbox_checked(self, event):
 
-        if event.type == self.start_checkbox:
-            self.end_checkbox.is_checked = False 
-            self.end_checkbox.rebuild()
-        
-        elif event.type == self.end_checkbox:
-            self.start_checkbox.is_checked = False 
-            self.start_checkbox.rebuild()
+        logging.info(f"checkbox_checked event type: {event.type}")
 
-        elif event.ui_element == self.start_checkbox:
-            if self.start_checkbox.is_checked:
+        if event.ui_element == self.start_marker_checkbox:
+            if self.start_marker_checkbox.is_checked:
                 # Force uncheck the other 
-                self.end_checkbox.is_checked = False 
-                self.end_checkbox.rebuild()
+                self.end_marker_checkbox.is_checked = False 
+                self.end_marker_checkbox.rebuild()
 
-        elif event.ui_element == self.end_checkbox:
-            if self.end_checkbox.is_checked:
+        elif event.ui_element == self.end_marker_checkbox:
+            if self.end_marker_checkbox.is_checked:
                 # force uncheck the other 
-                self.start_checkbox.is_checked = False 
-                self.start_checkbox.rebuild() 
+                self.start_marker_checkbox.is_checked = False 
+                self.start_marker_checkbox.rebuild() 
 
-        elif event.ui_element == self.diagonal_checkbox:
-            self.refresh_available_list()
+
+        #elif event.ui_element == self.diagonal_checkbox:
+        #    self.refresh_available_list()
 
     
 

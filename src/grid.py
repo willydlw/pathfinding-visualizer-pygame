@@ -103,7 +103,7 @@ class Grid:
 
             if node:
                 # Handle start checkbox
-                if sidebar.start_checkbox.is_checked:
+                if sidebar.start_marker_checkbox.is_checked:
                     # if we are click a new node, reset the old start node 
                     if self.start_node and self.start_node != node:
                         self.start_node.is_start = False 
@@ -113,7 +113,7 @@ class Grid:
                     logging.info(f"Start moved to: {node.row}, {node.col}")
 
                 # Handle end checkbox
-                elif sidebar.end_checkbox.is_checked:
+                elif sidebar.end_marker_checkbox.is_checked:
                     if self.end_node and self.end_node != node:
                         self.end_node.is_end = False 
                     node.is_start = False
