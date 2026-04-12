@@ -133,11 +133,13 @@ class PathFinderApp:
             # --- Handle Dropdowns ---
             elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                 logging.debug(f"event.text: {event.text}")
+
                 # Terrain Brush
-                if event.ui_element == self.sidebar.terrain_dropdown:
+                if event.ui_element == self.sidebar.terrain_type_dropdown:
                       terrain = Terrain_Type[event.text].value
                       logging.debug(f"terrain: {terrain}")
                       self.grid.current_brush = terrain 
+                      
                 # Map Actions
                 elif event.ui_element == self.sidebar.map_dropdown:
                     logging.debug(f"Map_Actions.CREATE_MAP.name: {Map_Actions.CREATE_MAP.name}")

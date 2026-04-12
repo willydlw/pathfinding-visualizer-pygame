@@ -126,12 +126,12 @@ class Sidebar:
         self.viz_panel.hide()
 
         # 5. Initialize map panel with ui elements
-        self.label_map = None
+        self.map_label = None
         self.map_dropdown = None 
-        self.terrain_label = None 
-        self.terrain_dropdown = None 
-        self.grid_size_label = None 
-        self.grid_size_dropdown = None 
+        self.terrain_type_label = None 
+        self.terrain_type_dropdown = None 
+        self.grid_dimensions_label = None 
+        self.grid_dimensions_dropdown = None 
         self.start_marker_checkbox = None
         self.start_marker_label = None 
         self.end_marker_checkbox = None
@@ -476,9 +476,9 @@ class Sidebar:
     def _handle_dropdown_menu_events(self, event):
 
         if event.ui_element == self.map_dropdown:
-            self.update_visibility(event.text)
+            self._handle_map_action(event.text)
       
-        elif event.ui_element == self.grid_size_dropdown:
+        elif event.ui_element == self.grid_dimensions_dropdown:
 
             # Store the intended size but don't apply it yet 
             self.pending_grid_size = event.text 
@@ -494,7 +494,8 @@ class Sidebar:
                 blocking=True
             )
 
-    
+
+        """
         elif event.ui_element == self.anim_dropdown:
             # Next Step button visibility
             logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
@@ -508,10 +509,10 @@ class Sidebar:
         elif event.ui_element == self.algo_dropdown:
                 self.selected_algo = event.text 
                 logging.info(f"Selected algorithm: {self.selected_algo}")
+        """
         
-        elif event.ui_element == self.map_dropdown:
-            self._handle_map_action(event.text)
-
+        
+        """
         elif event.ui_element == self.neighbor_order_dropdown:
             self._handle_neighbor_order(event.text)
         """
@@ -576,28 +577,6 @@ class Sidebar:
         self.end_checkbox.is_checked = False 
         self.end_checkbox.rebuild()
 
-    def update_visibility(self, label_text):
-        current_action = Map_Actions.from_label(label_text)
-        is_editing = (current_action == Map_Actions.CREATE_MAP)
-        
-        # Use the specific names you defined in _init_ui_grid_settings
-        widgets = [
-            self.grid_size_label, 
-            self.grid_size_dropdown,
-            self.terrain_label,
-            self.terrain_dropdown,
-            self.start_label,
-            self.start_checkbox,
-            self.end_label,
-            self.end_checkbox,
-            self.clear_grid_button
-        ]
-
-        for widget in widgets:
-            widget.show() if is_editing else widget.hide()
-
-
-
 
 
 
@@ -609,8 +588,7 @@ class Sidebar:
                 self.open_file_dialog(Map_Actions.LOAD_MAP)
         elif text == Map_Actions.SAVE_MAP.name:
             self.open_file_dialog(Map_Actions.SAVE_MAP)
-        
- """
+
         
 
     def _switch_tab(self, target_panel):
