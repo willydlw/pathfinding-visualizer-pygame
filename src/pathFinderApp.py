@@ -16,6 +16,7 @@ from .constants import (
     Algorithm_Type,
     Animation_Mode,
     Map_Actions,
+    Map_Dimension,
     Neighbor_Direction,
     Speed_Options,
     Terrain_Type,
@@ -68,6 +69,11 @@ class PathFinderApp:
             logging.error(f"File 'theme.json' not found")
             self.ui_manager = pygame_gui.UIManager((self.screen_width, self.screen_height))
 
+        # Preloading this font to avoid a warning when UI later has to load it.
+        self.ui_manager.preload_fonts([
+                {'name': 'noto_sans', 'point_size': 14, 'style': 'bold'},
+            ])
+
         # Position sidebar after the grid + extra padding 
         sidebar_x = self.config.GRID_WIDTH + (self.config.GRID_PADDING * 2)
         self.sidebar = Sidebar(
@@ -78,6 +84,8 @@ class PathFinderApp:
         self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
         self.pending_save_path = None
+        self.pending_grid_size = None 
+        self.confirmation_dialog = None
         logging.info(f"PathFinderApp initialized")
 
     
@@ -145,29 +153,72 @@ class PathFinderApp:
 
             elif event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
                 if self.pending_save_path:
-                    logging.info(f"Overwriting file {self.pending_save_path}")
                     self.grid.save_to_file(self.pending_save_path)
                     self.pending_save_path = None 
+                
+                if self.pending_grid_size is not None:
+                    self.grid.resize_grid(self.pending_grid_size)
 
+                    # reset the pending variable soe it doesn't trigger again accidentally
+                    self.pending_grid_size = None 
+                    
+            elif event.type == pygame_gui.UI_WINDOW_CLOSE:
+                if event.ui_element ==  self.confirmation_dialog:
+                    # User cancelled! Revert dropdown to the actual current grid size
+                    # Find the label corresponding to the current grid rows 
+                    current_dim_label = Map_Dimension(self.grid.rows).label 
+
+
+                    # Kill and recreate is the standard for "pygame-gui>=0.6.14",
+                    # Grab existing rect
+                    old_rect = self.sidebar.grid_dimensions_dropdown.relative_rect
+                    
+                    self.sidebar.grid_dimensions_dropdown.kill()
+                    self.sidebar.grid_dimensions_dropdown = pygame_gui.elements.UIDropDownMenu(
+                        options_list=Map_Dimension.get_ui_labels(),
+                        starting_option=current_dim_label,
+                        relative_rect=old_rect,
+                        manager=self.sidebar.manager,
+                        container=self.sidebar.map_panel,
+                        object_id="#grid_dimensions_selector"
+                    )
+
+                    # clear the pending state
+                    self.pending_grid_size = None 
 
             # --- Handle Dropdowns ---
             elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                 logging.debug(f"event.text: {event.text}")
 
                 # Terrain Brush
-                if event.ui_element == self.sidebar.terrain_type_dropdown:
+                if event.ui_object_id.endswith("#terrain_type_selector"):
                     terrain = Terrain_Type[event.text].value
                     self.grid.current_brush = terrain 
 
-                elif event.ui_element == self.sidebar.grid_dimensions_dropdown:
-                    logging.fatal(f"need logic for changing grid dimensions")
+                elif event.ui_object_id.endswith("#grid_dimensions_selector"):
+                    # Store the intended size but don't apply it yet 
+                    self.pending_grid_size = Map_Dimension.from_label(event.text).value
+
+                    # Define the dialog dimensions 
+                    dialog_w, dialog_h = 300, 200 
+
+                    # Calculate center position 
+                    center_x = (self.screen_width - dialog_w) // 2 
+                    center_y = (self.screen_height - dialog_h) // 2
+                
+                    # Create the confirmation dialog
+                    self.confirmation_dialog = UIConfirmationDialog(
+                        rect=pygame.Rect((center_x, center_y), (dialog_w, dialog_h)), # Center this as needed
+                        manager=self.ui_manager,
+                        window_title="Confirm Grid Resize",
+                        action_long_desc="Resizing the grid will <b>clear all current drawings</b>. Do you want to proceed?",
+                        action_short_name="Yes, Resize",
+                        blocking=True
+                    )
+
 
                 # Map Actions
                 elif event.ui_element == self.sidebar.map_dropdown:
-                    logging.debug(f"map_dropdown event: {event.text}")
-                    #logging.debug(f"Map_Actions.CREATE_MAP.name: {Map_Actions.CREATE_MAP.name}")
-                    #logging.debug(f"Map_Actions.LOAD_MAP.name:   {Map_Actions.LOAD_MAP.name}")
-                    #logging.debug(f"Map_Actions.SAVE_MAP.name:   {Map_Actions.SAVE_MAP.name}")
 
                     if event.text == Map_Actions.CREATE_MAP.name:
                         self.grid.clear() 

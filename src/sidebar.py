@@ -207,7 +207,7 @@ class Sidebar:
 
         self.map_action_dropdown = UIDropDownMenu(
             options_list=Map_Actions.list_labels(),
-            starting_option=Map_Actions.SELECT_NODES.label,
+            starting_option=Map_Actions.EDIT_MAP.label,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row),
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
@@ -235,7 +235,8 @@ class Sidebar:
                 (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
             manager=self.manager,
-            container=self.map_panel 
+            container=self.map_panel,
+            object_id="#terrain_type_selector"
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING 
@@ -259,7 +260,8 @@ class Sidebar:
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)
             ),
             manager=self.manager,
-            container=self.map_panel 
+            container=self.map_panel,
+            object_id="#grid_dimensions_selector"
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING 
@@ -271,7 +273,8 @@ class Sidebar:
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
             text="",
             manager=self.manager,
-            container=self.map_panel 
+            container=self.map_panel,
+            object_id="#start_marker_checkbox"
         )
 
         self.start_marker_label = UILabel(
@@ -289,7 +292,8 @@ class Sidebar:
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
             text="",
             manager=self.manager,
-            container=self.map_panel 
+            container=self.map_panel,
+            object_id="#end_marker_checkbox"
         )
 
         self.end_marker_label = UILabel(
@@ -312,7 +316,7 @@ class Sidebar:
             manager=self.manager,
             container=self.map_panel,
             object_id="#clear_grid_button",
-            tool_tip_object_id="Click here to reset the entire drawing area."
+            tool_tip_text="Click here to reset the entire drawing area."
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING  
@@ -442,9 +446,7 @@ class Sidebar:
 
     
     def _handle_checkbox_unchecked(self, event):
-
-        logging.info(f"checkbox_checked event type: {event.type} ")
-        
+  
         if event.ui_element == self.diagonal_checkbox:
             diagonals = Neighbor_Direction.get_diagonal_labels()
 
@@ -459,8 +461,6 @@ class Sidebar:
 
 
     def _handle_checkbox_checked(self, event):
-
-        logging.info(f"checkbox_checked event type: {event.type}")
 
         if event.ui_element == self.start_marker_checkbox:
             if self.start_marker_checkbox.is_checked:
@@ -482,27 +482,9 @@ class Sidebar:
 
     def _handle_dropdown_menu_events(self, event):
 
-        logging.info(f"event: {event}")
-
         if event.ui_object_id.endswith("#map_action_selector"):
-            logging.info(f"Map action dropdown changed")
             self._handle_map_action(event.text)
       
-        elif event.ui_element == self.grid_dimensions_dropdown:
-
-            # Store the intended size but don't apply it yet 
-            self.pending_grid_size = event.text 
-
-            # Create the confirmation dialog 
-            # Create the confirmation dialog
-            self.confirmation_dialog = UIConfirmationDialog(
-                rect=pygame.Rect((400, 200), (300, 200)), # Center this as needed
-                manager=self.manager,
-                window_title="Confirm Resize",
-                action_long_desc="Resizing the grid will <b>clear all current drawings</b>. Do you want to proceed?",
-                action_short_name="Yes, Resize",
-                blocking=True
-            )
 
 
         """
@@ -565,9 +547,6 @@ class Sidebar:
 
 
     def _handle_map_action(self, text):
-       
-        logging.info("map action text: {text}")
-
         if text == Map_Actions.LOAD_MAP.label:
             self.open_file_dialog(Map_Actions.LOAD_MAP)
         elif text == Map_Actions.SAVE_MAP.label:

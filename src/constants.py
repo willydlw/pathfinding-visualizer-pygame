@@ -154,10 +154,9 @@ class Draw_State(IntEnum):
 
 @unique
 class Map_Actions(IntEnum):
-    SELECT_NODES = 0
-    CREATE_MAP = 1
-    LOAD_MAP = 2
-    SAVE_MAP = 3
+    EDIT_MAP = 0
+    LOAD_MAP = 1
+    SAVE_MAP = 2
 
     @property 
     def label(self):
@@ -197,7 +196,6 @@ class Map_Dimension(IntEnum):
     MD32 = 32
     MD64 = 64
     MD128 = 128 
-    MD256 = 256
 
     @property 
     def label(self) -> str:
@@ -395,6 +393,9 @@ class Terrain_Type(IntEnum):
             self.WATER:  (162, 192, 201),   # dusty blue  
         }.get(self, (255, 255, 255))        # Default white
     
+    @classmethod 
+    def default(cls):
+        return cls.GRASS 
 
     @property 
     def label(self):
@@ -417,7 +418,7 @@ class Terrain_Type(IntEnum):
         for member in cls:
             if member.label.lower() == label_text.lower():
                 return member 
-        raise ValueError(f"Invalid label: {label_text}")
+        return cls.default
     
     # @lru_cache decorator avoids rebuilding the dictionary every time method
     # is called. The same dictionary object is returned on subsequent calls.

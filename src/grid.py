@@ -110,7 +110,6 @@ class Grid:
                     node.is_start = True 
                     node.is_end = False 
                     self.start_node = node 
-                    logging.info(f"Start moved to: {node.row}, {node.col}")
 
                 # Handle end checkbox
                 elif sidebar.end_marker_checkbox.is_checked:
@@ -119,7 +118,6 @@ class Grid:
                     node.is_start = False
                     node.is_end = True 
                     self.end_node = node 
-                    logging.info(f"End moved to: {node.row}, {node.col}")
 
                 # Handle regular painting
                 else:
@@ -256,4 +254,23 @@ class Grid:
         for row in self.map:
             for node in row:
                 node.reset_search_states()
+
+    def resize_grid(self, new_num_cells):
+        """Resets the grid to a new number of cells."""
+        self.rows = new_num_cells 
+        self.cols = new_num_cells 
+        
+        # Recalculate the size of a single cell in pixels 
+        self.cell_size = self.grid_size // new_num_cells 
+
+        # Reset states that would be invalid on a new grid 
+        self.start_node = None 
+        self.end_node = None 
+
+        # Rebuild 2D map 
+        self.map = [[Node(r, c, self.cell_size, Terrain_Type.GRASS)
+                     for c in range(self.cols)]
+                     for r in range(self.rows)]
+        
+        logging.info(f"Grid resized to {new_num_cells}x{new_num_cells} Cell size: {self.cell_size}px")
         

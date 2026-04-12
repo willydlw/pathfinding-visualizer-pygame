@@ -8,5 +8,13 @@
             "border_width": "0",
             "shadow_width": "0"
         }
+    },
+    "#grid_dimensions_selector": {
+        "colours": {
+            "normal_bg": "#34495e",
+            "hovered_bg": "#3d566e",
+            "selected_bg": "#1abc9c",
+            "normal_text": "#ffffff"
+        }
     }
 }
