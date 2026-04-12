@@ -3,6 +3,7 @@ import pygame_gui
 import logging 
 
 
+import pygame_gui.ui_manager
 from pygame_gui.windows import (
     UIConfirmationDialog,
     UIFileDialog 
@@ -42,12 +43,13 @@ logger = logging.getLogger(__name__)
 
 class UI_Layout:
 
-    def __init__(self, width, padding, widget_height, label_width, start_row):
+    def __init__(self, width, padding, widget_height, label_width, x_offset, start_row):
 
         self.width = width 
         self.padding = padding 
         self.widget_height = widget_height 
         self.label_width = label_width 
+        self.start_x = x_offset
         self.start_row = start_row
         self.draw_row = start_row
 
@@ -68,36 +70,45 @@ class UI_Layout:
 
 
 class Sidebar:
+    # Declare instance attributes here for the IDE/Type Checker 
+    manager:    pygame_gui.UIManager 
+    config:     AppConfig 
+    ui_layout:  UI_Layout
+    map_btn:    UIButton   # Hinting the attributes defined in _init_tabs 
+    algo_btn:   UIButton  
+    viz_button: UIButton
+    map_panel:  UIPanel 
+    algo_panel: UIPanel 
+    viz_panel:  UIPanel
+
+
     def __init__(self, manager, config: AppConfig):
         self.manager = manager
         self.config = config
 
+        # UI Layout
         self.ui_layout = UI_Layout(
             width=config.SIDEBAR_WIDTH,
             padding = 10,
             widget_height=self.config.WIDGET_HEIGHT,
             label_width=110,
+            x_offset = self.config.GRID_WIDTH + (self.config.GRID_PADDING * 2),
             start_row=config.UI_START_ROW
         )
 
-        self.ui_layout.draw_row = 20
-        self.x_offset = self.config.GRID_WIDTH + (self.config.GRID_PADDING * 2)
-
+        
         # 1. Create Tab Buttons ad the top of hte Sidebar
+        self.map_btn  = None 
+        self.algo_btn = None 
+        self.viz_btn  = None
         self._init_tabs()
 
-
         # 2. Create the Panels (Containers)
-        panel_y_start = 70 
-        bottom_margin = 20 
-        dynamic_height = config.GRID_WIDTH + (config.GRID_PADDING * 2) - panel_y_start - bottom_margin
-        panel_rect = pygame.Rect(
-            (self.x_offset, panel_y_start), 
-            (config.SIDEBAR_WIDTH, dynamic_height))
-
-        self.map_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-        self.algo_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-        self.viz_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.map_panel  = None
+        self.algo_panel = None
+        self.viz_panel  = None 
+        self._init_panels()
+        
 
         # 3. Initialize Content 
         self.ui_layout.reset_flow()
@@ -117,32 +128,46 @@ class Sidebar:
 
 
     def _init_tabs(self):
+        """Create the Tab Buttons."""
         tab_w = self.config.SIDEBAR_WIDTH // 3 
         tab_h = 40 
 
-        self.btn_map = UIButton(
-            relative_rect=pygame.Rect((self.x_offset,20), (tab_w, tab_h)),
+        self.map_btn = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.start_x,20), (tab_w, tab_h)),
             text="Map",
             manager=self.manager 
         )
 
-        self.btn_algo = UIButton(
-            relative_rect=pygame.Rect((self.x_offset + tab_w,20), (tab_w, tab_h)),
+        self.algo_btn = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.start_x + tab_w,20), (tab_w, tab_h)),
             text="Algorithm",
             manager=self.manager 
         )
 
-        self.btn_viz = UIButton(
-            relative_rect=pygame.Rect((self.x_offset + tab_w * 2,20), (tab_w, tab_h)),
+        self.viz_button = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.start_x + tab_w * 2,20), (tab_w, tab_h)),
             text="Visualize",
             manager=self.manager 
         )
+
+    def _init_panels(self):
+        """Create a panel for each Tab."""
+        panel_y_start = 70 
+        bottom_margin = 20 
+        dynamic_height = self.config.GRID_WIDTH + (self.config.GRID_PADDING * 2) - panel_y_start - bottom_margin
+        panel_rect = pygame.Rect(
+            (self.ui_layout.start_x, panel_y_start), 
+            (self.config.SIDEBAR_WIDTH, dynamic_height))
+
+        self.map_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.algo_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.viz_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
 
 
     def _init_map_tab(self):
 
         # 1. Map Actions 
-        self.map_label = UILabel(
+        self.label_map = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.label_width, self.ui_layout.widget_height)),
@@ -361,12 +386,13 @@ class Sidebar:
 
     def handle_events(self, event):
 
+        # Handles switching between map, panel, and viz tabs
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            if event.ui_element == self.btn_map:
+            if event.ui_element == self.map_btn:
                 self._switch_tab(self.map_panel)
-            elif event.ui_element == self.btn_algo:
+            elif event.ui_element == self.algo_btn:
                 self._switch_tab(self.algo_panel)
-            elif event.ui_element == self.btn_viz:
+            elif event.ui_element == self.viz_btn:
                 self._switch_tab(self.viz_panel)
 
         elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
@@ -428,7 +454,6 @@ class Sidebar:
             self.refresh_available_list()
 
     
-               
 
     def _handle_dropdown_menu_events(self, event):
 
@@ -480,7 +505,7 @@ class Sidebar:
 
 
     def _handle_file_dialog_path_picked_events(self, event):
-        """ Just close the dialog; let the App handle the grid logic."""
+        # Just close the dialog; let the App handle the grid logic.
         if event.ui_element == self.active_file_dialog:
             if self.current_action == Map_Actions.SAVE_MAP:
                self.active_file_dialog = None 
@@ -494,7 +519,7 @@ class Sidebar:
 
        
     def open_file_dialog(self, action_type):
-        """Sidebar owns the dialog object, but the App uses the result"""
+        #Sidebar owns the dialog object, but the App uses the result
         if self.active_file_dialog is None:
             title = action_type.label
 
@@ -527,7 +552,7 @@ class Sidebar:
         self.status_label.set_text(message)
     
     def uncheck_start_end(self):
-        """Unchecks both start and end boxes."""
+        #Unchecks both start and end boxes.
         self.start_checkbox.is_checked = False 
         self.start_checkbox.rebuild()
         self.end_checkbox.is_checked = False 
@@ -557,16 +582,9 @@ class Sidebar:
 
 
 
-    def _switch_tab(self, target_panel):
-        self.map_panel.hide()
-        self.algo_panel.hide()
-        self.viz_panel.hide()
-        target_panel.show() 
-        self.active_panel = target_panel
- 
 
     def _handle_map_action(self, text):
-        """Trigger dialogs, but leave grid clearing to the App."""
+        #Trigger dialogs, but leave grid clearing to the App.
 
         logging.info("map action text: {text}")
         if text == Map_Actions.LOAD_MAP.name:
@@ -574,4 +592,13 @@ class Sidebar:
         elif text == Map_Actions.SAVE_MAP.name:
             self.open_file_dialog(Map_Actions.SAVE_MAP)
         
+ """
+        
+
+    def _switch_tab(self, target_panel):
+        self.map_panel.hide()
+        self.algo_panel.hide()
+        self.viz_panel.hide()
+        target_panel.show() 
+        self.active_panel = target_panel
  
