@@ -9,7 +9,7 @@ class AppConfig:
     # Sidebar Sizes (used by UI_Layout)
     SIDEBAR_WIDTH: int = 400 
     WIDGET_HEIGHT: int = 35 
-    CHECKBOX_SIZE: int = 25
+    CHECKBOX_SIZE: int = 50
     ROW_SPACING:   int = 50 
     UI_START_ROW:  int = 20
 

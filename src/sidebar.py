@@ -74,12 +74,12 @@ class Sidebar:
     manager:    pygame_gui.UIManager 
     config:     AppConfig 
     ui_layout:  UI_Layout
-    map_btn:    UIButton   # Hinting the attributes defined in _init_tabs 
-    algo_btn:   UIButton  
-    viz_button: UIButton
-    map_panel:  UIPanel 
-    algo_panel: UIPanel 
-    viz_panel:  UIPanel
+    btn_map_tab:    UIButton   # Hinting the attributes defined in _init_tabs 
+    btn_algo_tab:   UIButton  
+    btn_viz_tab: UIButton
+    panel_map_config:  UIPanel 
+    panel_algo_settings: UIPanel 
+    panel_viz_settings:  UIPanel
 
 
     def __init__(self, manager, config: AppConfig):
@@ -105,54 +105,52 @@ class Sidebar:
 
         
         # 1. Create Tab Buttons at the top of the Sidebar
-        self.map_btn  = None 
-        self.algo_btn = None 
-        self.viz_btn  = None
+        self.btn_map_tab  = None 
+        self.btn_algo_tab = None 
+        self.btn_viz_tab  = None
         self._init_tabs()
 
         # 2. Create the Panels (Containers)
-        self.map_panel  = None
-        self.algo_panel = None
-        self.viz_panel  = None 
+        self.panel_map_config  = None
+        self.panel_algo_settings = None
+        self.panel_viz_settings  = None 
         self._init_panels()
          
 
-        # 3. Initialize map panel with ui elements
-        self.map_label = None
-        self.map_dropdown = None 
-        self.terrain_type_label = None 
-        self.terrain_type_dropdown = None 
-        self.grid_dimensions_label = None 
-        self.grid_dimensions_dropdown = None 
-        self.start_marker_checkbox = None
-        self.start_marker_label = None 
-        self.end_marker_checkbox = None
-        self.end_marker_label = None 
+        # 3. Initialize map panel ui elements
+        self.label_map_action = None
+        self.select_map_action = None 
+        self.label_terrain_type = None 
+        self.select_terrain = None 
+        self.label_grid_dimensions = None 
+        self.select_grid_dimensions = None 
+        self.check_place_start = None
+        self.check_place_end = None
+       
         self.ui_layout.reset_flow()
-        self._init_map_panel() 
+        self._init_panel_map_config() 
        
 
-        # 5. Initialze algorithm panel with ui elements 
-        self.algo_label = None 
-        self.algo_dropdown = None 
-        self.diagonal_direction_checkbox = None 
-        self.diagonal_direction_label = None 
-        self.neighbor_direction_label = None 
-        self.available_direction_list = None 
-        self.neighbor_order_display = None 
-        self.clear_order_button = None 
+        # 5. Initialze algorithm panel ui elements 
+        self.label_algo = None 
+        self.select_algo = None 
+        self.check_allow_diagonals = None 
+        self.label_avail_dirs = None 
+        self.list_avail_dirs = None 
+        self.list_active_order = None 
+        self.btn_clear_order = None 
 
         self.ui_layout.reset_flow()
-        self._init_algo_panel()
+        self._init_panel_algo_settings()
 
         # 6. Initialize viz panel with ui elements
         self.ui_layout.reset_flow()
-        self._init_viz_panel() 
+        self._init_panel_viz_settings() 
        
         # Set Initial Active Panel State 
-        self.active_panel = self.algo_panel
-        self.map_panel.hide()
-        self.viz_panel.hide()
+        self.active_panel = self.panel_algo_settings
+        self.panel_map_config.hide()
+        self.panel_viz_settings.hide()
 
 
     def _init_tabs(self):
@@ -160,19 +158,19 @@ class Sidebar:
         tab_w = self.config.SIDEBAR_WIDTH // 3 
         tab_h = 40 
 
-        self.map_btn = UIButton(
+        self.btn_map_tab = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.start_x,20), (tab_w, tab_h)),
             text="Map",
             manager=self.manager 
         )
 
-        self.algo_btn = UIButton(
+        self.btn_algo_tab = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.start_x + tab_w,20), (tab_w, tab_h)),
             text="Algorithm",
             manager=self.manager 
         )
 
-        self.viz_button = UIButton(
+        self.btn_viz_tab = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.start_x + tab_w * 2,20), (tab_w, tab_h)),
             text="Visualize",
             manager=self.manager 
@@ -187,12 +185,12 @@ class Sidebar:
             (self.ui_layout.start_x, panel_y_start), 
             (self.config.SIDEBAR_WIDTH, dynamic_height))
 
-        self.map_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-        self.algo_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-        self.viz_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.panel_map_config = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.panel_algo_settings = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.panel_viz_settings = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
 
 
-    def _init_map_panel(self):
+    def _init_panel_map_config(self):
         """
         Create UI elements for 
             1. Map actions: create map, load map, save map
@@ -201,63 +199,63 @@ class Sidebar:
             4. Setting start, end locations 
         """
         # 1. Map Actions 
-        self.map_action_label = UILabel(
+        self.label_map_action = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.label_width, self.ui_layout.widget_height)),
             text="Map Actions:",
             manager=self.manager,
-            container=self.map_panel 
+            container=self.panel_map_config 
         )
 
-        self.map_action_dropdown = UIDropDownMenu(
+        self.select_map_action = UIDropDownMenu(
             options_list=Map_Actions.list_labels(),
             starting_option=Map_Actions.EDIT_MAP.label,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row),
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
             manager=self.manager,
-            container=self.map_panel,
-            object_id="#map_action_selector"
+            container=self.panel_map_config,
+            object_id="#select_map_action"
         )
         
         self.ui_layout.draw_row += self.config.ROW_SPACING 
 
         # 2. Terrain        
-        self.terrain_type_label = UILabel(
+        self.label_terrain_type = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.label_width, self.ui_layout.widget_height)),
             text="Terrain Type:",
             manager=self.manager,
-            container=self.map_panel 
+            container=self.panel_map_config 
         )
 
-        self.terrain_type_dropdown = UIDropDownMenu(
+        self.select_terrain = UIDropDownMenu(
             options_list=[terrain.name for terrain in Terrain_Type],
             starting_option=Terrain_Type.GRASS.name,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
             manager=self.manager,
-            container=self.map_panel,
-            object_id="#terrain_type_selector"
+            container=self.panel_map_config,
+            object_id="#select_terrain"
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING 
     
         # Grid Settings
-        self.grid_dimensions_label = UILabel(
+        self.label_grid_dimensions = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row),
                 (self.ui_layout.label_width, self.ui_layout.widget_height)
             ),
             text="Set Grid Size:",
             manager=self.manager,
-            container=self.map_panel 
+            container=self.panel_map_config 
         )
 
-        self.grid_dimensions_dropdown = UIDropDownMenu(
+        self.select_grid_dimensions = UIDropDownMenu(
             options_list=Map_Dimension.get_ui_labels(),
             starting_option=Map_Dimension.MD8.label,
             relative_rect=pygame.Rect(
@@ -265,88 +263,70 @@ class Sidebar:
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)
             ),
             manager=self.manager,
-            container=self.map_panel,
-            object_id="#grid_dimensions_selector"
+            container=self.panel_map_config,
+            object_id="#select_grid_dimensions"
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING 
 
         # Start/End Markers     
-        self.start_marker_checkbox = UICheckBox(
+        self.check_place_start = UICheckBox(
             relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row + 5), 
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
-            text="",
-            manager=self.manager,
-            container=self.map_panel,
-            object_id="#start_marker_checkbox"
-        )
-
-        self.start_marker_label = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x + self.config.CHECKBOX_SIZE + 5, self.ui_layout.draw_row), 
-                (80, self.ui_layout.widget_height)),
             text="Set Start",
             manager=self.manager,
-            container=self.map_panel 
+            container=self.panel_map_config,
+            object_id="#check_place_start"
         )
 
-        self.end_marker_checkbox = UICheckBox(
+        self.check_place_end = UICheckBox(
             relative_rect=pygame.Rect(
-                (self.ui_layout.col2x, self.ui_layout.draw_row + 5), 
+                (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
-            text="",
-            manager=self.manager,
-            container=self.map_panel,
-            object_id="#end_marker_checkbox"
-        )
-
-        self.end_marker_label = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col2x + self.config.CHECKBOX_SIZE + 5, self.ui_layout.draw_row), 
-                (80, self.ui_layout. widget_height)),
             text="Set End",
             manager=self.manager,
-            container=self.map_panel 
+            container=self.panel_map_config,
+            object_id="#check_place_end"
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING 
 
-        self.clear_grid_button = UIButton(
+        self.btn_reset_grid = UIButton(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_widget_width, self.ui_layout.widget_height)
             ),
             text="CLEAR GRID",
             manager=self.manager,
-            container=self.map_panel,
-            object_id="#clear_grid_button",
+            container=self.panel_map_config,
+            object_id="#btn_reset_grid",
             tool_tip_text="Click here to reset the entire drawing area."
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING  
 
 
-    def _init_algo_panel(self):
+    def _init_panel_algo_settings(self):
         # 1. Algorithm Selection 
-        self.algo_label = UILabel(
+        self.label_algo = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.label_width, self.ui_layout.widget_height)),
             text="Algorithm:",
             manager=self.manager,
-            container=self.algo_panel 
+            container=self.panel_algo_settings 
         )
 
-        self.algo_dropdown = UIDropDownMenu(
+        self.select_algo = UIDropDownMenu(
             options_list=[algo.name for algo in Algorithm_Type],
             starting_option=Algorithm_Type.BFS.name,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
             manager=self.manager,
-            container=self.algo_panel,
-            object_id="#algo_selector"
+            container=self.panel_algo_settings,
+            object_id="#select_algo"
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING
@@ -354,89 +334,83 @@ class Sidebar:
         # 2. Neighbor Direction Priority 
                  
         # Diagonal Toggle Checkbox 
-        self.diagonal_direction_checkbox = UICheckBox(
+        self.check_allow_diagonals = UICheckBox(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
-            text="",
+                (self.config.CHECKBOX_SIZE, self.ui_layout.widget_height)),
+            text="Include Diagonal Neighbors",
             manager=self.manager,
-            container=self.algo_panel
-        )
-
-        self.diagonal_direction_label = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x + self.config.CHECKBOX_SIZE + 5, self.ui_layout.draw_row), 
-                (self.ui_layout.width - self.ui_layout.label_width, self.ui_layout.widget_height)),
-            text="Include Diagonals",
-            manager=self.manager,
-            container=self.algo_panel 
+            container=self.panel_algo_settings
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
         # Neighbor Search Order Settings
-        self.neighbor_direction_label = UILabel(
+        self.label_avail_dirs = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_widget_width, self.ui_layout.widget_height)
             ),
             text="Neighbor Search Order (Click to add):",
             manager=self.manager,
-            container=self.algo_panel
+            container=self.panel_algo_settings
         )
 
         self.ui_layout.draw_row += self.ui_layout.widget_height 
 
         # Selection Lists
         list_height = 100 
-        self.available_direction_list = UISelectionList(
+        self.list_avail_dirs = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_widget_width, list_height)),
             item_list=Neighbor_Direction.get_labels(include_diagonals=False),
             manager=self.manager,
-            container=self.algo_panel,
+            container=self.panel_algo_settings,
             object_id="#available_direction_selector"
         )
 
         self.ui_layout.draw_row += list_height + 10
-        self.neighbor_order_display = UISelectionList(
+        self.list_active_order = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_widget_width, list_height)),
             item_list=[],
             manager=self.manager,
-            container=self.algo_panel,
-            object_id="#neighbor_order_display"
+            container=self.panel_algo_settings,
+            object_id="#list_active_order"
         )
 
         self.ui_layout.draw_row += list_height + 10
 
-        self.clear_order_button = UIButton(
+        self.btn_clear_order = UIButton(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_widget_width, self.ui_layout.widget_height)),
-            text="Clear Order",
+            text="Clear Search Order",
             manager=self.manager,
-            container=self.algo_panel, 
-            object_id="#clear_order_btn"
+            container=self.panel_algo_settings, 
+            object_id="#clear_order_btn",
+            tool_tip_text="Resets Search Order"
         )
 
 
 
-    def _init_viz_panel(self):
+    def _init_panel_viz_settings(self):
         pass
 
     def handle_events(self, event):
 
         # Handles switching between map, panel, and viz tabs
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            if event.ui_element == self.map_btn:
-                self._switch_tab(self.map_panel)
-            elif event.ui_element == self.algo_btn:
-                self._switch_tab(self.algo_panel)
-            elif event.ui_element == self.viz_btn:
-                self._switch_tab(self.viz_panel)
+            if event.ui_element == self.btn_map_tab:
+                self._switch_tab(self.panel_map_config)
+            elif event.ui_element == self.btn_algo_tab:
+                self._switch_tab(self.panel_algo_settings)
+            elif event.ui_element == self.btn_viz_tab:
+                self._switch_tab(self.panel_viz_settings)
+            elif event.ui_element == self.btn_clear_order:
+                self._handle_clear_order()
 
         elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
             self._handle_checkbox_checked(event)
@@ -462,6 +436,21 @@ class Sidebar:
         return [item['text'] if isinstance(item, dict) else item for item in raw_list]
 
 
+    def _handle_clear_order(self):
+        # Get strings from both lists 
+        current_order = self._get_clean_item_list(self.list_active_order)
+        current_pool = self._get_clean_item_list(self.list_avail_dirs)
+
+        # Combine them back into the pool
+        current_pool.extend(current_order)
+
+        # Clear the active order list 
+        self.list_active_order.set_item_list([])
+
+        sorted_pool = Neighbor_Direction.sort_labels(current_pool)
+        self.list_avail_dirs.set_item_list(sorted_pool)
+
+
     def _handle_new_selection(self, event):
 
         # --- Moving from Available to Order ---
@@ -472,67 +461,67 @@ class Sidebar:
 
             # Remove from Available 
             # Extract strings from the dictionary list
-            current_avail = self._get_clean_item_list(self.available_direction_list)
+            current_avail = self._get_clean_item_list(self.list_avail_dirs)
             logging.info(f"current_avail: {current_avail}")
 
             if selected in current_avail:
                 current_avail.remove(selected) 
-                self.available_direction_list.set_item_list(current_avail)
+                self.list_avail_dirs.set_item_list(current_avail)
 
                 # Add to Neighbor Order 
-                current_order = self._get_clean_item_list(self.neighbor_order_display)
+                current_order = self._get_clean_item_list(self.list_active_order)
                 current_order.append(selected)
-                self.neighbor_order_display.set_item_list(current_order)
+                self.list_active_order.set_item_list(current_order)
 
 
         # --- Moving from Neighbor Order back to Available ---
-        if event.ui_object_id.endswith("#neighbor_order_display"):
+        if event.ui_object_id.endswith("#list_active_order"):
             selected = event.text 
 
             # Remove from Neighbor Order
-            current_order = self._get_clean_item_list(self.neighbor_order_display)
+            current_order = self._get_clean_item_list(self.list_active_order)
 
             if selected in current_order:
                 current_order.remove(selected)
-                self.neighbor_order_display.set_item_list(current_order)
+                self.list_active_order.set_item_list(current_order)
 
                 # Add back to Available in sorted order
-                current_avail = self._get_clean_item_list(self.available_direction_list)
+                current_avail = self._get_clean_item_list(self.list_avail_dirs)
                 current_avail.append(selected)
 
                 sorted_avail = Neighbor_Direction.sort_labels(current_avail)
-                self.available_direction_list.set_item_list(sorted_avail)
+                self.list_avail_dirs.set_item_list(sorted_avail)
 
 
     
     def _handle_checkbox_unchecked(self, event):
   
-        if event.ui_element == self.diagonal_direction_checkbox:
+        if event.ui_element == self.check_allow_diagonals:
             self._handle_diagonal_checkbox(is_checked=False)
             
 
     def _handle_checkbox_checked(self, event):
 
-        if event.ui_element == self.start_marker_checkbox:
-            if self.start_marker_checkbox.is_checked:
+        if event.ui_element == self.check_place_start:
+            if self.check_place_start.is_checked:
                 # Force uncheck the other 
-                self.end_marker_checkbox.is_checked = False 
-                self.end_marker_checkbox.rebuild()
+                self.check_place_end.is_checked = False 
+                self.check_place_end.rebuild()
 
-        elif event.ui_element == self.end_marker_checkbox:
-            if self.end_marker_checkbox.is_checked:
+        elif event.ui_element == self.check_place_end:
+            if self.check_place_end.is_checked:
                 # force uncheck the other 
-                self.start_marker_checkbox.is_checked = False 
-                self.start_marker_checkbox.rebuild() 
+                self.check_place_start.is_checked = False 
+                self.check_place_start.rebuild() 
 
-        elif event.ui_element == self.diagonal_direction_checkbox:
+        elif event.ui_element == self.check_allow_diagonals:
            self._handle_diagonal_checkbox(is_checked=True)
 
     
     def _handle_diagonal_checkbox(self, is_checked):
         # 1. Get the current version of both lists 
-        current_order = self._get_clean_item_list(self.neighbor_order_display)
-        current_avail = self._get_clean_item_list(self.available_direction_list)
+        current_order = self._get_clean_item_list(self.list_active_order)
+        current_avail = self._get_clean_item_list(self.list_avail_dirs)
 
         # 2. Get the list of diagonal labels 
         diagonals = Neighbor_Direction.get_diagonal_labels() 
@@ -543,8 +532,8 @@ class Sidebar:
                 new_avail = [item for item in current_avail if item not in diagonals]
 
                 # update the UI 
-                self.neighbor_order_display.set_item_list(new_order)
-                self.available_direction_list.set_item_list(new_avail)
+                self.list_active_order.set_item_list(new_order)
+                self.list_avail_dirs.set_item_list(new_avail)
         else:
             # check box checked - add diagonals back to available 
             for d in diagonals:
@@ -552,7 +541,7 @@ class Sidebar:
                     current_avail.append(d)
 
             sorted_avail = Neighbor_Direction.sort_labels(current_avail)
-            self.available_direction_list.set_item_list(sorted_avail)
+            self.list_avail_dirs.set_item_list(sorted_avail)
 
     
 
@@ -560,7 +549,7 @@ class Sidebar:
 
         if event.ui_object_id.endswith("#map_action_selector"):
             self._handle_map_action(event.text)
-        elif event.ui_object_id.endswith("algo_dropdown"):
+        elif event.ui_object_id.endswith("select_algo"):
                 self.selected_algorithm = event.text 
                 logging.info(f"Selected algorithm: {self.selected_algorithm}")
 
@@ -583,10 +572,10 @@ class Sidebar:
     
     def uncheck_start_end(self):
         #Unchecks both start and end boxes.
-        self.start_marker_checkbox.is_checked = False 
-        self.start_marker_checkbox.rebuild()
-        self.end_marker_checkbox.is_checked = False 
-        self.end_marker_checkbox.rebuild()
+        self.check_place_start.is_checked = False 
+        self.check_place_start.rebuild()
+        self.check_place_end.is_checked = False 
+        self.check_place_end.rebuild()
 
 
 
@@ -629,9 +618,9 @@ class Sidebar:
 
 
     def _switch_tab(self, target_panel):
-        self.map_panel.hide()
-        self.algo_panel.hide()
-        self.viz_panel.hide()
+        self.panel_map_config.hide()
+        self.panel_algo_settings.hide()
+        self.panel_viz_settings.hide()
         target_panel.show() 
         self.active_panel = target_panel
  
