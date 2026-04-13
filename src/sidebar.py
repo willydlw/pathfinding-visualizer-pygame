@@ -96,6 +96,13 @@ class Sidebar:
             start_row=config.UI_START_ROW
         )
 
+
+        # Initialize these class attributes before the gui elements 
+        self.active_file_dialog = None 
+        self.current_action = None 
+        self.selected_algo = Algorithm_Type.BFS
+        self.neighbor_order_list = []
+
         
         # 1. Create Tab Buttons at the top of the Sidebar
         self.map_btn  = None 
@@ -108,19 +115,9 @@ class Sidebar:
         self.algo_panel = None
         self.viz_panel  = None 
         self._init_panels()
-        
+         
 
-        # 3. Initialize Panel Content
-        self.ui_layout.reset_flow()
-        self._init_map_tab() 
-    
-        self.ui_layout.reset_flow()
-        self._init_algo_tab()
-
-        self.ui_layout.reset_flow()
-        self._init_viz_tab() 
-
-        # 4. Initialize map panel with ui elements
+        # 3. Initialize map panel with ui elements
         self.map_label = None
         self.map_dropdown = None 
         self.terrain_type_label = None 
@@ -131,7 +128,9 @@ class Sidebar:
         self.start_marker_label = None 
         self.end_marker_checkbox = None
         self.end_marker_label = None 
-        self._init_map_tab()
+        self.ui_layout.reset_flow()
+        self._init_map_panel() 
+       
 
         # 5. Initialze algorithm panel with ui elements 
         self.algo_label = None 
@@ -139,26 +138,20 @@ class Sidebar:
         self.diagonal_direction_checkbox = None 
         self.diagonal_direction_label = None 
         self.neighbor_direction_label = None 
-        self.neighbor_direction_available_list = None 
+        self.available_direction_list = None 
         self.neighbor_order_display = None 
         self.clear_order_button = None 
 
-        self._init_algo_tab()
-
-        self.selected_algo = Algorithm_Type.BFS
-        self.neighbor_order_list = []
+        self.ui_layout.reset_flow()
+        self._init_algo_panel()
 
         # 6. Initialize viz panel with ui elements
-
-        # Other 
-        # Need a file dialog when user selects Save map or Load Map
-        self.active_file_dialog = None 
-        self.current_action = None 
-
-
+        self.ui_layout.reset_flow()
+        self._init_viz_panel() 
+       
         # Set Initial Active Panel State 
-        self.active_panel = self.map_panel 
-        self.algo_panel.hide()
+        self.active_panel = self.algo_panel
+        self.map_panel.hide()
         self.viz_panel.hide()
 
 
@@ -194,12 +187,12 @@ class Sidebar:
             (self.ui_layout.start_x, panel_y_start), 
             (self.config.SIDEBAR_WIDTH, dynamic_height))
 
-        self.map_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1, visible=True)
-        self.algo_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1, visible=True)
-        self.viz_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1, visible=True)
+        self.map_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.algo_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.viz_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
 
 
-    def _init_map_tab(self):
+    def _init_map_panel(self):
         """
         Create UI elements for 
             1. Map actions: create map, load map, save map
@@ -333,7 +326,8 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.ROW_SPACING  
 
-    def _init_algo_tab(self):
+
+    def _init_algo_panel(self):
         # 1. Algorithm Selection 
         self.algo_label = UILabel(
             relative_rect=pygame.Rect(
@@ -395,14 +389,14 @@ class Sidebar:
 
         # Selection Lists
         list_height = 100 
-        self.neighbor_direction_available_list = UISelectionList(
+        self.available_direction_list = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_widget_width, list_height)),
             item_list=Neighbor_Direction.get_labels(include_diagonals=False),
             manager=self.manager,
             container=self.algo_panel,
-            object_id="#neighbor_direction_available_list"
+            object_id="#available_direction_selector"
         )
 
         self.ui_layout.draw_row += list_height + 10
@@ -430,7 +424,7 @@ class Sidebar:
 
 
 
-    def _init_viz_tab(self):
+    def _init_viz_panel(self):
         pass
 
     def handle_events(self, event):
@@ -454,24 +448,68 @@ class Sidebar:
             logging.info(f"detected drop_down_menu_changed")
             self._handle_dropdown_menu_events(event)
 
+        elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+            logging.info(f"detected new selection")
+            self._handle_new_selection(event)
+
         elif event.type == pygame_gui.UI_WINDOW_CLOSE:
             self._handle_window_close_events(event)
+
+    
+    def _get_clean_item_list(self, ui_list_element):
+        """Extracts strings from a UISelectionList regardless of its internal format."""
+        raw_list = ui_list_element.item_list 
+        return [item['text'] if isinstance(item, dict) else item for item in raw_list]
+
+
+    def _handle_new_selection(self, event):
+
+        # --- Moving from Available to Order ---
+        if event.ui_object_id.endswith("#available_direction_selector"):
+           
+            selected = event.text 
+            logging.info(f"Selected direction: {selected}")
+
+            # Remove from Available 
+            # Extract strings from the dictionary list
+            current_avail = self._get_clean_item_list(self.available_direction_list)
+            logging.info(f"current_avail: {current_avail}")
+
+            if selected in current_avail:
+                current_avail.remove(selected) 
+                self.available_direction_list.set_item_list(current_avail)
+
+                # Add to Neighbor Order 
+                current_order = self._get_clean_item_list(self.neighbor_order_display)
+                current_order.append(selected)
+                self.neighbor_order_display.set_item_list(current_order)
+
+
+        # --- Moving from Neighbor Order back to Available ---
+        if event.ui_object_id.endswith("#neighbor_order_display"):
+            selected = event.text 
+
+            # Remove from Neighbor Order
+            current_order = self._get_clean_item_list(self.neighbor_order_display)
+
+            if selected in current_order:
+                current_order.remove(selected)
+                self.neighbor_order_display.set_item_list(current_order)
+
+                # Add back to Available in sorted order
+                current_avail = self._get_clean_item_list(self.available_direction_list)
+                current_avail.append(selected)
+
+                sorted_avail = Neighbor_Direction.sort_labels(current_avail)
+                self.available_direction_list.set_item_list(sorted_avail)
+
 
     
     def _handle_checkbox_unchecked(self, event):
   
         if event.ui_element == self.diagonal_direction_checkbox:
-            diagonals = Neighbor_Direction.get_diagonal_labels()
-
-            # 1. Remove diagonals from the available list 
-            current_available = [item['text'] for item in self.available_list.item_list]
-            new_available = [d for d in current_available if d not in diagonals]
-            self.available_list.set_item_list(new_available)
-
-            # 2. Also remove them from the Order list if they were already selected 
-            self.neighbor_order_list = [d for d in self.neighbor_order_list if d not in diagonals]
-            self.neighbor_order_display.set_item_list(self.neighbor_order_list)
-
+            self._handle_diagonal_checkbox(is_checked=False)
+            
 
     def _handle_checkbox_checked(self, event):
 
@@ -488,7 +526,33 @@ class Sidebar:
                 self.start_marker_checkbox.rebuild() 
 
         elif event.ui_element == self.diagonal_direction_checkbox:
-            self.refresh_available_list()
+           self._handle_diagonal_checkbox(is_checked=True)
+
+    
+    def _handle_diagonal_checkbox(self, is_checked):
+        # 1. Get the current version of both lists 
+        current_order = self._get_clean_item_list(self.neighbor_order_display)
+        current_avail = self._get_clean_item_list(self.available_direction_list)
+
+        # 2. Get the list of diagonal labels 
+        diagonals = Neighbor_Direction.get_diagonal_labels() 
+
+        if not is_checked:
+                # Checkbox unchecked - remove diagonals from both lists 
+                new_order = [item for item in current_order if item not in diagonals]
+                new_avail = [item for item in current_avail if item not in diagonals]
+
+                # update the UI 
+                self.neighbor_order_display.set_item_list(new_order)
+                self.available_direction_list.set_item_list(new_avail)
+        else:
+            # check box checked - add diagonals back to available 
+            for d in diagonals:
+                if d not in current_avail and d not in current_order:
+                    current_avail.append(d)
+
+            sorted_avail = Neighbor_Direction.sort_labels(current_avail)
+            self.available_direction_list.set_item_list(sorted_avail)
 
     
 
@@ -499,8 +563,6 @@ class Sidebar:
         elif event.ui_object_id.endswith("algo_dropdown"):
                 self.selected_algorithm = event.text 
                 logging.info(f"Selected algorithm: {self.selected_algorithm}")
-      
-
 
         """
         elif event.ui_element == self.anim_dropdown:
@@ -512,39 +574,9 @@ class Sidebar:
             else:
                 self.next_step_button.hide() 
                 self.speed_dropdown.show()
-
-        
         """
         
         
-        """
-        elif event.ui_element == self.neighbor_order_dropdown:
-            self._handle_neighbor_order(event.text)
-        """
-            
-
-    def _handle_neighbor_order(self, event):
-        self.neighbor_order = event
-        logging.info(f"self.neighbor_order: {self.neighbor_order}")
-
-
-
-
-
-    def refresh_available_list(self):
-        # Base set of directions
-        all_allowed = Neighbor_Direction.get_labels(
-            include_diagonals=self.diagonal_checkbox.is_checked
-        )
-
-        # Available side gets filtered and sorted
-        new_available = [d for d in all_allowed if d not in self.neighbor_order_list]
-        sorted_available = Neighbor_Direction.sort_labels(new_available)
-        self.available_list.set_item_list(sorted_available)
-
-        # Order side gets updated but stays in the order items were clicked 
-        self.neighbor_order_display.set_item_list(self.neighbor_order_list)
-
 
     def set_status(self, message):
         self.status_label.set_text(message)

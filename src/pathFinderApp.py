@@ -225,50 +225,6 @@ class PathFinderApp:
                         self.sidebar.uncheck_start_end() 
               
 
-            # Selection List 
-            elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
-                logging.info(f"event.type: {event.type}")
-                # 1. User clicks an available direction
-                if event.ui_object_id.endswith("#neighbor_direction_available_list"):               
-                    selection = event.text
-
-                    logging.info(f"Detected available direction selection, event.text: {event.text}")
-                    
-                    # 1. Extract strings using the event's direct element reference 
-                    current_available_strings = [item['text'] for item in event.ui_element.item_list]
-                    logging.info(f"current_available_strings: {current_available_strings}")
-
-                    # Filter the strings
-                    new_available = [text for text in current_available_strings if text != selection]
-
-                    logging.info(f"new_available: {new_available}")
-
-                    # 3. Update the list using the SAME direct element reference
-                    event.ui_element.set_item_list(new_available)
-
-                    # 4. Update Order List
-                    if selection not in self.sidebar.neighbor_order_list:
-                        self.sidebar.neighbor_order_list.append(selection)
-                        self.sidebar.neighbor_order_display.set_item_list(self.sidebar.neighbor_order_list)
-
-               
-                # 2. (Optional) User clicks an item in the 'Order' list to move it BACK
-                elif event.ui_element == self.sidebar.neighbor_order_display:
-                    selection = event.text
-                    
-                    # Remove from Order list
-                    if selection in self.sidebar.neighbor_order_list:
-                        self.sidebar.neighbor_order_list.remove(selection)
-                        self.sidebar.neighbor_order_display.set_item_list(self.sidebar.neighbor_order_list)
-                    
-                    # Add back to Available list
-                    current_available = [item['text'] for item in self.sidebar.available_list.item_list]
-                    current_available.append(selection)
-
-                    # Sort it so the order stays 'North, East, South, West'
-                    sorted_available = Neighbor_Direction.sort_labels(current_available)
-                    self.sidebar.available_list.set_item_list(sorted_available)
-
 
     def _update(self):
 
