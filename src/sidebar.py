@@ -162,8 +162,6 @@ class Sidebar:
         self.viz_panel.hide()
 
 
-
-
     def _init_tabs(self):
         """Create the Tab Buttons."""
         tab_w = self.config.SIDEBAR_WIDTH // 3 
