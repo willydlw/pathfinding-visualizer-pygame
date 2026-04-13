@@ -7,10 +7,11 @@ class AppConfig:
     MAX_GRID_SIZE: int = 256 
 
     # Sidebar Sizes (used by UI_Layout)
+    CHECKBOX_SIZE: int = 50
+    LIST_HEIGHT:   int = 100
+    ROW_SPACING:   int = 50 
     SIDEBAR_WIDTH: int = 400 
     WIDGET_HEIGHT: int = 35 
-    CHECKBOX_SIZE: int = 50
-    ROW_SPACING:   int = 50 
     UI_START_ROW:  int = 20
 
 

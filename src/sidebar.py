@@ -1,6 +1,9 @@
 import pygame 
 import pygame_gui 
 import logging 
+import random
+import os 
+import json
 
 
 import pygame_gui.ui_manager
@@ -17,6 +20,7 @@ from pygame_gui.elements import (
     UICheckBox, 
     UISelectionList,
     UITextBox ,
+    UITextEntryLine,
     UIPanel
 )
 
@@ -55,7 +59,8 @@ class UI_Layout:
 
 
         # Interactive Widgets 
-        self.full_widget_width = width - (padding * 2)
+        self.full_width = width - (padding * 2)
+        self.half_width = (width - padding * 3) // 2
 
         # Standard x positions
         self.col1x = padding
@@ -126,8 +131,6 @@ class Sidebar:
         self.select_grid_dimensions = None 
         self.check_place_start = None
         self.check_place_end = None
-       
-        self.ui_layout.reset_flow()
         self._init_panel_map_config() 
        
 
@@ -139,8 +142,6 @@ class Sidebar:
         self.list_avail_dirs = None 
         self.list_active_order = None 
         self.btn_clear_order = None 
-
-        self.ui_layout.reset_flow()
         self._init_panel_algo_settings()
 
         # 6. Initialize viz panel with ui elements
@@ -198,6 +199,8 @@ class Sidebar:
             3. Setting grid dimensions
             4. Setting start, end locations 
         """
+        self.ui_layout.reset_flow()
+
         # 1. Map Actions 
         self.label_map_action = UILabel(
             relative_rect=pygame.Rect(
@@ -295,7 +298,7 @@ class Sidebar:
         self.btn_reset_grid = UIButton(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_widget_width, self.ui_layout.widget_height)
+                (self.ui_layout.full_width, self.ui_layout.widget_height)
             ),
             text="CLEAR GRID",
             manager=self.manager,
@@ -308,6 +311,8 @@ class Sidebar:
 
 
     def _init_panel_algo_settings(self):
+        self.ui_layout.reset_flow()
+
         # 1. Algorithm Selection 
         self.label_algo = UILabel(
             relative_rect=pygame.Rect(
@@ -333,6 +338,112 @@ class Sidebar:
 
         # 2. Neighbor Direction Priority 
                  
+        # List available neighbor directions 
+        self.label_avail_dirs = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_width, self.ui_layout.widget_height)
+            ),
+            text="Neighbor Search Order (Click to add):",
+            manager=self.manager,
+            container=self.panel_algo_settings
+        )
+
+        self.ui_layout.draw_row += self.ui_layout.widget_height
+
+        # Selection Lists
+        self.list_avail_dirs = UISelectionList(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_width, self.config.LIST_HEIGHT)),
+            item_list=Neighbor_Direction.get_labels(include_diagonals=False),
+            manager=self.manager,
+            container=self.panel_algo_settings,
+            object_id="#available_direction_selector"
+        )
+
+        self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
+
+        self.list_active_order = UISelectionList(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_width, self.config.LIST_HEIGHT)),
+            item_list=[],
+            manager=self.manager,
+            container=self.panel_algo_settings,
+            object_id="#list_active_order"
+        )
+
+        self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
+
+        # Add these in _init_panel_algo_settings
+        self.btn_default_order = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
+            text="Default Order",
+            manager=self.manager, container=self.panel_algo_settings
+        )
+
+        self.btn_random_order = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
+            text="Randomize",
+            manager=self.manager, container=self.panel_algo_settings
+        )
+
+        self.ui_layout.draw_row += self.config.ROW_SPACING
+
+        # Button to trigger the save
+        self.btn_save_preset = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
+            text="Save Preset",
+            manager=self.manager, container=self.panel_algo_settings
+        )
+
+        # Optional: Dropdown to load saved presets
+        self.select_preset = UIDropDownMenu(
+            options_list=["Custom 1", "Custom 2"], # We will populate this dynamically
+            starting_option="Select Preset",
+            relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
+            manager=self.manager, container=self.panel_algo_settings
+        )
+        self.ui_layout.draw_row += self.config.ROW_SPACING
+
+
+        self.btn_clear_order = UIButton(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_width, self.ui_layout.widget_height)),
+            text="Clear Search Order",
+            manager=self.manager,
+            container=self.panel_algo_settings, 
+            object_id="#clear_order_btn",
+            tool_tip_text="Resets Search Order"
+        )
+
+        self.ui_layout.draw_row += self.config.ROW_SPACING
+
+        # Text field for the preset name
+        self.input_preset_name = UITextEntryLine(
+            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
+                                    (self.ui_layout.full_width, self.ui_layout.widget_height)),
+            manager=self.manager, container=self.panel_algo_settings,
+            placeholder_text="Enter Preset Name..." # Helpful hint for the user
+        )
+        self.ui_layout.draw_row += self.ui_layout.widget_height + 5
+
+        # Move your Save Button below it
+        self.btn_save_preset = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
+                                    (self.ui_layout.full_width, self.ui_layout.widget_height)),
+            text="Save Custom Preset",
+            manager=self.manager, container=self.panel_algo_settings
+        )
+        self.ui_layout.draw_row += self.config.ROW_SPACING
+
+
         # Diagonal Toggle Checkbox 
         self.check_allow_diagonals = UICheckBox(
             relative_rect=pygame.Rect(
@@ -343,61 +454,59 @@ class Sidebar:
             container=self.panel_algo_settings
         )
 
-        self.ui_layout.draw_row += self.config.ROW_SPACING
-
-        # Neighbor Search Order Settings
-        self.label_avail_dirs = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_widget_width, self.ui_layout.widget_height)
-            ),
-            text="Neighbor Search Order (Click to add):",
-            manager=self.manager,
-            container=self.panel_algo_settings
-        )
-
-        self.ui_layout.draw_row += self.ui_layout.widget_height 
-
-        # Selection Lists
-        list_height = 100 
-        self.list_avail_dirs = UISelectionList(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_widget_width, list_height)),
-            item_list=Neighbor_Direction.get_labels(include_diagonals=False),
-            manager=self.manager,
-            container=self.panel_algo_settings,
-            object_id="#available_direction_selector"
-        )
-
-        self.ui_layout.draw_row += list_height + 10
-        self.list_active_order = UISelectionList(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_widget_width, list_height)),
-            item_list=[],
-            manager=self.manager,
-            container=self.panel_algo_settings,
-            object_id="#list_active_order"
-        )
-
-        self.ui_layout.draw_row += list_height + 10
-
-        self.btn_clear_order = UIButton(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_widget_width, self.ui_layout.widget_height)),
-            text="Clear Search Order",
-            manager=self.manager,
-            container=self.panel_algo_settings, 
-            object_id="#clear_order_btn",
-            tool_tip_text="Resets Search Order"
-        )
-
-
 
     def _init_panel_viz_settings(self):
         pass
+
+    
+    def _get_clean_item_list(self, ui_list_element):
+        """Extracts strings from a UISelectionList regardless of its internal format."""
+        raw_list = ui_list_element.item_list 
+        return [item['text'] if isinstance(item, dict) else item for item in raw_list]
+    
+    def get_selected_direction_vectors(self):
+        """
+        Converts the strings in list_active_order into (dr, dc) vectors.
+        Ensures all required directions are included, appending missing ones to the end.
+        """
+        # Get the user's custom order and current settings
+        selected_labels = self._get_clean_item_list(self.list_active_order)
+        include_diagonals = self.check_allow_diagonals.is_checked 
+
+        # Define what complete looks like for the current mode 
+        required_labels = Neighbor_Direction.get_labels(include_diagonals)
+
+        # Create the final sequence: Start with user choices, then add missing 
+        final_labels = list(selected_labels)
+        for label in required_labels:
+            if label not in final_labels:
+                final_labels.append(label)
+
+        # Map the labels back to vectors 
+        # Get the lookup map : {"North": <Neighbor_Direction.NORTH>, ...}
+        lookup = Neighbor_Direction.get_lookup()
+
+        # Return a list of vectors [(dr, dc), ...]
+        return [lookup[label].vector for label in final_labels if label in lookup]
+    
+
+    def _sync_neighbor_order(self):
+        """Fills missing directions in the UI so the user sees the final search order."""
+        # Get the current user oder and the required defaults 
+        user_order = self._get_clean_item_list(self.list_active_order)
+        include_diagonals = self.check_allow_diagonals.is_checked 
+        required_labels = Neighbor_Direction.get_labels(include_diagonals)
+
+        # Add missing directions to the user order list 
+        updated_order = list(user_order)
+        for label in required_labels:
+            if label not in updated_order:
+                updated_order.append(label)
+
+        # Update the UI lists 
+        self.list_active_order.set_item_list(updated_order)
+        self.list_avail_dirs.set_item_list([])  # everything is now in the active list
+
 
     def handle_events(self, event):
 
@@ -409,6 +518,10 @@ class Sidebar:
                 self._switch_tab(self.panel_algo_settings)
             elif event.ui_element == self.btn_viz_tab:
                 self._switch_tab(self.panel_viz_settings)
+            elif event.ui_element == self.btn_default_order:
+                self._handle_set_default_order()
+            elif event.ui_element == self.btn_random_order:
+                self._handle_randomize_order()
             elif event.ui_element == self.btn_clear_order:
                 self._handle_clear_order()
 
@@ -426,14 +539,74 @@ class Sidebar:
             logging.info(f"detected new selection")
             self._handle_new_selection(event)
 
+        elif event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
+            if event.ui_element == self.input_preset_name:
+                self._handle_save_preset() 
+
         elif event.type == pygame_gui.UI_WINDOW_CLOSE:
             self._handle_window_close_events(event)
 
-    
-    def _get_clean_item_list(self, ui_list_element):
-        """Extracts strings from a UISelectionList regardless of its internal format."""
-        raw_list = ui_list_element.item_list 
-        return [item['text'] if isinstance(item, dict) else item for item in raw_list]
+    def _handle_load_preset(self, preset_name):
+        # load the data
+        try:
+            with open(f"presets/{preset_name}.json", "r") as f:
+                data = json.load(f)
+
+            # update the diagonal checkbox 
+            self.check_allow_diagonals.is_checked = data['diagonals']
+            self.check_allow_diagonals.rebuild()   # force refresh 
+
+            # update the lists 
+            self.list_active_order.set_item_list(data['order'])
+
+            # repopulate available with remaining items 
+            all_possible = Neighbor_Direction.get_labels(data['diagonals']) 
+            remaining = [d for d in all_possible if d not in data['order']]
+            self.list_avail_dirs.set_item_list(Neighbor_Direction.sort_labels(remaining))
+
+        except FileNotFoundError:
+            logging.warning(f"File {preset_name} not found.")
+
+
+
+    def _handle_save_preset(self):
+        # Get the name from the text entry field 
+        preset_name = self.input_preset_name.text.strip() 
+
+        if not preset_name:
+            preset_name = f"Preset_{len(os.listdir('presets')) + 1}"
+
+
+        # Get the current labels form UI list 
+        current_order = self._get_clean_item_list(self.list_active_order)
+        if not current_order:
+            logging.warning(f"Not saving preset, order list is empty.")
+            return 
+        
+        # Define the data structure 
+        preset_data = {
+            "order": current_order,
+            "diagonals": self.check_allow_diagonals.is_checked 
+        }
+
+        # Save to JSON file 
+        os.makedirs('presets', exist_ok=True)
+        with open(f"presets/{preset_data['name']}.json", "w") as f:
+            json.dump(preset_data, f)
+
+        # Clear input and refresh dropdown 
+        self.input_preset_name.set_text("")
+        self._refresh_preset_dropdown()
+
+        logging.info(f"Saved {preset_name} successfully")
+
+
+    def _refresh_preset_dropdown(self):
+        """Scan the presets folder and update the dropdown options."""
+        if os.path.exists('presets'):
+            # Get all .json filenames without the extension
+            files = [f.replace('.json', '') for f in os.listdir('presets') if f.endswith('.json')]
+            self.select_preset.add_options_list(files)
 
 
     def _handle_clear_order(self):
@@ -449,6 +622,29 @@ class Sidebar:
 
         sorted_pool = Neighbor_Direction.sort_labels(current_pool)
         self.list_avail_dirs.set_item_list(sorted_pool)
+
+    def _handle_set_default_order(self):
+        """Sets order to the standard natural order based on diagonal toggle."""
+        # Get master list of directions 
+        include_diagonals = self.check_allow_diagonals.is_checked 
+        full_default = Neighbor_Direction.get_labels(include_diagonals)
+
+        # Set lists: available empty, order full
+        self.list_active_order.set_item_list(full_default)
+        self.list_avail_dirs.set_item_list([])
+
+    def _handle_randomize_order(self):
+        """Randomizes the sequence of all currently active directions."""
+        # Combine everything in use (available and order)
+        all_active = (self._get_clean_item_list(self.list_avail_dirs) +
+                      self._get_clean_item_list(self.list_active_order))
+        
+        # shuffle the entire set 
+        random.shuffle(all_active)
+
+        # move everything to the order list 
+        self.list_active_order.set_item_list(all_active)
+        self.list_avail_dirs.set_item_list([])
 
 
     def _handle_new_selection(self, event):
@@ -544,7 +740,6 @@ class Sidebar:
             self.list_avail_dirs.set_item_list(sorted_avail)
 
     
-
     def _handle_dropdown_menu_events(self, event):
 
         if event.ui_object_id.endswith("#map_action_selector"):
