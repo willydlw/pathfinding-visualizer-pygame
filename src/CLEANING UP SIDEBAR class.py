@@ -3,25 +3,7 @@ CLEANING UP SIDEBAR class. Keep these old functions until we use or delete.
 Initializing 
 
         """
-        self.pending_grid_size = None 
-        self.confirmation_dialog = None 
-        
-        # Track the active dialog to distinguish between Load and Save actions
-        self.active_file_dialog = None 
-        self.current_action = None 
-        
-        self.selected_algo = Algorithm_Type.BFS
-        self.neighbor_order_list = []
-
-    
-
-         # --- Map Actions---
-       
-        self._init_ui_clear_grid_button()
-
-        # Initial visibility: everything for 'Create Map' will be hidden
-        self.update_visibility(Map_Actions.SELECT_NODES.label)
-
+        self.confirmation_dialog = None      
 
         # --- Row 5: Action Buttons 
         draw_row += list_height + 20
@@ -31,10 +13,6 @@ Initializing
             manager=self.manager
         )
 
-
-
-        # --- Row 6: Start/End Selection ---
-        
 
         # --- Row 7: Animation Mode ---
         draw_row += row_offset
@@ -83,17 +61,6 @@ Initializing
         )
         
         """ 
-
-
-        """
-        # Listen for the actual confirmation
-        if event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
-            if event.ui_element == self.confirmation_dialog:
-                selected_dim = Map_Dimension.from_label(self.pending_grid_size)
-                print(f"Applying new grid size: {selected_dim.value}")
-                # CALL YOUR ACTUAL RESIZE LOGIC HERE
-                # self.app.resize_grid(selected_dim.value)
-                logging.fatal(f"Missing logic to resize grid to {selected_dim} rows and columns")
 
  
 Removed from theme.json

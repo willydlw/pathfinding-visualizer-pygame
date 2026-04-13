@@ -97,7 +97,7 @@ class Sidebar:
         )
 
         
-        # 1. Create Tab Buttons ad the top of hte Sidebar
+        # 1. Create Tab Buttons at the top of the Sidebar
         self.map_btn  = None 
         self.algo_btn = None 
         self.viz_btn  = None
@@ -110,7 +110,7 @@ class Sidebar:
         self._init_panels()
         
 
-        # 3. Initialize Content 
+        # 3. Initialize Panel Content
         self.ui_layout.reset_flow()
         self._init_map_tab() 
     
@@ -120,12 +120,7 @@ class Sidebar:
         self.ui_layout.reset_flow()
         self._init_viz_tab() 
 
-        # 4. Set Initial State 
-        self.active_panel = self.map_panel 
-        self.algo_panel.hide()
-        self.viz_panel.hide()
-
-        # 5. Initialize map panel with ui elements
+        # 4. Initialize map panel with ui elements
         self.map_label = None
         self.map_dropdown = None 
         self.terrain_type_label = None 
@@ -138,14 +133,33 @@ class Sidebar:
         self.end_marker_label = None 
         self._init_map_tab()
 
-        # 6. Initialze algorithm panel with ui elements 
+        # 5. Initialze algorithm panel with ui elements 
+        self.algo_label = None 
+        self.algo_dropdown = None 
+        self.diagonal_direction_checkbox = None 
+        self.diagonal_direction_label = None 
+        self.neighbor_direction_label = None 
+        self.neighbor_direction_available_list = None 
+        self.neighbor_order_display = None 
+        self.clear_order_button = None 
 
+        self._init_algo_tab()
 
+        self.selected_algo = Algorithm_Type.BFS
+        self.neighbor_order_list = []
+
+        # 6. Initialize viz panel with ui elements
 
         # Other 
         # Need a file dialog when user selects Save map or Load Map
         self.active_file_dialog = None 
         self.current_action = None 
+
+
+        # Set Initial Active Panel State 
+        self.active_panel = self.map_panel 
+        self.algo_panel.hide()
+        self.viz_panel.hide()
 
 
 
@@ -182,9 +196,9 @@ class Sidebar:
             (self.ui_layout.start_x, panel_y_start), 
             (self.config.SIDEBAR_WIDTH, dynamic_height))
 
-        self.map_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-        self.algo_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-        self.viz_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
+        self.map_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1, visible=True)
+        self.algo_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1, visible=True)
+        self.viz_panel = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1, visible=True)
 
 
     def _init_map_tab(self):
@@ -321,7 +335,6 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.ROW_SPACING  
 
-
     def _init_algo_tab(self):
         # 1. Algorithm Selection 
         self.algo_label = UILabel(
@@ -334,13 +347,14 @@ class Sidebar:
         )
 
         self.algo_dropdown = UIDropDownMenu(
-            options_list=[algo.label for algo in Algorithm_Type],
-            starting_option=Algorithm_Type.BFS.label,
+            options_list=[algo.name for algo in Algorithm_Type],
+            starting_option=Algorithm_Type.BFS.name,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
             manager=self.manager,
-            container=self.algo_panel 
+            container=self.algo_panel,
+            object_id="#algo_selector"
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING
@@ -348,16 +362,16 @@ class Sidebar:
         # 2. Neighbor Direction Priority 
                  
         # Diagonal Toggle Checkbox 
-        self.diagonal_checkbox = UICheckBox(
+        self.diagonal_direction_checkbox = UICheckBox(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
             text="",
             manager=self.manager,
-            container=self.algo_panel 
+            container=self.algo_panel
         )
 
-        self.diagonal_label = UILabel(
+        self.diagonal_direction_label = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x + self.config.CHECKBOX_SIZE + 5, self.ui_layout.draw_row), 
                 (self.ui_layout.width - self.ui_layout.label_width, self.ui_layout.widget_height)),
@@ -368,30 +382,29 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
-
-        # Search Order Instructions
-       
-        self.direction_label = UILabel(
+        # Neighbor Search Order Settings
+        self.neighbor_direction_label = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_widget_width, self.ui_layout.widget_height)
             ),
             text="Neighbor Search Order (Click to add):",
             manager=self.manager,
-            container=self.algo_panel 
+            container=self.algo_panel
         )
 
         self.ui_layout.draw_row += self.ui_layout.widget_height 
 
         # Selection Lists
         list_height = 100 
-        self.available_list = UISelectionList(
+        self.neighbor_direction_available_list = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_widget_width, list_height)),
             item_list=Neighbor_Direction.get_labels(include_diagonals=False),
             manager=self.manager,
-            container=self.algo_panel 
+            container=self.algo_panel,
+            object_id="#neighbor_direction_available_list"
         )
 
         self.ui_layout.draw_row += list_height + 10
@@ -401,7 +414,8 @@ class Sidebar:
                 (self.ui_layout.full_widget_width, list_height)),
             item_list=[],
             manager=self.manager,
-            container=self.algo_panel 
+            container=self.algo_panel,
+            object_id="#neighbor_order_display"
         )
 
         self.ui_layout.draw_row += list_height + 10
@@ -412,7 +426,8 @@ class Sidebar:
                 (self.ui_layout.full_widget_width, self.ui_layout.widget_height)),
             text="Clear Order",
             manager=self.manager,
-            container=self.algo_panel 
+            container=self.algo_panel, 
+            object_id="#clear_order_btn"
         )
 
 
@@ -447,7 +462,7 @@ class Sidebar:
     
     def _handle_checkbox_unchecked(self, event):
   
-        if event.ui_element == self.diagonal_checkbox:
+        if event.ui_element == self.diagonal_direction_checkbox:
             diagonals = Neighbor_Direction.get_diagonal_labels()
 
             # 1. Remove diagonals from the available list 
@@ -474,9 +489,8 @@ class Sidebar:
                 self.start_marker_checkbox.is_checked = False 
                 self.start_marker_checkbox.rebuild() 
 
-
-        #elif event.ui_element == self.diagonal_checkbox:
-        #    self.refresh_available_list()
+        elif event.ui_element == self.diagonal_direction_checkbox:
+            self.refresh_available_list()
 
     
 
@@ -484,6 +498,9 @@ class Sidebar:
 
         if event.ui_object_id.endswith("#map_action_selector"):
             self._handle_map_action(event.text)
+        elif event.ui_object_id.endswith("algo_dropdown"):
+                self.selected_algorithm = event.text 
+                logging.info(f"Selected algorithm: {self.selected_algorithm}")
       
 
 
@@ -498,9 +515,7 @@ class Sidebar:
                 self.next_step_button.hide() 
                 self.speed_dropdown.show()
 
-        elif event.ui_element == self.algo_dropdown:
-                self.selected_algo = event.text 
-                logging.info(f"Selected algorithm: {self.selected_algo}")
+        
         """
         
         

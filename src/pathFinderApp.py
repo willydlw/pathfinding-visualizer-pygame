@@ -226,25 +226,27 @@ class PathFinderApp:
               
 
             # Selection List 
-            #logging.fatal(f"Uncomments UI_SELECTION_LIST_NEW_SELECTION")
-            """
             elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+                logging.info(f"event.type: {event.type}")
                 # 1. User clicks an available direction
-                if event.ui_element == self.sidebar.available_list:                   
+                if event.ui_object_id.endswith("#neighbor_direction_available_list"):               
                     selection = event.text
+
+                    logging.info(f"Detected available direction selection, event.text: {event.text}")
                     
-                    # 1. Update Available list
-                    # Extract only the string 'text' from the dictionaries in the list 
-                    current_available_strings = [item['text'] for item in self.sidebar.available_list.item_list]
+                    # 1. Extract strings using the event's direct element reference 
+                    current_available_strings = [item['text'] for item in event.ui_element.item_list]
+                    logging.info(f"current_available_strings: {current_available_strings}")
 
                     # Filter the strings
                     new_available = [text for text in current_available_strings if text != selection]
 
-                    # Pass the list of strings to set_item_list
-                    self.sidebar.available_list.set_item_list(new_available)
+                    logging.info(f"new_available: {new_available}")
 
-                    # 2. Update Order List
-                    # Ensure you are using the correct variable name (you had a typo in neigbor)
+                    # 3. Update the list using the SAME direct element reference
+                    event.ui_element.set_item_list(new_available)
+
+                    # 4. Update Order List
                     if selection not in self.sidebar.neighbor_order_list:
                         self.sidebar.neighbor_order_list.append(selection)
                         self.sidebar.neighbor_order_display.set_item_list(self.sidebar.neighbor_order_list)
@@ -266,8 +268,6 @@ class PathFinderApp:
                     # Sort it so the order stays 'North, East, South, West'
                     sorted_available = Neighbor_Direction.sort_labels(current_available)
                     self.sidebar.available_list.set_item_list(sorted_available)
-                                
-                """
 
 
     def _update(self):
