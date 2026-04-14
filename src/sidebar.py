@@ -504,21 +504,20 @@ class Sidebar:
 
         # Handles switching between map, panel, and viz tabs
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            logging.info(f"button pressed! event: {event}")
+            # Tab buttons
             if event.ui_element == self.btn_map_tab:
                 self._switch_tab(self.panel_map_config)
             elif event.ui_element == self.btn_algo_tab:
                 self._switch_tab(self.panel_algo_settings)
             elif event.ui_element == self.btn_viz_tab:
                 self._switch_tab(self.panel_viz_settings)
+
+            # Neighor Direction Order buttons
             elif event.ui_element == self.btn_default_order:
-                logging.info("detected default order button")
                 self._handle_set_default_order()
             elif event.ui_element == self.btn_random_order:
-                logging.info(f"detected random order button")
                 self._handle_randomize_order()
             elif event.ui_element == self.btn_save_preset:
-                logging.info(f"detected button save preset")
                 self._handle_save_preset()
             elif event.ui_element == self.btn_clear_order:
                 self._handle_clear_order()
@@ -530,11 +529,9 @@ class Sidebar:
             self._handle_checkbox_unchecked(event)
         
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-            logging.info(f"detected drop_down_menu_changed")
             self._handle_dropdown_menu_events(event)
 
         elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
-            logging.info(f"detected new selection")
             self._handle_new_selection(event)
 
         elif event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
@@ -772,9 +769,10 @@ class Sidebar:
     
     def _handle_dropdown_menu_events(self, event):
 
-        if event.ui_object_id.endswith("#map_action_selector"):
+        if event.ui_element == self.select_map_action:
+            logging.info("Selected map action")
             self._handle_map_action(event.text)
-        elif event.ui_object_id.endswith("select_algo"):
+        elif event.ui_element == self.select_algo:
             self.selected_algorithm = event.text 
             logging.info(f"Selected algorithm: {self.selected_algorithm}")
         
@@ -811,34 +809,30 @@ class Sidebar:
             self.open_file_dialog(Map_Actions.SAVE_MAP)
 
 
-    def _handle_window_close_events(self, event):
-        # Clean up dialog reference when closed
-        if event.ui_element == self.active_file_dialog:
-            self.active_file_dialog = None
-
-
     def open_file_dialog(self, action_type):
         #Sidebar owns the dialog object, but the App uses the result
         if self.active_file_dialog is None:
-            # Default name for saving
-            
+           
             if action_type == Map_Actions.SAVE_MAP:
-                title = "Save Map (Type name in path bar above)"
                 path = "maps/new_map.json"
             else:
-                title = action_type.label
                 path = "maps/"
-
 
             self.active_file_dialog = UIFileDialog(
                 rect=pygame.Rect(160, 50, 440, 500),
                 manager=self.manager,
-                window_title=title,
+                window_title=action_type.window_title,
                 initial_file_path=path,
                 object_id="#map_file_dialog",
                 allowed_suffixes={".json"},
                 allow_existing_files_only=(action_type == Map_Actions.LOAD_MAP)
             )
+
+    
+    def _handle_window_close_events(self, event):
+        # Clean up dialog reference when closed
+        if event.ui_element == self.active_file_dialog:
+            self.active_file_dialog = None
 
 
     def _switch_tab(self, target_panel):

@@ -103,48 +103,57 @@ class Grid:
             with open(file_path, 'r') as f:
                 data = json.load(f)
 
+            # 1. Structural Check: Ensure all required keys exist 
+            required_keys = ["rows", "cols", "cells"]
+            if not all(key in data for key in required_keys):
+                logger.error(f"Failed to load {file_path}: Missing required map data.")
+                return 
+            
             # Update the row, col counts 
             self.rows = data["rows"]
             self.cols = data["cols"]
-
-            # recalculate cell size
             self.cell_size = self.grid_size // self.rows 
 
-            # build a new 2d map with the stored terrain types
+            # 2. Build map with value protection
             new_map = []
 
             for r in range(self.rows):
                 row = []
                 for c in range(self.cols):
-                    terrain_val = data["cells"][r][c]
-                    #New nodes start with all UI flags (visited/path/start/end) as False
-                    row.append(Node(r, c, self.cell_size, terrain_val))
+                    terrain_int = data["cells"][r][c]
+                    try:
+                        terrain_obj = Terrain_Type(terrain_int)  # converts int 0 to Terrain_Type.GRASS
+                    except ValueError:
+                        logging.warning(f"Invalid terrain value {terrain_int} at ({r}, {c}). Defaulting to Grass")
+                        terrain_obj = Terrain_Type.default()
+                    
+                    row.append(Node(r, c, self.cell_size, terrain_obj))
                 new_map.append(row)
 
             # replace the old map with the new map 
             self.map = new_map
             
-            # restore Start Node with reference and flag
+            # restore Start Node 
             self.start_node = None 
             if data.get("start_pos"):
                 r, c = data["start_pos"]
                 # Bounds check: only assign if coordinates exist in the new grid
-                if r < self.rows and c < self.cols:
+                if 0 <= r < self.rows and 0 <= c < self.cols:
                     self.start_node = self.map[r][c]
                     self.start_node.is_start = True 
 
-            # Restore the end node reference and flag 
+            # Restore end node
             self.end_node = None 
             if data.get("end_pos"):
                 r, c = data["end_pos"]
-                if r < self.rows and c < self.cols:
+                if 0 <= r < self.rows and 0 <= c < self.cols:
                     self.end_node = self.map[r][c]
                     self.end_node.is_end = True 
                 
-            logging.info(f"Map loaded from {file_path}")
+            logging.info(f"Map successfully loaded from {file_path}")
 
         except Exception as e:
-            logger.error(f"Failed to load map: {e}")
+            logger.error(f"An unexpected error occurred while loading map: {e}")
     
 
     def save_to_file(self, file_path):
@@ -159,14 +168,15 @@ class Grid:
             "start_pos": (self.start_node.row, self.start_node.col) if self.start_node else None,
             "end_pos": (self.end_node.row, self.end_node.col) if self.end_node else None,
             # Save only the underlying terrain for each node 
-            "cells": [[node.terrain for node in row] for row in self.map]
+            "cells": [[node.terrain.value if hasattr(node.terrain, 'value') else node.terrain
+                       for node in row] for row in self.map]
         }
 
         try:
             dir_name = os.path.dirname(file_path)
             if dir_name: # only create if there's actually a directory path
                 # Create directory if it doesn't exist (e.g., /maps/)
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                os.makedirs(dir_name, exist_ok=True)
             
             with open(file_path, 'w') as f:
                 json.dump(grid_data, f) 

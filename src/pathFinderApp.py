@@ -94,9 +94,6 @@ class PathFinderApp:
 
         self.current_brush = Terrain_Type.GRASS
 
-        logging.info(f"self.current_brush: {self.current_brush}")
-        logging.info(f"self.current_brush type: {type(self.current_brush)}")
-
         logging.info(f"PathFinderApp initialized")
 
     
@@ -154,26 +151,25 @@ class PathFinderApp:
 
             # --- Handle File Dialog Logic --- 
             elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
-                # Use the window title to decide what to do 
-                dialog_title = event.ui_element.window_display_title 
+                if event.ui_element.most_specific_combined_id == "#map_file_dialog":
+                    dialog_title = event.ui_element.window_display_title
+                   
+                    if dialog_title == Map_Actions.LOAD_MAP.window_title:
+                        self.grid.load_from_file(event.text)
 
-                if dialog_title == Map_Actions.LOAD_MAP.label:
-                    logging.info(f"Loading map from {event.text}")
-                    self.grid.load_from_file(event.text)
-                elif dialog_title == Map_Actions.SAVE_MAP.label:
-                    logging.info(f"Saving map to {event.text}")
-                    if os.path.exists(event.text):
-                        self.pending_save_path = event.text 
-                        UIConfirmationDialog(
-                            rect=pygame.Rect(250, 200, 300, 200),
-                            manager=self.ui_manager,
-                            action_long_desc=f"The file '{os.path.basename(event.text)}' already exists. Overwrite?",
-                            window_title="Confirm Overwrite",
-                            action_short_name="Overwrite",
-                            blocking=True
-                        )
-                    else:
-                        self.grid.save_to_file(event.text)
+                    elif dialog_title == Map_Actions.SAVE_MAP.window_title:
+                        if os.path.exists(event.text):
+                            self.pending_save_path = event.text 
+                            UIConfirmationDialog(
+                                rect=pygame.Rect(250, 200, 300, 200),
+                                manager=self.ui_manager,
+                                action_long_desc=f"The file '{os.path.basename(event.text)}' already exists. Overwrite?",
+                                window_title="Confirm Overwrite",
+                                action_short_name="Overwrite",
+                                blocking=True
+                            )
+                        else:
+                            self.grid.save_to_file(event.text)
 
             elif event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
                 if self.pending_save_path:

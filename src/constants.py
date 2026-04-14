@@ -162,6 +162,16 @@ class Map_Actions(IntEnum):
     def label(self):
         return self.name.replace("_", " ").title()
     
+    @property 
+    def window_title(self):
+        """Returns a standardized window title for each action."""
+        titles = {
+            Map_Actions.SAVE_MAP: "Save Map (Type name in path bar above)",
+            Map_Actions.LOAD_MAP: "Load Map",
+            Map_Actions.EDIT_MAP: "Edit Map"
+        }
+        return titles.get(self, self.label)
+    
     def __str__(self):
         return self.label 
     
