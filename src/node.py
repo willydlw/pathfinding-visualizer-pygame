@@ -101,8 +101,7 @@ class Node:
         """
             
 
-    
-    def reset_all(self, default_terrain):
+    def reset_all(self, default_terrain: Terrain_Type) -> None:
         """Clears search state data, start/end state and resets terrain."""
         self.reset_search_states()
         self.terrain = default_terrain 
@@ -110,7 +109,7 @@ class Node:
         self.is_end = False   
 
 
-    def reset_search_states(self):
+    def reset_search_states(self) -> None:
         """Clears search data but keeps terrain."""
         self.visited = False 
         self.closed = False 
@@ -121,3 +120,8 @@ class Node:
         self.g = float('inf')
         self.f = 0
         self.h = 0 
+
+    
+    def set_terrain(self, terrain: Terrain_Type) -> None:
+        self.terrain = terrain 
+        #logging.info(f"self.terrain: {self.terrain}")        

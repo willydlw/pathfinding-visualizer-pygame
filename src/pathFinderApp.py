@@ -88,6 +88,15 @@ class PathFinderApp:
         self.pending_save_path = None
         self.pending_grid_size = None 
         self.confirmation_dialog = None
+        
+        self.left_button_held = False 
+        self.right_button_held = False 
+
+        self.current_brush = Terrain_Type.GRASS
+
+        logging.info(f"self.current_brush: {self.current_brush}")
+        logging.info(f"self.current_brush type: {type(self.current_brush)}")
+
         logging.info(f"PathFinderApp initialized")
 
     
@@ -104,9 +113,21 @@ class PathFinderApp:
             # Handles internal UI changes
             self.sidebar.handle_events(event)
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1: 
+                    self.left_button_held = True 
+                elif event.button == 3:  
+                    self.right_button_held = True 
 
-            # --- Handle Buttons ---
-            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1: 
+                    self.left_button_held = False 
+                elif event.button == 3:
+                    self.right_button_held = False 
+
+
+            # --- Handle UI Buttons ---
+            elif event.type == pygame_gui.UI_BUTTON_PRESSED:
                 # App decides what to do when Sidebar buttons are pressed 
                 
                 if event.ui_object_id.endswith("#clear_grid_button"):
@@ -191,14 +212,16 @@ class PathFinderApp:
 
             # --- Handle Dropdowns ---
             elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-                logging.debug(f"event.text: {event.text}")
 
                 # Terrain Brush
-                if event.ui_object_id.endswith("#terrain_type_selector"):
+                if event.ui_element == self.sidebar.select_terrain:
                     terrain = Terrain_Type[event.text].value
-                    self.grid.current_brush = terrain 
+                    self.current_brush = terrain 
+                    logging.info(f"detected select_terrain: {terrain}")
 
-                elif event.ui_object_id.endswith("#grid_dimensions_selector"):
+                elif event.ui_element == self.sidebar.select_grid_dimensions:
+                #elif event.ui_manager.ui_object_id.endswith("#grid_dimensions_selector"):
+                    logging.info(f"Detected grid size change")
                     # Store the intended size but don't apply it yet 
                     self.pending_grid_size = Map_Dimension.from_label(event.text).value
 
@@ -219,21 +242,24 @@ class PathFinderApp:
                         blocking=True
                     )
 
+
     def _handle_continuous_mouse(self):
+
         """Handles painting terrain/start/end while mouse is pressed."""
         if self.ui_manager.get_hovering_any_element():
             return 
+        
     
         pos = pygame.mouse.get_pos() 
         node = self.grid.get_node_from_pos(pos)
         if not node:
             return
         
-        buttons = pygame.mouse.get_pressed() 
-        
-        # Left click logic (start, end, or Terrain)
-        if buttons[0]:
-
+        #logging.info(f"self.left_button_held: {self.left_button_held}")
+        #logging.info(f"self.right_button_held: {self.right_button_held}")
+       
+        # Handle painting (start/end/terrain)
+        if self.left_button_held:
             # Handle start node placement
             if self.sidebar.check_start.is_checked:
                 self.grid.set_start(node)
@@ -243,11 +269,7 @@ class PathFinderApp:
 
             # Handle regular painting
             else:
-                self.grid.set_terrain(node)
-        
-        # Right click logic (Erase)
-        elif buttons[2]:
-            self.grid.set_terrain(node, Terrain_Type.default)
+                node.set_terrain(self.current_brush)
             
 
     def _update(self):

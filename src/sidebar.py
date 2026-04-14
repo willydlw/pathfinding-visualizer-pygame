@@ -106,7 +106,7 @@ class Sidebar:
         self.active_file_dialog = None 
         self.current_action = None 
         self.selected_algo = Algorithm_Type.BFS
-        self.neighbor_order_list = []
+
 
         
         # 1. Create Tab Buttons at the top of the Sidebar
@@ -130,7 +130,7 @@ class Sidebar:
         self.label_grid_dimensions = None 
         self.select_grid_dimensions = None 
         self.check_start = None
-        self.check_end = None
+        self.check_end = None 
         self._init_panel_map_config() 
        
 
@@ -455,6 +455,7 @@ class Sidebar:
         raw_list = ui_list_element.item_list 
         return [item['text'] if isinstance(item, dict) else item for item in raw_list]
     
+
     def get_selected_direction_vectors(self):
         """
         Converts the strings in list_active_order into (dr, dc) vectors.
@@ -774,8 +775,9 @@ class Sidebar:
         if event.ui_object_id.endswith("#map_action_selector"):
             self._handle_map_action(event.text)
         elif event.ui_object_id.endswith("select_algo"):
-                self.selected_algorithm = event.text 
-                logging.info(f"Selected algorithm: {self.selected_algorithm}")
+            self.selected_algorithm = event.text 
+            logging.info(f"Selected algorithm: {self.selected_algorithm}")
+        
 
         """
         elif event.ui_element == self.anim_dropdown:
