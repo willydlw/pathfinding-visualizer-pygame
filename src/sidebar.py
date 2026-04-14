@@ -129,8 +129,8 @@ class Sidebar:
         self.select_terrain = None 
         self.label_grid_dimensions = None 
         self.select_grid_dimensions = None 
-        self.check_place_start = None
-        self.check_place_end = None
+        self.check_start = None
+        self.check_end = None
         self._init_panel_map_config() 
        
 
@@ -149,8 +149,9 @@ class Sidebar:
         self._init_panel_viz_settings() 
        
         # Set Initial Active Panel State 
-        self.active_panel = self.panel_algo_settings
-        self.panel_map_config.hide()
+        self.active_panel = self.panel_map_config
+        #self.panel_map_config.hide()
+        self.panel_algo_settings.hide()
         self.panel_viz_settings.hide()
 
 
@@ -273,24 +274,24 @@ class Sidebar:
         self.ui_layout.draw_row += self.config.ROW_SPACING 
 
         # Start/End Markers     
-        self.check_place_start = UICheckBox(
+        self.check_start = UICheckBox(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
             text="Set Start",
             manager=self.manager,
             container=self.panel_map_config,
-            object_id="#check_place_start"
+            object_id="#check_start"
         )
 
-        self.check_place_end = UICheckBox(
+        self.check_end = UICheckBox(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
             text="Set End",
             manager=self.manager,
             container=self.panel_map_config,
-            object_id="#check_place_end"
+            object_id="#check_end"
         )
 
         self.ui_layout.draw_row += self.config.ROW_SPACING 
@@ -444,8 +445,6 @@ class Sidebar:
 
         self._refresh_preset_dropdown()
         
-
-
 
     def _init_panel_viz_settings(self):
         pass
@@ -603,7 +602,7 @@ class Sidebar:
 
     def _refresh_preset_dropdown(self):
         """Scan the presets folder and update the dropdown options."""
-        
+
         # ensure directory exists
         os.makedirs('presets', exist_ok=True)
 
@@ -647,6 +646,7 @@ class Sidebar:
         sorted_pool = Neighbor_Direction.sort_labels(current_pool)
         self.list_avail_dirs.set_item_list(sorted_pool)
 
+
     def _handle_set_default_order(self):
         """Sets order to the standard natural order based on diagonal toggle."""
         # Get master list of directions 
@@ -660,6 +660,7 @@ class Sidebar:
         # Set lists: available empty, order full
         self.list_active_order.set_item_list(full_default)
         self.list_avail_dirs.set_item_list([])
+
 
     def _handle_randomize_order(self):
         """Randomizes the sequence of all currently active directions."""
@@ -726,17 +727,17 @@ class Sidebar:
 
     def _handle_checkbox_checked(self, event):
 
-        if event.ui_element == self.check_place_start:
-            if self.check_place_start.is_checked:
+        if event.ui_element == self.check_start:
+            if self.check_start.is_checked:
                 # Force uncheck the other 
-                self.check_place_end.is_checked = False 
-                self.check_place_end.rebuild()
+                self.check_end.is_checked = False 
+                self.check_end.rebuild()
 
-        elif event.ui_element == self.check_place_end:
-            if self.check_place_end.is_checked:
+        elif event.ui_element == self.check_end:
+            if self.check_end.is_checked:
                 # force uncheck the other 
-                self.check_place_start.is_checked = False 
-                self.check_place_start.rebuild() 
+                self.check_start.is_checked = False 
+                self.check_start.rebuild() 
 
         elif event.ui_element == self.check_allow_diagonals:
            self._handle_diagonal_checkbox(is_checked=True)
@@ -795,12 +796,10 @@ class Sidebar:
     
     def uncheck_start_end(self):
         #Unchecks both start and end boxes.
-        self.check_place_start.is_checked = False 
-        self.check_place_start.rebuild()
-        self.check_place_end.is_checked = False 
-        self.check_place_end.rebuild()
-
-
+        self.check_start.is_checked = False 
+        self.check_start.rebuild()
+        self.check_end.is_checked = False 
+        self.check_end.rebuild()
 
 
     def _handle_map_action(self, text):

@@ -25,6 +25,8 @@ from .constants import (
 logger = logging.getLogger(__name__)
 
 
+
+
 class PathFinderApp:
    
     def __init__(self, config: AppConfig):
@@ -99,8 +101,9 @@ class PathFinderApp:
             # Call it for every event retrieved from the Pygame event queue.
             self.ui_manager.process_events(event) 
 
-            # Handles internal UI toggles
+            # Handles internal UI changes
             self.sidebar.handle_events(event)
+
 
             # --- Handle Buttons ---
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
@@ -216,15 +219,36 @@ class PathFinderApp:
                         blocking=True
                     )
 
+    def _handle_continuous_mouse(self):
+        """Handles painting terrain/start/end while mouse is pressed."""
+        if self.ui_manager.get_hovering_any_element():
+            return 
+    
+        pos = pygame.mouse.get_pos() 
+        node = self.grid.get_node_from_pos(pos)
+        if not node:
+            return
+        
+        buttons = pygame.mouse.get_pressed() 
+        
+        # Left click logic (start, end, or Terrain)
+        if buttons[0]:
 
-                # Map Actions
-                elif event.ui_element == self.sidebar.map_dropdown:
+            # Handle start node placement
+            if self.sidebar.check_start.is_checked:
+                self.grid.set_start(node)
 
-                    if event.text == Map_Actions.CREATE_MAP.name:
-                        self.grid.clear() 
-                        self.sidebar.uncheck_start_end() 
-              
+            elif self.sidebar.check_end.is_checked:
+                self.grid.set_end(node)
 
+            # Handle regular painting
+            else:
+                self.grid.set_terrain(node)
+        
+        # Right click logic (Erase)
+        elif buttons[2]:
+            self.grid.set_terrain(node, Terrain_Type.default)
+            
 
     def _update(self):
 
@@ -245,8 +269,7 @@ class PathFinderApp:
 
         # Handle continuous painting only when NO search is running 
         if not self.active_generator:
-            if not self.ui_manager.get_hovering_any_element():
-                self.grid.handle_continuous_mouse(self.sidebar)
+            self._handle_continuous_mouse()
             return 
         
         # selected option is returning a list

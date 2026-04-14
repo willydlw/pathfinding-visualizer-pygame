@@ -67,80 +67,6 @@ class Grid:
         return None 
     
 
-    def handle_click_event(self, sidebar):
-        """Called only once per mouse click (not held)"""
-        pos = pygame.mouse.get_pos() 
-        node = self.get_node_from_pos(pos)
-
-        if not node:
-            return 
-        
-        # Handle start placement 
-        if sidebar.start_checkbox.is_checked:
-            if self.start_node and self.start_node != node:
-                self.start_node.is_start = False 
-            node.is_start = True 
-            node.is_end = False 
-            self.start_node = node 
-            logging.info(f"Start set to: {node.row}, {node.col}")
-
-        # Handle End Placement 
-        elif sidebar.end_checkbox.is_checked:
-            if self.end_node and self.end_node != node:
-                self.end_node.is_end = False 
-            node.is_end = True 
-            node.is_start = False 
-            self.end_node = node 
-            logging.info(f"End set to: {node.row}, {node.col}")
-            
-    
-    def handle_continuous_mouse(self, sidebar):
-        """Handles painting terrain/start/end whild mouse is held down."""
-        # Left click held: paint terrain or start/end
-        if pygame.mouse.get_pressed()[0]:
-            pos = pygame.mouse.get_pos() 
-            node = self.get_node_from_pos(pos)
-
-            if node:
-                # Handle start checkbox
-                if sidebar.start_marker_checkbox.is_checked:
-                    # if we are click a new node, reset the old start node 
-                    if self.start_node and self.start_node != node:
-                        self.start_node.is_start = False 
-                    node.is_start = True 
-                    node.is_end = False 
-                    self.start_node = node 
-
-                # Handle end checkbox
-                elif sidebar.end_marker_checkbox.is_checked:
-                    if self.end_node and self.end_node != node:
-                        self.end_node.is_end = False 
-                    node.is_start = False
-                    node.is_end = True 
-                    self.end_node = node 
-
-                # Handle regular painting
-                else:
-                    # Normal terrain painting (only if node isn't currently start/end)
-                    if not node.is_start and not node.is_end:
-                        node.terrain = self.current_brush
-
-    
-    def handle_mouse_event(self, event):
-        """Handles one-time clicks, specifically for right-click release"""
-        # Right click: Erase (Wait for button UP)
-        if event.type == pygame.MOUSEBUTTONUP and event.button == 3:
-            pos = pygame.mouse.get_pos() 
-            node = self.get_node_from_pos(pos)
-            if node:
-                if node.is_start:
-                    node.is_start = False 
-                    self.start_node = None 
-                elif node.is_end:
-                    node.is_end = False 
-                    self.end_node = None 
-                else:
-                    node.terrain = Terrain_Type.DEFAULT 
 
     def draw(self, surface, font):
         # Draw the colored cell blocks
@@ -273,4 +199,23 @@ class Grid:
                      for r in range(self.rows)]
         
         logging.info(f"Grid resized to {new_num_cells}x{new_num_cells} Cell size: {self.cell_size}px")
+
+    def set_start(self, node):
+        if self.start_node:
+            self.start_node.is_start = False 
+        
+        node.is_start = True 
+        node.is_end = False 
+        self.start_node = node 
+
+    def set_end(self, node):
+        if self.end_node:
+            self.end_node.is_end = False 
+        
+        node.is_end = True 
+        node.is_start = False 
+
+    def set_terrain(self, node):
+        if not node.is_start and not node.is_end:
+            node.terrain = self.current_brush
         
