@@ -213,7 +213,8 @@ class Grid:
             self.end_node.is_end = False 
         
         node.is_end = True 
-        node.is_start = False 
+        node.is_start = False
+        self.end_node = node 
 
     def set_terrain(self, node):
         if not node.is_start and not node.is_end:
