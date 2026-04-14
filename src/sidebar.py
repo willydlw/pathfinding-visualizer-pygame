@@ -373,7 +373,6 @@ class Sidebar:
             container=self.panel_algo_settings,
             object_id="#list_active_order"
         )
-
         self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
 
         # Add these in _init_panel_algo_settings
@@ -390,10 +389,31 @@ class Sidebar:
             text="Randomize",
             manager=self.manager, container=self.panel_algo_settings
         )
+        self.ui_layout.draw_row += self.config.ROW_SPACING
+       
+        # Diagonal Toggle Checkbox 
+        self.check_allow_diagonals = UICheckBox(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.config.CHECKBOX_SIZE, self.ui_layout.widget_height)),
+            text="Include Diagonals",
+            manager=self.manager,
+            container=self.panel_algo_settings
+        )
 
+        # Clear order
+        self.btn_clear_order = UIButton(
+             relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
+            text="Clear Search Order",
+            manager=self.manager,
+            container=self.panel_algo_settings, 
+            object_id="#clear_order_btn",
+            tool_tip_text="Resets Search Order"
+        )
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
-        # Button to trigger the save
+         # Save preset
         self.btn_save_preset = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -401,10 +421,10 @@ class Sidebar:
             manager=self.manager, container=self.panel_algo_settings,
             tool_tip_text="Test 123"
         )
-
+        
         # Optional: Dropdown to load saved presets
         self.select_preset = UIDropDownMenu(
-            options_list=["Custom 1", "Custom 2"], # We will populate this dynamically
+            options_list=["Select Preset"], # We will populate this dynamically
             starting_option="Select Preset",
             relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -412,20 +432,7 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
-
-        self.btn_clear_order = UIButton(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_width, self.ui_layout.widget_height)),
-            text="Clear Search Order",
-            manager=self.manager,
-            container=self.panel_algo_settings, 
-            object_id="#clear_order_btn",
-            tool_tip_text="Resets Search Order"
-        )
-
-        self.ui_layout.draw_row += self.config.ROW_SPACING
-
+        
         # Text field for the preset name
         self.input_preset_name = UITextEntryLine(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
@@ -433,27 +440,11 @@ class Sidebar:
             manager=self.manager, container=self.panel_algo_settings,
             placeholder_text="Enter Preset Name..." # Helpful hint for the user
         )
-        self.ui_layout.draw_row += self.ui_layout.widget_height + 5
+        #self.ui_layout.draw_row += self.ui_layout.widget_height + 5
 
-        # Move your Save Button below it
-        self.btn_save_preset = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
-                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
-            text="Save Custom Preset",
-            manager=self.manager, container=self.panel_algo_settings
-        )
-        self.ui_layout.draw_row += self.config.ROW_SPACING
+        self._refresh_preset_dropdown()
+        
 
-
-        # Diagonal Toggle Checkbox 
-        self.check_allow_diagonals = UICheckBox(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.config.CHECKBOX_SIZE, self.ui_layout.widget_height)),
-            text="Include Diagonal Neighbors",
-            manager=self.manager,
-            container=self.panel_algo_settings
-        )
 
 
     def _init_panel_viz_settings(self):
@@ -528,6 +519,7 @@ class Sidebar:
                 self._handle_randomize_order()
             elif event.ui_element == self.btn_save_preset:
                 logging.info(f"detected button save preset")
+                self._handle_save_preset()
             elif event.ui_element == self.btn_clear_order:
                 self._handle_clear_order()
 
@@ -577,13 +569,13 @@ class Sidebar:
 
 
     def _handle_save_preset(self):
-        logging.info("entering handle_save_preset")
+        # Ensure the directory exists
+        os.makedirs('presets', exist_ok=True)
+
         # Get the name from the text entry field 
         preset_name = self.input_preset_name.text.strip() 
-
         if not preset_name:
             preset_name = f"Preset_{len(os.listdir('presets')) + 1}"
-
 
         # Get the current labels form UI list 
         current_order = self._get_clean_item_list(self.list_active_order)
@@ -599,7 +591,7 @@ class Sidebar:
 
         # Save to JSON file 
         os.makedirs('presets', exist_ok=True)
-        with open(f"presets/{preset_data['name']}.json", "w") as f:
+        with open(f"presets/{preset_name}.json", "w") as f:
             json.dump(preset_data, f)
 
         # Clear input and refresh dropdown 
@@ -611,10 +603,34 @@ class Sidebar:
 
     def _refresh_preset_dropdown(self):
         """Scan the presets folder and update the dropdown options."""
-        if os.path.exists('presets'):
-            # Get all .json filenames without the extension
-            files = [f.replace('.json', '') for f in os.listdir('presets') if f.endswith('.json')]
-            self.select_preset.add_options_list(files)
+        
+        # ensure directory exists
+        os.makedirs('presets', exist_ok=True)
+
+        # get files and strip extensions
+        files = [f.replace('.json', '') for f in os.listdir('presets') if f.endswith('.json')]
+
+        # always prepend "Select Preset" so the menu has its default value 
+        options = ["Select Preset"] + files 
+
+        # Save the current position/parameters before killing 
+        rect = self.select_preset.relative_rect 
+        manager = self.select_preset.ui_manager 
+        container = self.select_preset.ui_container
+
+        # Remove the old dropdown from the UI 
+        self.select_preset.kill() 
+
+        # Recreate it with the new list 
+        self.select_preset = UIDropDownMenu(
+            options_list=options,
+            starting_option="Select Preset",
+            relative_rect=rect,
+            manager=manager,
+            container=container
+        )
+
+       
 
 
     def _handle_clear_order(self):

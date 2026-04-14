@@ -12,3 +12,6 @@ wheels/
 
 # log files
 *.log
+
+# user directories 
+presets/
