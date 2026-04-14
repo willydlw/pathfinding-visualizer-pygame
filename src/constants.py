@@ -263,11 +263,17 @@ class Neighbor_Direction(Enum):
         return f"<{self.__class__.__name__}.{self.name}>, <{self.value}>"
     
     @classmethod
-    def get_natural_order(cls):
-        """The master sorting order for the UI."""
-        return ["North", "North East", "East", "South East",
-                "South", "South West", "West", "North West"]
-    
+    def get_natural_order(cls):    
+        """Returns all 8 labels in the requested clockwise order."""
+        ordered = [
+            cls.NORTH, cls.NORTH_EAST, 
+            cls.EAST,  cls.SOUTH_EAST, 
+            cls.SOUTH, cls.SOUTH_WEST, 
+            cls.WEST,  cls.NORTH_WEST
+        ]
+        return [m.label for m in ordered]
+
+
     @classmethod 
     def sort_labels(cls, label_list):
         """Sorts a list of labels based on the natural order."""

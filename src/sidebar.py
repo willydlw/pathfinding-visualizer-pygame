@@ -398,7 +398,8 @@ class Sidebar:
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
             text="Save Preset",
-            manager=self.manager, container=self.panel_algo_settings
+            manager=self.manager, container=self.panel_algo_settings,
+            tool_tip_text="Test 123"
         )
 
         # Optional: Dropdown to load saved presets
@@ -428,7 +429,7 @@ class Sidebar:
         # Text field for the preset name
         self.input_preset_name = UITextEntryLine(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
-                                    (self.ui_layout.full_width, self.ui_layout.widget_height)),
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
             manager=self.manager, container=self.panel_algo_settings,
             placeholder_text="Enter Preset Name..." # Helpful hint for the user
         )
@@ -437,7 +438,7 @@ class Sidebar:
         # Move your Save Button below it
         self.btn_save_preset = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
-                                    (self.ui_layout.full_width, self.ui_layout.widget_height)),
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
             text="Save Custom Preset",
             manager=self.manager, container=self.panel_algo_settings
         )
@@ -512,6 +513,7 @@ class Sidebar:
 
         # Handles switching between map, panel, and viz tabs
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            logging.info(f"button pressed! event: {event}")
             if event.ui_element == self.btn_map_tab:
                 self._switch_tab(self.panel_map_config)
             elif event.ui_element == self.btn_algo_tab:
@@ -519,9 +521,13 @@ class Sidebar:
             elif event.ui_element == self.btn_viz_tab:
                 self._switch_tab(self.panel_viz_settings)
             elif event.ui_element == self.btn_default_order:
+                logging.info("detected default order button")
                 self._handle_set_default_order()
             elif event.ui_element == self.btn_random_order:
+                logging.info(f"detected random order button")
                 self._handle_randomize_order()
+            elif event.ui_element == self.btn_save_preset:
+                logging.info(f"detected button save preset")
             elif event.ui_element == self.btn_clear_order:
                 self._handle_clear_order()
 
@@ -546,6 +552,8 @@ class Sidebar:
         elif event.type == pygame_gui.UI_WINDOW_CLOSE:
             self._handle_window_close_events(event)
 
+
+
     def _handle_load_preset(self, preset_name):
         # load the data
         try:
@@ -568,8 +576,8 @@ class Sidebar:
             logging.warning(f"File {preset_name} not found.")
 
 
-
     def _handle_save_preset(self):
+        logging.info("entering handle_save_preset")
         # Get the name from the text entry field 
         preset_name = self.input_preset_name.text.strip() 
 
@@ -627,7 +635,11 @@ class Sidebar:
         """Sets order to the standard natural order based on diagonal toggle."""
         # Get master list of directions 
         include_diagonals = self.check_allow_diagonals.is_checked 
-        full_default = Neighbor_Direction.get_labels(include_diagonals)
+
+        if include_diagonals:
+            full_default = Neighbor_Direction.get_natural_order()
+        else:
+            full_default = Neighbor_Direction.get_labels(include_diagonals)
 
         # Set lists: available empty, order full
         self.list_active_order.set_item_list(full_default)
