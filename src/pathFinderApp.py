@@ -201,7 +201,7 @@ class PathFinderApp:
                     
                     self.sidebar.select_grid_dimensions.kill()
                     self.sidebar.select_grid_dimensions = pygame_gui.elements.UIDropDownMenu(
-                        options_list=Map_Dimension.get_ui_labels(),
+                        options_list=Map_Dimension.options_list(),
                         starting_option=current_dim_label,
                         relative_rect=old_rect,
                         manager=self.sidebar.manager,
@@ -217,7 +217,7 @@ class PathFinderApp:
 
                 # Terrain Brush
                 if event.ui_element == self.sidebar.select_terrain:
-                    terrain = Terrain_Type[event.text].value
+                    terrain = Terrain_Type.from_label(event.text)
                     self.current_brush = terrain 
                     logging.info(f"detected select_terrain: {terrain}")
 
@@ -248,7 +248,7 @@ class PathFinderApp:
                     # convert string to enum 
                     algo = Algorithm_Type.from_label(event.text)
                     self.algo_settings.algorithm = algo 
-                    
+
                 elif event.ui_element == self.sidebar.select_neighbor_connectivity:
                     logging.info(f"select_neighbor_connectivity dropdown, event.text: {event.text}")
                     

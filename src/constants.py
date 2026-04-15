@@ -42,7 +42,6 @@ class UIEnum(IntEnum):
 
 
 
- 
 @unique
 class Algorithm_Type(UIEnum):
     BFS = 0
@@ -58,15 +57,12 @@ class Algorithm_Type(UIEnum):
         }
 
 
-
 @unique
 class Animation_Mode(UIEnum):
     ANIMATED = 0
     INSTANT =  1
     SINGLE_STEP = 2
     
-
-
 
 @unique
 class Draw_State(UIEnum):
@@ -91,7 +87,6 @@ class Draw_State(UIEnum):
         }.get(self, (255,255,255))             # Default white
   
 
-
 @unique
 class Map_Actions(UIEnum):
     EDIT_MAP = 0
@@ -110,7 +105,8 @@ class Map_Actions(UIEnum):
         return titles.get(self, self.label)
 
 
-class Map_Dimension(IntEnum):
+@unique
+class Map_Dimension(UIEnum):
     MD8 =  8
     MD16 = 16
     MD32 = 32
@@ -118,15 +114,28 @@ class Map_Dimension(IntEnum):
     MD128 = 128 
 
     @classmethod
-    def get_labels(self):
+    def get_labels(cls):
         """Overrides base behavior to return '64 x 64' format."""
-        return { member: f"{member.value} x {member.value}" for member in cls}
+        return {member: f"{member.value} x {member.value}" for member in cls}
     
     @classmethod
     def get_default(cls):
         return cls.MD8
     
-   
+
+
+@unique 
+class Neighbor_Connectivity(UIEnum):
+    CONNECT4 = 4
+    CONNECT8 = 8 
+
+    @classmethod 
+    def get_labels(cls):
+        return{
+            cls.CONNECT4: '4 Cardinal (N, S, E, W)',
+            cls.CONNECT8: '8 (Cardinal + Diagonals)'
+        }
+
 
 
 class Neighbor_Direction(Enum):
@@ -203,18 +212,6 @@ class Neighbor_Direction(Enum):
         return label_list
        
     
-
-@unique 
-class Neighbor_Connectivity(IntEnum):
-    CONNECT4 = 4
-    CONNECT8 = 8 
-
-    @classmethod 
-    def get_labels(cls):
-        return{
-            cls.CONNECT4: '4 Cardinal (N, S, E, W)',
-            cls.CONNECT8: '8 (Cardinal + Diagonals)'
-        }
 
 
 @unique

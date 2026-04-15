@@ -227,8 +227,8 @@ class Sidebar:
         )
 
         self.select_map_action = UIDropDownMenu(
-            options_list=Map_Actions.list_labels(),
-            starting_option=Map_Actions.EDIT_MAP.label,
+            options_list=Map_Actions.options_list(),
+            starting_option=Map_Actions.get_default().label,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row),
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
@@ -250,8 +250,8 @@ class Sidebar:
         )
 
         self.select_terrain = UIDropDownMenu(
-            options_list=[terrain.name for terrain in Terrain_Type],
-            starting_option=Terrain_Type.GRASS.name,
+            options_list=Terrain_Type.options_list(),
+            starting_option=Terrain_Type.get_default().label,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
@@ -274,8 +274,8 @@ class Sidebar:
         )
 
         self.select_grid_dimensions = UIDropDownMenu(
-            options_list=Map_Dimension.get_ui_labels(),
-            starting_option=Map_Dimension.MD8.label,
+            options_list=Map_Dimension.options_list(),
+            starting_option=Map_Dimension.get_default().label,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row),
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)
@@ -350,7 +350,7 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
-        # Neighbor Search Action
+        # Neighbor Connectivity
         self.label_neighbor_connectivity = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
@@ -359,9 +359,6 @@ class Sidebar:
             manager=self.manager,
             container=self.panel_algo_settings 
         )
-
-
-        logging.info(f"Neighbor_Connectivity.options_list(): {Neighbor_Connectivity.options_list()}")
 
         self.select_neighbor_connectivity = UIDropDownMenu(
             options_list=Neighbor_Connectivity.options_list(),
