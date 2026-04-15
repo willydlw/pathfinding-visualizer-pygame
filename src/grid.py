@@ -36,10 +36,10 @@ class Grid:
         logging.info(f"Grid init completed.")
 
     
-    def clear(self):
+    def clear(self, terrain):    # terrain is Terrain_Type enum not string
         """Resets the grid map to all DEFAULT (0)."""
         self.map = [
-            [Node(r, c, self.cell_size, Terrain_Type.GRASS) for c in range(self.cols)] 
+            [Node(r, c, self.cell_size, terrain) for c in range(self.cols)] 
             for r in range(self.rows)
         ]
         self.start_node = None 

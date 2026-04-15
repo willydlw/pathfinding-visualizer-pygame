@@ -127,8 +127,8 @@ class PathFinderApp:
             elif event.type == pygame_gui.UI_BUTTON_PRESSED:
                 # App decides what to do when Sidebar buttons are pressed 
                 
-                if event.ui_object_id.endswith("#clear_grid_button"):
-                    self.grid.clear()
+                if event.ui_element == self.sidebar.btn_reset_grid:
+                    self.grid.clear(self.current_brush)
                     self.sidebar.uncheck_start_end()
 
                 """

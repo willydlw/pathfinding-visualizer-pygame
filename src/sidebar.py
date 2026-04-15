@@ -131,6 +131,7 @@ class Sidebar:
         self.select_grid_dimensions = None 
         self.check_start = None
         self.check_end = None 
+        self.btn_reset_grid = None 
         self._init_panel_map_config() 
        
 
