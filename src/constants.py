@@ -312,6 +312,38 @@ class Neighbor_Direction(Enum):
 
     
 
+@unique 
+class Neighbor_Connectivity(IntEnum):
+    CONNECT4 = 4
+    CONNECT8 = 8 
+
+    @ classmethod 
+    def get_default(cls):
+        """Returns the defualt enum member."""
+        return cls.CONNECT4
+
+    @classmethod 
+    def get_labels(cls):
+        return{
+            cls.CONNECT4: '4 Cardinal (N, S, E, W)',
+            cls.CONNECT8: '8 (Cardinal + Diagonals)'
+        }
+
+    @property 
+    def label(self):
+        return Neighbor_Connectivity.get_labels()[self]
+    
+    @classmethod
+    def options_list(cls):
+        return list(cls.get_labels().values())
+    
+    @classmethod
+    def from_labels(cls, label_string):
+        # Finds the enum member that match the provided string 
+        for member, label in cls.get_labels().items():
+            if label == label_string:
+                return member 
+        return cls.CONNECT4
 
 
 @unique
@@ -351,6 +383,7 @@ class Neighbor_Order(IntEnum):
     def get_lookup(cls):
         """Creates a mapping: {"1x" : Speed_Options.ANIM_1x, ...}"""
         return {m.label: m for m in cls}
+
 
 
 

@@ -8,6 +8,7 @@ import logging
 import os 
 
 from .appConfig import AppConfig
+from .algo_settings import Algo_Settings
 from .grid import Grid 
 from .sidebar import Sidebar
 from .algorithms import bfs, dfs, astar
@@ -17,6 +18,7 @@ from .constants import (
     Animation_Mode,
     Map_Actions,
     Map_Dimension,
+    Neighbor_Connectivity,
     Neighbor_Direction,
     Speed_Options,
     Terrain_Type,
@@ -82,6 +84,8 @@ class PathFinderApp:
             self.ui_manager,
             self.config
         )
+
+        self.algo_settings = Algo_Settings()
         
         self.active_generator = None        # Holds the algorithms generator 
         self.step_requested = False 
@@ -93,6 +97,7 @@ class PathFinderApp:
         self.right_button_held = False 
 
         self.current_brush = Terrain_Type.GRASS
+        
 
         logging.info(f"PathFinderApp initialized")
 
@@ -125,19 +130,20 @@ class PathFinderApp:
 
             # --- Handle UI Buttons ---
             elif event.type == pygame_gui.UI_BUTTON_PRESSED:
-                # App decides what to do when Sidebar buttons are pressed 
-                
+                # reset grid 
                 if event.ui_element == self.sidebar.btn_reset_grid:
                     self.grid.clear(self.current_brush)
                     self.sidebar.uncheck_start_end()
 
-                """
-
-                if event.ui_element == self.sidebar.run_search_button:
-                    selected = self.sidebar.algo_dropdown.selected_option 
+                # run search
+                if event.ui_element == self.sidebar.btn_run_search:
+                    selected = self.sidebar.select_algo.selected_option 
                     algo_str = selected[0] if isinstance(selected, tuple) else selected 
+                    logging.info(f"run search button pressed, selected: {selected}")
+                    logging.info(f"algo_str: {algo_str}")
                     self.start_search(algo_str)
                 
+                """
                 elif event.ui_element == self.sidebar.next_step_button:
                      self.step_requested = True 
 
@@ -216,7 +222,6 @@ class PathFinderApp:
                     logging.info(f"detected select_terrain: {terrain}")
 
                 elif event.ui_element == self.sidebar.select_grid_dimensions:
-                #elif event.ui_manager.ui_object_id.endswith("#grid_dimensions_selector"):
                     logging.info(f"Detected grid size change")
                     # Store the intended size but don't apply it yet 
                     self.pending_grid_size = Map_Dimension.from_label(event.text).value
@@ -237,6 +242,16 @@ class PathFinderApp:
                         action_short_name="Yes, Resize",
                         blocking=True
                     )
+                elif event.ui_element == self.sidebar.select_neighbor_connectivity:
+                    logging.info(f"select_neighbor_connectivity dropdown, event.text: {event.text}")
+                    # get string
+                    selected_text = event.text 
+                    
+                    # convert string back to enum 
+                    connectivity = Neighbor_Connectivity.from_labels(selected_text)
+
+                    # apply to pathfinding logic 
+                    self.algo_settings.neighbor_connectivity = connectivity
 
 
     def _handle_continuous_mouse(self):
@@ -400,7 +415,7 @@ class PathFinderApp:
         # accidentally changing during the search 
         self.sidebar.uncheck_start_end()
 
-        # Reset any previous search state
+        # Reset any previous search state information
         self.grid.reset_search_data()
 
         # In case there is any currently running search, set the generator to None
@@ -409,6 +424,11 @@ class PathFinderApp:
 
         # Neighbor Search Directions 
         lookup = Neighbor_Direction.get_lookup() 
+
+        item_list = self.sidebar.list_active_order.item_list 
+        neighbor_search_order = [item['text'] for item in item_list]
+        logging.info(f"neighbor_search_order: {neighbor_search_order}")
+
 
         # Fallback to a default order if the list is empty 
         if not self.sidebar.neigbor_order_list:

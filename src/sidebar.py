@@ -31,6 +31,7 @@ from .constants import (
     Animation_Mode,
     Map_Actions,
     Map_Dimension,
+    Neighbor_Connectivity,
     Neighbor_Direction,
     Speed_Options,
     Terrain_Type, 
@@ -138,6 +139,10 @@ class Sidebar:
         # 5. Initialze algorithm panel ui elements 
         self.label_algo = None 
         self.select_algo = None 
+
+        self.label_neighbor_connectivity = None 
+        self.select_neighbor_connectivity = None
+
         self.label_avail_dirs = None 
         self.list_avail_dirs = None 
         self.list_active_order = None 
@@ -154,7 +159,8 @@ class Sidebar:
         self._init_panel_algo_settings()
 
         # 6. Initialize viz panel with ui elements
-        self.ui_layout.reset_flow()
+        self.btn_run_search = None 
+       
         self._init_panel_viz_settings() 
        
         # Set Initial Active Panel State 
@@ -344,6 +350,32 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
+        # Neighbor Search Action
+        self.label_neighbor_connectivity = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.label_width, self.ui_layout.widget_height)),
+            text="Neighbor Connectivity",
+            manager=self.manager,
+            container=self.panel_algo_settings 
+        )
+
+
+        logging.info(f"Neighbor_Connectivity.options_list(): {Neighbor_Connectivity.options_list()}")
+
+        self.select_neighbor_connectivity = UIDropDownMenu(
+            options_list=Neighbor_Connectivity.options_list(),
+            starting_option=Neighbor_Connectivity.get_default().label,
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col2x, self.ui_layout.draw_row), 
+                (self.ui_layout.col2_width, self.ui_layout.widget_height)),
+            manager=self.manager,
+            container=self.panel_algo_settings,
+            object_id="#select_neighbor_connectivity"
+        )
+
+        self.ui_layout.draw_row += self.config.ROW_SPACING
+
         # 2. Neighbor Direction Priority 
                  
         # List available neighbor directions 
@@ -421,7 +453,7 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
-         # Save preset
+        # Save preset
         self.btn_save_preset = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -453,7 +485,16 @@ class Sidebar:
         
 
     def _init_panel_viz_settings(self):
-        pass
+        self.ui_layout.reset_flow()
+
+        # Save preset
+        self.btn_run_search = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
+            text="Run Search",
+            manager=self.manager, container=self.panel_viz_settings
+        )
+        
 
     
     def _get_clean_item_list(self, ui_list_element):
