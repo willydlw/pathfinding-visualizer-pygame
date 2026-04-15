@@ -191,15 +191,15 @@ class PathFinderApp:
 
                     # Kill and recreate is the standard for "pygame-gui>=0.6.14",
                     # Grab existing rect
-                    old_rect = self.sidebar.grid_dimensions_dropdown.relative_rect
+                    old_rect = self.sidebar.select_grid_dimensions.relative_rect
                     
-                    self.sidebar.grid_dimensions_dropdown.kill()
-                    self.sidebar.grid_dimensions_dropdown = pygame_gui.elements.UIDropDownMenu(
+                    self.sidebar.select_grid_dimensions.kill()
+                    self.sidebar.select_grid_dimensions = pygame_gui.elements.UIDropDownMenu(
                         options_list=Map_Dimension.get_ui_labels(),
                         starting_option=current_dim_label,
                         relative_rect=old_rect,
                         manager=self.sidebar.manager,
-                        container=self.sidebar.map_panel,
+                        container=self.sidebar.panel_map_config,
                         object_id="#grid_dimensions_selector"
                     )
 
@@ -240,7 +240,6 @@ class PathFinderApp:
 
 
     def _handle_continuous_mouse(self):
-
         """Handles painting terrain/start/end while mouse is pressed."""
         if self.ui_manager.get_hovering_any_element():
             return 
