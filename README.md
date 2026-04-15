@@ -177,3 +177,22 @@ Neighbors are defined by the change ins coordinates (dx, dy) from the current ce
 - **Obstacle Checking:** Ensure the neighbor is not a non-walkable tile.
 - **Diagonal Cut-corner Check:** In 8-connectivity, you may want to prevent the agent from moving diagonally through the corner of two obstacles. This requires checking if both adjacent orthogonal cells are walkable.
 - **Traversal Cost:** Orthogonal neighbors usually have a cost of 1, which diagonal neighbors have a cost of square root(2), approx 1.41.
+
+
+
+Project Inspiration: https://davechurchill.ca/code/search/
+
+
+
+TODO:
+
+A* Tiebreaker options: Select min F only, Tiebreak min G, Tiebreak min H
+
+Heuristic functions: 8 direction Manhattan, 4 direction manhattan, 2D euclidean distance, zero (no heuristic)
+
+
+Object size: 1x1 square, 2x2 square, 3x3 square
+
+
+Visualization: toggle grid
+instant path, animated search, single step

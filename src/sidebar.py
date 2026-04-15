@@ -412,7 +412,7 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
 
-        # Add these in _init_panel_algo_settings
+        # Default order
         self.btn_default_order = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -420,6 +420,7 @@ class Sidebar:
             manager=self.manager, container=self.panel_algo_settings
         )
 
+        # Randomize order
         self.btn_random_order = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -428,35 +429,16 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.config.ROW_SPACING
        
-        # Diagonal Toggle Checkbox 
-        self.check_allow_diagonals = UICheckBox(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.config.CHECKBOX_SIZE, self.ui_layout.widget_height)),
-            text="Include Diagonals",
-            manager=self.manager,
-            container=self.panel_algo_settings
-        )
 
         # Clear order
         self.btn_clear_order = UIButton(
-             relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
+             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
             text="Clear Search Order",
             manager=self.manager,
             container=self.panel_algo_settings, 
             object_id="#clear_order_btn",
             tool_tip_text="Resets Search Order"
-        )
-        self.ui_layout.draw_row += self.config.ROW_SPACING
-
-        # Save preset
-        self.btn_save_preset = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
-                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
-            text="Save Preset",
-            manager=self.manager, container=self.panel_algo_settings,
-            tool_tip_text="Enter preset name or will save with default name"
         )
         
         # Dropdown to load saved presets
@@ -469,12 +451,23 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
+
         # Text field for the preset name
         self.input_preset_name = UITextEntryLine(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
             manager=self.manager, container=self.panel_algo_settings,
             placeholder_text="Enter Preset Name..." # Helpful hint for the user
+        )
+
+
+        # Save preset
+        self.btn_save_preset = UIButton(
+            relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
+                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
+            text="Save Preset",
+            manager=self.manager, container=self.panel_algo_settings,
+            tool_tip_text="Enter preset name or will save with default name"
         )
         #self.ui_layout.draw_row += self.ui_layout.widget_height + 5
 
@@ -673,8 +666,6 @@ class Sidebar:
             container=container
         )
 
-       
-
 
     def _handle_clear_order(self):
         # Get strings from both lists 
@@ -692,17 +683,25 @@ class Sidebar:
 
 
     def _handle_set_default_order(self):
-        """Sets order to the standard natural order based on diagonal toggle."""
-        # Get master list of directions 
-        include_diagonals = self.check_allow_diagonals.is_checked 
-
-        if include_diagonals:
-            full_default = Neighbor_Direction.get_natural_order()
+        """Sets order to the standard natural order based on connectivity selection."""
+        # 1. Safely extract string (handles tuple issue)
+        raw_selection = self.select_neighbor_connectivity.selected_option 
+        if isinstance(raw_selection, (list, tuple)):
+            selected_text = raw_selection[0]
         else:
-            full_default = Neighbor_Direction.get_labels(include_diagonals)
+            selected_text = raw_selection 
 
-        # Set lists: available empty, order full
-        self.list_active_order.set_item_list(full_default)
+        # 2. Convert to enum 
+        connectivity = Neighbor_Connectivity.from_label(selected_text)
+
+        # 3. Determine if we need diagonals
+        include_diagonals = (connectivity == Neighbor_Connectivity.CONNECT8)
+
+        # 4. Get the labels 
+        direction_labels = Neighbor_Direction.get_labels(include_diagonals=include_diagonals)
+
+        # 5. Set lists: available empty, order full
+        self.list_active_order.set_item_list(direction_labels)
         self.list_avail_dirs.set_item_list([])
 
 
@@ -762,13 +761,6 @@ class Sidebar:
                 self.list_avail_dirs.set_item_list(sorted_avail)
 
 
-    
-    def _handle_checkbox_unchecked(self, event):
-  
-        if event.ui_element == self.check_allow_diagonals:
-            self._handle_diagonal_checkbox(is_checked=False)
-            
-
     def _handle_checkbox_checked(self, event):
 
         if event.ui_element == self.check_start:
@@ -783,11 +775,14 @@ class Sidebar:
                 self.check_start.is_checked = False 
                 self.check_start.rebuild() 
 
-        elif event.ui_element == self.check_allow_diagonals:
-           self._handle_diagonal_checkbox(is_checked=True)
 
     
-    def _handle_diagonal_checkbox(self, is_checked):
+    def _handle_connectivity_selection(self, text):
+        logging.info(f"connectivity choice text: {text}")
+
+        # convert string to enum
+        connectivity = Neighbor_Connectivity.from_label(text)
+        
         # 1. Get the current version of both lists 
         current_order = self._get_clean_item_list(self.list_active_order)
         current_avail = self._get_clean_item_list(self.list_avail_dirs)
@@ -795,7 +790,7 @@ class Sidebar:
         # 2. Get the list of diagonal labels 
         diagonals = Neighbor_Direction.get_diagonal_labels() 
 
-        if not is_checked:
+        if connectivity == Neighbor_Connectivity.CONNECT4:
                 # Checkbox unchecked - remove diagonals from both lists 
                 new_order = [item for item in current_order if item not in diagonals]
                 new_avail = [item for item in current_avail if item not in diagonals]
@@ -804,7 +799,7 @@ class Sidebar:
                 self.list_active_order.set_item_list(new_order)
                 self.list_avail_dirs.set_item_list(new_avail)
         else:
-            # check box checked - add diagonals back to available 
+            # add diagonals to available 
             for d in diagonals:
                 if d not in current_avail and d not in current_order:
                     current_avail.append(d)
@@ -821,6 +816,8 @@ class Sidebar:
         elif event.ui_element == self.select_algo:
             self.selected_algorithm = event.text 
             logging.info(f"Selected algorithm: {self.selected_algorithm}")
+        elif event.ui_element == self.select_neighbor_connectivity:
+            self._handle_connectivity_selection(event.text)
         elif event.ui_element == self.select_preset:
             self._handle_load_preset(event.text)
         

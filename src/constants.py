@@ -47,13 +47,20 @@ class Algorithm_Type(UIEnum):
     BFS = 0
     DFS = 1
     ASTAR = 2
+    #WEIGHTED_ASTAR = 3
+    #UCS = 4                 # uniform cost search 
+    #GREEDY_BEST_FIRST = 5
+
 
     @classmethod 
     def get_labels(cls):
         return{
             cls.BFS: 'BFS',
             cls.DFS: 'DFS',
-            cls.ASTAR: 'ASTAR'
+            cls.ASTAR: 'A*',
+            #cls.WEIGHTED_ASTAR: 'WA*',
+            #cls.UCS: 'UCS',
+            #cls.GREEDY_BEST_FIRST: "GBFS"
         }
 
 
@@ -132,7 +139,7 @@ class Neighbor_Connectivity(UIEnum):
     @classmethod 
     def get_labels(cls):
         return{
-            cls.CONNECT4: '4 Cardinal (N, S, E, W)',
+            cls.CONNECT4: '4 Cardinal (N, E, S, W)',
             cls.CONNECT8: '8 (Cardinal + Diagonals)'
         }
 
@@ -187,7 +194,7 @@ class Neighbor_Direction(Enum):
     def get_labels(cls, include_diagonals=False):
         """Returns labels. If include_diagonals is False, returns only Cardinals."""
         if include_diagonals:
-            return [m.label for m in cls]
+            return Neighbor_Direction.get_natural_order()
         cardinals = [cls.NORTH, cls.EAST, cls.SOUTH, cls.WEST]
         return [m.label for m in cardinals]
        
@@ -233,12 +240,12 @@ class Neighbor_Order(IntEnum):
 
     @classmethod 
     def list_labels(cls):
-        """Returns a list of all human-readable labels."""
+        #Returns a list of all human-readable labels.
         return [member.label for member in cls]
     
     @classmethod 
     def from_label(cls, label_text):
-        """Finds an enum member by its label string (case-insensitive)."""
+        #Finds an enum member by its label string (case-insensitive).
         for member in cls:
             if member.label.lower() == label_text.lower():
                 return member 

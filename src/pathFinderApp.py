@@ -96,7 +96,7 @@ class PathFinderApp:
         self.left_button_held = False 
         self.right_button_held = False 
 
-        self.current_brush = Terrain_Type.GRASS
+        self.current_brush = Terrain_Type.get_default().label
         
 
         logging.info(f"PathFinderApp initialized")
