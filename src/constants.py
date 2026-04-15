@@ -1,6 +1,4 @@
-from enum import Enum, IntEnum, unique, auto 
-from functools import lru_cache 
-
+from enum import Enum, IntEnum, unique
 
 # Path Costs 
 class PATH_COST(IntEnum):
@@ -8,159 +6,98 @@ class PATH_COST(IntEnum):
     DIAGONAL = 14
 
 
-# Notes: 
-# Using auto() for values to let python handle the numbering 
-# when specific integer values don't matter to program logic.
-# Prevents manual numbering errors.
 
-# @unique Decorator ensures no two members have the same value.
-
-
-
-
-@unique
-class Algorithm_Type(IntEnum):
-    BFS = auto()
-    DFS = auto()
-    ASTAR = auto()
-
-    @property 
-    def label(self):
-        # Converts "SINGLE_STEP" -> "Single Step"
-        return self.name.replace("_", " ").title()
-    
-    def __str__(self):
-        return self.label 
-    
-    def __repr__(self):
-        return f"<{self.__class__.__name__}.{self.name}>"
-
+# UI Base Class 
+class UIEnum(IntEnum):
     @classmethod 
-    def list_labels(cls):
-        """Returns a list of all human-readable labels."""
-        return [member.label for member in cls]
+    def get_labels(cls):
+        """Default behavior: generate labels from member names."""
+        return {member: member.name.replace("_", " ").title() for member in cls}
+    
+    @classmethod 
+    def get_default(cls):
+        """Returns the first member as default. can be overridden."""
+        return list(cls)[0]
+
+    @property  
+    def label(self):
+        """Gets the string label for the current enum instance."""
+        return self.__class__.get_labels()[self]
+    
+    @classmethod 
+    def options_list(cls):
+        """Returns list of strings."""
+        return list(cls.get_labels().values())
     
     @classmethod 
     def from_label(cls, label_text):
-        """Finds an enum member by its label string (case-insensitive)."""
-        for member in cls:
-            if member.label.lower() == label_text.lower():
+        """Converts string back to Enum number."""
+        for member, label in cls.get_labels().items():
+            if label.lower() == label_text.lower():
                 return member 
-        raise ValueError(f"Invalid label: {label_text}")
-    
-    # @lru_cache decorator avoids rebuilding the dictionary every time method
-    # is called. The same dictionary object is returned on subsequent calls.
-    @classmethod 
-    @lru_cache(maxsize=None)
-    def get_lookup(cls):
-        """Creates a mapping: {"BFS" : Algorithm_Type.BFS, ...}"""
-        return {m.label: m for m in cls}
-    
-
-
-@unique
-class Animation_Mode(IntEnum):
-    ANIMATED = auto()
-    INSTANT = auto()
-    SINGLE_STEP = auto()
-
-    @property 
-    def label(self):
-        # Converts "SINGLE_STEP" -> "Single Step"
-        return self.name.replace("_", " ").title()
+        return cls.get_default() 
     
     def __str__(self):
         return self.label 
-    
-    def __repr__(self):
-        return f"<{self.__class__.__name__}.{self.name}>"
+
+
+
+ 
+@unique
+class Algorithm_Type(UIEnum):
+    BFS = 0
+    DFS = 1
+    ASTAR = 2
 
     @classmethod 
-    def list_labels(cls):
-        """Returns a list of all human-readable labels."""
-        return [member.label for member in cls]
-    
-    @classmethod 
-    def from_label(cls, label_text):
-        """Finds an enum member by its label string (case-insensitive)."""
-        for member in cls:
-            if member.label.lower() == label_text.lower():
-                return member 
-        raise ValueError(f"Invalid label: {label_text}")
-    
-    # @lru_cache decorator avoids rebuilding the dictionary every time method
-    # is called. The same dictionary object is returned on subsequent calls.
-    @classmethod 
-    @lru_cache(maxsize=None)
-    def get_lookup(cls):
-        """Creates a mapping: {"Single Step" : Animation_Mode.SINGLE_STEP, ...}"""
-        return {m.label: m for m in cls}
-    
+    def get_labels(cls):
+        return{
+            cls.BFS: 'BFS',
+            cls.DFS: 'DFS',
+            cls.ASTAR: 'ASTAR'
+        }
+
 
 
 @unique
-class Draw_State(IntEnum):
-    START   = auto()
-    END     = auto()
-    VISITED = auto()
-    CLOSED  = auto()
-    PATH    = auto()
-    GRID_LINE = auto()
+class Animation_Mode(UIEnum):
+    ANIMATED = 0
+    INSTANT =  1
+    SINGLE_STEP = 2
+    
+
+
+
+@unique
+class Draw_State(UIEnum):
+    START   = 0
+    END     = 1
+    VISITED = 2
+    CLOSED  = 3
+    PATH    = 4
+    GRID_LINE = 5
     
 
     @property 
     def color(self):
         """Returns the (r, g, b) tuple associated wiht the state."""
         return{
-            self.START:     ( 46, 204, 113),   # Emerald (Go) 
-            self.END:       (231,  76,  60),   # Alizarin Red (Stop)
-            self.VISITED:   (241, 196,  15),   # Sunflower Yellow (Scanning)
-            self.CLOSED:    (149, 165, 166),   # Asbestos Gray (Done)
-            self.PATH:      (155,  89, 182),   # Amethyst Purple (the result)
-            self.GRID_LINE: ( 44,  62,  80),   # Dark Midnight Blue
+            self.__class__.START:     ( 46, 204, 113),   # Emerald (Go) 
+            self.__class__.END:       (231,  76,  60),   # Alizarin Red (Stop)
+            self.__class__.VISITED:   (241, 196,  15),   # Sunflower Yellow (Scanning)
+            self.__class__.CLOSED:    (149, 165, 166),   # Asbestos Gray (Done)
+            self.__class__.PATH:      (155,  89, 182),   # Amethyst Purple (the result)
+            self.__class__.GRID_LINE: ( 44,  62,  80),   # Dark Midnight Blue
         }.get(self, (255,255,255))             # Default white
   
-    @property 
-    def label(self):
-        return self.name.replace("_", " ").title()
-    
-    def __str__(self):
-        return self.label 
-    
-    def __repr__(self):
-        return f"<{self.__class__.__name__}.{self.name}>"
-
-    @classmethod 
-    def list_labels(cls):
-        """Returns a list of all human-readable labels."""
-        return [member.label for member in cls]
-    
-    @classmethod 
-    def from_label(cls, label_text):
-        """Finds an enum member by its label string (case-insensitive)."""
-        for member in cls:
-            if member.label.lower() == label_text.lower():
-                return member 
-        raise ValueError(f"Invalid label: {label_text}")
-    
-    # @lru_cache decorator avoids rebuilding the dictionary every time method
-    # is called. The same dictionary object is returned on subsequent calls.
-    @classmethod 
-    @lru_cache(maxsize=None)
-    def get_lookup(cls):
-        """Creates a mapping: {"Start" : Draw_State.START, ...}"""
-        return {m.label: m for m in cls}
 
 
 @unique
-class Map_Actions(IntEnum):
+class Map_Actions(UIEnum):
     EDIT_MAP = 0
     LOAD_MAP = 1
     SAVE_MAP = 2
 
-    @property 
-    def label(self):
-        return self.name.replace("_", " ").title()
     
     @property 
     def window_title(self):
@@ -171,33 +108,6 @@ class Map_Actions(IntEnum):
             Map_Actions.EDIT_MAP: "Edit Map"
         }
         return titles.get(self, self.label)
-    
-    def __str__(self):
-        return self.label 
-    
-    def __repr__(self):
-        return f"<{self.__class__.__name__}.{self.name}>"
-
-    @classmethod 
-    def list_labels(cls):
-        """Returns a list of all human-readable labels."""
-        return [member.label for member in cls]
-    
-    @classmethod 
-    def from_label(cls, label_text):
-        """Finds an enum member by its label string (case-insensitive)."""
-        for member in cls:
-            if member.label.lower() == label_text.lower():
-                return member 
-        raise ValueError(f"Invalid label: {label_text}")
-    
-    # @lru_cache decorator avoids rebuilding the dictionary every time method
-    # is called. The same dictionary object is returned on subsequent calls.
-    @classmethod 
-    @lru_cache(maxsize=None)
-    def get_lookup(cls):
-        """Creates a mapping: {"Create Map" : Map_Actions.CREATE_MAP, ...}"""
-        return {m.label: m for m in cls}
 
 
 class Map_Dimension(IntEnum):
@@ -207,23 +117,16 @@ class Map_Dimension(IntEnum):
     MD64 = 64
     MD128 = 128 
 
-    @property 
-    def label(self) -> str:
-        """Returns a string for the UI dropdown (e.g. '64 x 64')."""
-        return f"{self.value} x {self.value}"
+    @classmethod
+    def get_labels(self):
+        """Overrides base behavior to return '64 x 64' format."""
+        return { member: f"{member.value} x {member.value}" for member in cls}
     
     @classmethod
-    def get_ui_labels(cls) -> list[str]:
-        """Returns a list of all dimension labels for the dropdown."""
-        return [dim.label for dim in cls] 
+    def get_default(cls):
+        return cls.MD8
     
-    @classmethod 
-    def from_label(cls, label: str) -> "Map Dimension":
-        """Converts a UI string back into an Enum member."""
-        # Extracts the number from '64 x 64' ->64 
-        value = int(label.split(' x ')[0])
-        return cls(value)
-    
+   
 
 
 class Neighbor_Direction(Enum):
@@ -245,7 +148,26 @@ class Neighbor_Direction(Enum):
         """Returns a GUI-friendly string like 'North West'"""
         return self.name.replace("_", " ").title()
     
+    @property
+    def vector(self) -> tuple:
+        """
+        Alias for .value for clarity in pathfinding code.
+        Returns the (dr, dc) tuple
+        """
+        return self.value 
     
+    
+    @classmethod
+    def get_natural_order(cls):    
+        """Standard clockwise rotation for UI or logic."""
+        ordered = [
+            cls.NORTH, cls.NORTH_EAST, 
+            cls.EAST,  cls.SOUTH_EAST, 
+            cls.SOUTH, cls.SOUTH_WEST, 
+            cls.WEST,  cls.NORTH_WEST
+        ]
+        return [m.label for m in ordered]
+
     @classmethod
     def get_diagonal_labels(cls):
         """Returns the list of Diagonal order labels."""
@@ -260,30 +182,19 @@ class Neighbor_Direction(Enum):
         cardinals = [cls.NORTH, cls.EAST, cls.SOUTH, cls.WEST]
         return [m.label for m in cardinals]
        
-    
-    @property
-    def vector(self) -> tuple:
-        """Returns the (dr, dc) tuple"""
-        return self.value 
-    
+    @classmethod 
+    def from_label(cls, label_text: str):
+        for member in cls:
+            if member.label.lower() == label_text.lower():
+                return member 
+        return None 
+   
     def __str__(self):
         return self.label 
     
     def __repr__(self):
         return f"<{self.__class__.__name__}.{self.name}>, <{self.value}>"
     
-    @classmethod
-    def get_natural_order(cls):    
-        """Returns all 8 labels in the requested clockwise order."""
-        ordered = [
-            cls.NORTH, cls.NORTH_EAST, 
-            cls.EAST,  cls.SOUTH_EAST, 
-            cls.SOUTH, cls.SOUTH_WEST, 
-            cls.WEST,  cls.NORTH_WEST
-        ]
-        return [m.label for m in ordered]
-
-
     @classmethod 
     def sort_labels(cls, label_list):
         """Sorts a list of labels based on the natural order."""
@@ -291,36 +202,12 @@ class Neighbor_Direction(Enum):
         label_list.sort(key=lambda x: order.index(x) if x in order else 999)
         return label_list
        
-    @classmethod 
-    def list_labels(cls):
-        """Returns a list of all human-readable labels."""
-        return [member.label for member in cls]
-    
-    @classmethod 
-    def from_label(cls, label_text):
-        """Finds an enum member by its label string (case-insensitive)."""
-        for member in cls:
-            if member.label.lower() == label_text.lower():
-                return member 
-        raise ValueError(f"Invalid label: {label_text}")
-
-    @classmethod 
-    @lru_cache(maxsize=None)
-    def get_lookup(cls):
-        """Creates a mapping: {"North" : NeighborDirection.NORTH, ...}"""
-        return {m.label: m for m in cls}
-
     
 
 @unique 
 class Neighbor_Connectivity(IntEnum):
     CONNECT4 = 4
     CONNECT8 = 8 
-
-    @ classmethod 
-    def get_default(cls):
-        """Returns the defualt enum member."""
-        return cls.CONNECT4
 
     @classmethod 
     def get_labels(cls):
@@ -329,30 +216,12 @@ class Neighbor_Connectivity(IntEnum):
             cls.CONNECT8: '8 (Cardinal + Diagonals)'
         }
 
-    @property 
-    def label(self):
-        return Neighbor_Connectivity.get_labels()[self]
-    
-    @classmethod
-    def options_list(cls):
-        return list(cls.get_labels().values())
-    
-    @classmethod
-    def from_labels(cls, label_string):
-        # Finds the enum member that match the provided string 
-        for member, label in cls.get_labels().items():
-            if label == label_string:
-                return member 
-        return cls.CONNECT4
-
 
 @unique
 class Neighbor_Order(IntEnum):
-    RANDOM = auto()
-    CLOCKWISE = auto()
-    COUNTER_CLOCKWISE = auto()
-    PREFER_VERTICAL = auto()
-    PREFER_HORIZONTAL = auto()
+    RANDOM = 0
+    CLOCKWISE = 1
+    COUNTER_CLOCKWISE = 2
     
     
     @property 
@@ -378,17 +247,12 @@ class Neighbor_Order(IntEnum):
                 return member 
         raise ValueError(f"Invalid label: {label_text}")
 
-    @classmethod 
-    @lru_cache(maxsize=None)
-    def get_lookup(cls):
-        """Creates a mapping: {"1x" : Speed_Options.ANIM_1x, ...}"""
-        return {m.label: m for m in cls}
-
+ 
 
 
 
 @unique 
-class Speed_Options(IntEnum):
+class Speed_Options(UIEnum):
     ANIM_1x = 1
     ANIM_2X = 2
     ANIM_4X = 4 
@@ -396,39 +260,19 @@ class Speed_Options(IntEnum):
     ANIM_16x = 16
     ANIM_32x = 32
 
-    @property 
-    def label(self):
-        """Returns the human-readable strine like '1x', '2x', etc."""
-        return f"{self.value}x"
+    @classmethod 
+    def get_labels(cls):
+        """Overrides the base to return '1x, '2x, etc. """
+        return {member: f"{member.value}x" for member in cls}
+    
+    @classmethod
+    def get_default(cls):
+        return cls.ANIM_1x 
 
-    def __str__(self):
-        return self.label 
-    
-    def __repr__(self):
-        return f"<{self.__class__.__name__}.{self.name}: {self.value}>"
-    
-    @classmethod 
-    def list_labels(cls):
-        """Returns a list of all human-readable labels."""
-        return [member.label for member in cls]
-    
-    @classmethod 
-    def from_label(cls, label_text):
-        """Finds an enum member by its label string (case-insensitive)."""
-        for member in cls:
-            if member.label.lower() == label_text.lower():
-                return member 
-        raise ValueError(f"Invalid label: {label_text}")
-
-    @classmethod 
-    @lru_cache(maxsize=None)
-    def get_lookup(cls):
-        """Creates a mapping: {"1x" : Speed_Options.ANIM_1x, ...}"""
-        return {m.label: m for m in cls}
      
 
 @unique
-class Terrain_Type(IntEnum): 
+class Terrain_Type(UIEnum): 
     GRASS = 0
     SAND = 1
     WATER = 2
@@ -437,46 +281,21 @@ class Terrain_Type(IntEnum):
     def color(self):
         """Returns the (r, g, b) tuple associated with the state."""
         return {
-            self.GRASS:  (119, 158, 133),   # soft sage green 
-            self.SAND:   (236, 217, 198),   # pale sand/Tan
-            self.WATER:  (162, 192, 201),   # dusty blue  
+            self.__class__.GRASS:  (119, 158, 133),   # soft sage green 
+            self.__class__.SAND:   (236, 217, 198),   # pale sand/Tan
+            self.__class__.WATER:  (162, 192, 201),   # dusty blue  
         }.get(self, (255, 255, 255))        # Default white
     
     @classmethod 
     def default(cls):
         return cls.GRASS 
 
-    @property 
-    def label(self):
-        return self.name.replace("_", " ").title()
-    
-    def __str__(self):
-        return self.label 
-    
-    def __repr__(self):
-        return f"<{self.__class__.__name__}.{self.name}>"
 
-    @classmethod 
-    def list_labels(cls):
-        """Returns a list of all human-readable labels."""
-        return [member.label for member in cls]
-    
-    @classmethod 
-    def from_label(cls, label_text):
-        """Finds an enum member by its label string (case-insensitive)."""
-        for member in cls:
-            if member.label.lower() == label_text.lower():
-                return member 
-        return cls.default
-    
-    # @lru_cache decorator avoids rebuilding the dictionary every time method
-    # is called. The same dictionary object is returned on subsequent calls.
-    @classmethod 
-    @lru_cache(maxsize=None)
-    def get_lookup(cls):
-        """Creates a mapping: {"Grass" : Terrain_Type.GRASS, ...}"""
-        return {m.label: m for m in cls}
-    
-    @classmethod 
-    def list_labels(cls):
-        return [m.label for m in cls]  
+    @property 
+    def cost(self) -> float:
+        """Returns the movement penalty for this terrain."""
+        return {
+            self.__class__.GRASS: 1.0,
+            self.__class__.SAND:  2.5,
+            self.__class__.WATER: 5.0,
+        }.get(self, 1.0)

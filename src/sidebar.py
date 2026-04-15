@@ -338,8 +338,8 @@ class Sidebar:
         )
 
         self.select_algo = UIDropDownMenu(
-            options_list=[algo.name for algo in Algorithm_Type],
-            starting_option=Algorithm_Type.BFS.name,
+            options_list=Algorithm_Type.options_list(),
+            starting_option=Algorithm_Type.get_default().label,
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
@@ -355,7 +355,7 @@ class Sidebar:
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.label_width, self.ui_layout.widget_height)),
-            text="Neighbor Connectivity",
+            text="Connectivity",
             manager=self.manager,
             container=self.panel_algo_settings 
         )

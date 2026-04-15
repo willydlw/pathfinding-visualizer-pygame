@@ -141,3 +141,39 @@ Inefficiency: This lack of goal-oriented bias means it must visit every node at 
 
 Implementation-Specific Biases
 Tie-Breaking: If two different paths reach the same cell at the same time, the one added to the queue first (based on the neighbor-processing loop) becomes the "official" shortest path in the parent-tracking map.
+
+
+### Neighbor Connectivity 
+
+Neighbors are defined by the connectivity of the grid, which are the cells an agent can move to from its current position.
+
+1. Connectivity Types (Types of Neighbors)
+
+The number of neighbors defines the movement restrictions:
+
+- **4-Connectivity (Von Neumann Neighborhood):** Neighbors are adjacent orthonally - up, down, left, right. This represents the "Manhattan" movement pattern.
+
+- **8-Connectivity (Moore Neighborhood):** Neighbors include the 4 orthonal cells plus the 4 diagonal cells (up-left, up-right, down-left, down-right). This is used when diagonal movement is allowed.
+
+2. Technical Definition Methods 
+
+Neighbors are defined by the change ins coordinates (dx, dy) from the current cell(x, y).
+
+**Cardinal Movement (4-Neighbors)** 
+
+- Neighbors: (x, y+1), (x, y-1), (x+1, y), (x-1, y)
+
+- Implementation: A loop using relative coordinates: [(0, 1), (0, -1), (1, 0), (-1, 0)]
+
+**Cardinal + Diagonal Movement (8-Neighbors)** 
+
+- Neigbors: 4-neighbors plus (x-1, y-1), (x+1, y-1), (x-1, y+1), (x+1, y+1)
+
+- Implementation: A loop using relative coordinates, including diagonals: [(0, 1), (0, -1), (1, 0), (-1, 0), (-1, -1), (1, -1), (-1, 1), (1, 1)]
+
+3. Key Considerations When Defining Neighbors 
+
+- **Boundary Checking:** Ensure neighbor coordinates do not go outside the grid array bounds.
+- **Obstacle Checking:** Ensure the neighbor is not a non-walkable tile.
+- **Diagonal Cut-corner Check:** In 8-connectivity, you may want to prevent the agent from moving diagonally through the corner of two obstacles. This requires checking if both adjacent orthogonal cells are walkable.
+- **Traversal Cost:** Orthogonal neighbors usually have a cost of 1, which diagonal neighbors have a cost of square root(2), approx 1.41.

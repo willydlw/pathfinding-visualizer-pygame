@@ -242,13 +242,18 @@ class PathFinderApp:
                         action_short_name="Yes, Resize",
                         blocking=True
                     )
+                
+                elif event.ui_element == self.sidebar.select_algo:
+                    logging.info(f"select_algo dropdown, event.text: {event.text}")
+                    # convert string to enum 
+                    algo = Algorithm_Type.from_label(event.text)
+                    self.algo_settings.algorithm = algo 
+                    
                 elif event.ui_element == self.sidebar.select_neighbor_connectivity:
                     logging.info(f"select_neighbor_connectivity dropdown, event.text: {event.text}")
-                    # get string
-                    selected_text = event.text 
                     
-                    # convert string back to enum 
-                    connectivity = Neighbor_Connectivity.from_labels(selected_text)
+                    # convert string to enum 
+                    connectivity = Neighbor_Connectivity.from_label(event.text)
 
                     # apply to pathfinding logic 
                     self.algo_settings.neighbor_connectivity = connectivity
