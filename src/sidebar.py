@@ -138,11 +138,19 @@ class Sidebar:
         # 5. Initialze algorithm panel ui elements 
         self.label_algo = None 
         self.select_algo = None 
-        self.check_allow_diagonals = None 
         self.label_avail_dirs = None 
         self.list_avail_dirs = None 
         self.list_active_order = None 
+
+        self.btn_default_order = None 
+        self.btn_random_order = None 
+
+        self.check_allow_diagonals = None 
         self.btn_clear_order = None 
+
+        self.btn_save_preset = None 
+        self.select_preset = None 
+        self.input_preset_name = None
         self._init_panel_algo_settings()
 
         # 6. Initialize viz panel with ui elements
@@ -150,9 +158,9 @@ class Sidebar:
         self._init_panel_viz_settings() 
        
         # Set Initial Active Panel State 
-        self.active_panel = self.panel_map_config
-        #self.panel_map_config.hide()
-        self.panel_algo_settings.hide()
+        self.active_panel = self.panel_algo_settings
+        self.panel_map_config.hide()
+        #self.panel_algo_settings.hide()
         self.panel_viz_settings.hide()
 
 
@@ -191,7 +199,6 @@ class Sidebar:
         self.panel_map_config = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
         self.panel_algo_settings = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
         self.panel_viz_settings = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-
 
     def _init_panel_map_config(self):
         """
@@ -311,7 +318,6 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.ROW_SPACING  
 
-
     def _init_panel_algo_settings(self):
         self.ui_layout.reset_flow()
 
@@ -421,10 +427,10 @@ class Sidebar:
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
             text="Save Preset",
             manager=self.manager, container=self.panel_algo_settings,
-            tool_tip_text="Test 123"
+            tool_tip_text="Enter preset name or will save with default name"
         )
         
-        # Optional: Dropdown to load saved presets
+        # Dropdown to load saved presets
         self.select_preset = UIDropDownMenu(
             options_list=["Select Preset"], # We will populate this dynamically
             starting_option="Select Preset",
@@ -434,7 +440,6 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
-        
         # Text field for the preset name
         self.input_preset_name = UITextEntryLine(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
@@ -456,7 +461,6 @@ class Sidebar:
         raw_list = ui_list_element.item_list 
         return [item['text'] if isinstance(item, dict) else item for item in raw_list]
     
-
     def get_selected_direction_vectors(self):
         """
         Converts the strings in list_active_order into (dr, dc) vectors.
@@ -482,7 +486,6 @@ class Sidebar:
         # Return a list of vectors [(dr, dc), ...]
         return [lookup[label].vector for label in final_labels if label in lookup]
     
-
     def _sync_neighbor_order(self):
         """Fills missing directions in the UI so the user sees the final search order."""
         # Get the current user oder and the required defaults 
@@ -545,6 +548,7 @@ class Sidebar:
 
 
     def _handle_load_preset(self, preset_name):
+        logging.info("entering handle_load_preset")
         # load the data
         try:
             with open(f"presets/{preset_name}.json", "r") as f:
@@ -562,6 +566,9 @@ class Sidebar:
             remaining = [d for d in all_possible if d not in data['order']]
             self.list_avail_dirs.set_item_list(Neighbor_Direction.sort_labels(remaining))
 
+            self._refresh_preset_dropdown()
+
+          
         except FileNotFoundError:
             logging.warning(f"File {preset_name} not found.")
 
@@ -776,6 +783,8 @@ class Sidebar:
         elif event.ui_element == self.select_algo:
             self.selected_algorithm = event.text 
             logging.info(f"Selected algorithm: {self.selected_algorithm}")
+        elif event.ui_element == self.select_preset:
+            self._handle_load_preset(event.text)
         
 
         """
