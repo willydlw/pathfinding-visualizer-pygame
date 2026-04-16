@@ -127,7 +127,6 @@ class PathFinderApp:
                 elif event.button == 3:
                     self.right_button_held = False 
 
-
             # --- Handle UI Buttons ---
             elif event.type == pygame_gui.UI_BUTTON_PRESSED:
                 # reset grid 
@@ -136,12 +135,13 @@ class PathFinderApp:
                     self.sidebar.uncheck_start_end()
 
                 # run search
-                if event.ui_element == self.sidebar.btn_run_search:
+                elif event.ui_element == self.sidebar.btn_run_search:
                     selected = self.sidebar.select_algo.selected_option 
                     algo_str = selected[0] if isinstance(selected, tuple) else selected 
                     logging.info(f"run search button pressed, selected: {selected}")
                     logging.info(f"algo_str: {algo_str}")
                     self.start_search(algo_str)
+
                 
                 """
                 elif event.ui_element == self.sidebar.next_step_button:
@@ -153,7 +153,75 @@ class PathFinderApp:
                     self.sidebar.neighbor_order_display.set_item_list([])
                     self.sidebar.refresh_available_list()
                 """
+            
+
+            # --- Handle UI Checkboxes ---
+            elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
+                if event.ui_element == self.sidebar.btn_random_order:
+                    self.algo_settings.randomize_neighbors = True 
+
+            elif event.type == pygame_gui.UI_CHECK_BOX_UNCHECKED:
+                if event.ui_element == self.sidebar.btn_random_order:
+                    self.algo_settings.randomize_neighbors = False
+
+
+            # --- Handle Dropdowns ---
+            elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                
+                # Terrain Brush
+                if event.ui_element == self.sidebar.select_terrain:
+                    terrain = Terrain_Type.from_label(event.text)
+                    self.current_brush = terrain 
+                    logging.info(f"detected select_terrain: {terrain}")
+
+                elif event.ui_element == self.sidebar.select_grid_dimensions:
+                    logging.info(f"Detected grid size change")
+                    # Store the intended size but don't apply it yet 
+                    self.pending_grid_size = Map_Dimension.from_label(event.text).value
+
+                    # Define the dialog dimensions 
+                    dialog_w, dialog_h = 300, 200 
+
+                    # Calculate center position 
+                    center_x = (self.screen_width - dialog_w) // 2 
+                    center_y = (self.screen_height - dialog_h) // 2
+                
+                    # Create the confirmation dialog
+                    self.confirmation_dialog = UIConfirmationDialog(
+                        rect=pygame.Rect((center_x, center_y), (dialog_w, dialog_h)), # Center this as needed
+                        manager=self.ui_manager,
+                        window_title="Confirm Grid Resize",
+                        action_long_desc="Resizing the grid will <b>clear all current drawings</b>. Do you want to proceed?",
+                        action_short_name="Yes, Resize",
+                        blocking=True
+                    )
+                
+                elif event.ui_element == self.sidebar.select_algo:
+                    logging.info(f"select_algo dropdown, event.text: {event.text}")
+                    # convert string to enum 
+                    algo = Algorithm_Type.from_label(event.text)
+                    self.algo_settings.algorithm = algo 
+
+                elif event.ui_element == self.sidebar.select_neighbor_connectivity:
+                    logging.info(f"select_neighbor_connectivity dropdown, event.text: {event.text}")
                     
+                    # convert string to enum 
+                    connectivity = Neighbor_Connectivity.from_label(event.text)
+
+                    # apply to pathfinding logic 
+                    self.algo_settings.neighbor_connectivity = connectivity
+
+            elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION: 
+                # Check if the event came from either of the two direction lists 
+                if "#available_direction_selector" in event.ui_object_id or \
+                   "#list_selected_order" in event.ui_object_id:
+                    
+                    # read the current visual state from the sidebar 
+                    new_order = self.sidebar.get_selected_directions()
+
+                    # update the algorithm settings
+                    self.algo_settings.neighbor_directions = new_order
+
 
             # --- Handle File Dialog Logic --- 
             elif event.type == pygame_gui.UI_FILE_DIALOG_PATH_PICKED:
@@ -212,51 +280,6 @@ class PathFinderApp:
                     # clear the pending state
                     self.pending_grid_size = None 
 
-            # --- Handle Dropdowns ---
-            elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-
-                # Terrain Brush
-                if event.ui_element == self.sidebar.select_terrain:
-                    terrain = Terrain_Type.from_label(event.text)
-                    self.current_brush = terrain 
-                    logging.info(f"detected select_terrain: {terrain}")
-
-                elif event.ui_element == self.sidebar.select_grid_dimensions:
-                    logging.info(f"Detected grid size change")
-                    # Store the intended size but don't apply it yet 
-                    self.pending_grid_size = Map_Dimension.from_label(event.text).value
-
-                    # Define the dialog dimensions 
-                    dialog_w, dialog_h = 300, 200 
-
-                    # Calculate center position 
-                    center_x = (self.screen_width - dialog_w) // 2 
-                    center_y = (self.screen_height - dialog_h) // 2
-                
-                    # Create the confirmation dialog
-                    self.confirmation_dialog = UIConfirmationDialog(
-                        rect=pygame.Rect((center_x, center_y), (dialog_w, dialog_h)), # Center this as needed
-                        manager=self.ui_manager,
-                        window_title="Confirm Grid Resize",
-                        action_long_desc="Resizing the grid will <b>clear all current drawings</b>. Do you want to proceed?",
-                        action_short_name="Yes, Resize",
-                        blocking=True
-                    )
-                
-                elif event.ui_element == self.sidebar.select_algo:
-                    logging.info(f"select_algo dropdown, event.text: {event.text}")
-                    # convert string to enum 
-                    algo = Algorithm_Type.from_label(event.text)
-                    self.algo_settings.algorithm = algo 
-
-                elif event.ui_element == self.sidebar.select_neighbor_connectivity:
-                    logging.info(f"select_neighbor_connectivity dropdown, event.text: {event.text}")
-                    
-                    # convert string to enum 
-                    connectivity = Neighbor_Connectivity.from_label(event.text)
-
-                    # apply to pathfinding logic 
-                    self.algo_settings.neighbor_connectivity = connectivity
 
 
     def _handle_continuous_mouse(self):

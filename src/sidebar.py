@@ -145,7 +145,7 @@ class Sidebar:
 
         self.label_avail_dirs = None 
         self.list_avail_dirs = None 
-        self.list_active_order = None 
+        self.list_selected_order = None 
 
         self.btn_default_order = None 
         self.btn_random_order = None 
@@ -381,12 +381,12 @@ class Sidebar:
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_width, self.ui_layout.widget_height)
             ),
-            text="Neighbor Search Order (Click to add):",
+            text="Neighbor Directions (click to select)",
             manager=self.manager,
             container=self.panel_algo_settings
         )
+        self.ui_layout.draw_row += self.ui_layout.widget_height 
 
-        self.ui_layout.draw_row += self.ui_layout.widget_height
 
         # Selection Lists
         self.list_avail_dirs = UISelectionList(
@@ -401,35 +401,51 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
 
-        self.list_active_order = UISelectionList(
+
+        self.label_avail_dirs = UILabel(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.ui_layout.full_width, self.ui_layout.widget_height)
+            ),
+            text="Selected Order",
+            manager=self.manager,
+            container=self.panel_algo_settings
+        )
+        self.ui_layout.draw_row += self.ui_layout.widget_height 
+
+        self.list_selected_order = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_width, self.config.LIST_HEIGHT)),
             item_list=[],
             manager=self.manager,
             container=self.panel_algo_settings,
-            object_id="#list_active_order"
+            object_id="#list_selected_order"
         )
         self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
 
+      
+        # Random neighbor order
+        self.check_random_neighbor_order = UICheckBox(
+            relative_rect=pygame.Rect(
+                (self.ui_layout.col1x, self.ui_layout.draw_row), 
+                (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
+            text="Random Order",
+            manager=self.manager,
+            container=self.panel_algo_settings,
+            object_id="#check_start",
+            tool_tip_text="Algorithm selects neighbors randomly"
+        )
+
         # Default order
         self.btn_default_order = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
+            relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
             text="Default Order",
             manager=self.manager, container=self.panel_algo_settings
         )
-
-        # Randomize order
-        self.btn_random_order = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
-                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
-            text="Randomize",
-            manager=self.manager, container=self.panel_algo_settings
-        )
         self.ui_layout.draw_row += self.config.ROW_SPACING
        
-
         # Clear order
         self.btn_clear_order = UIButton(
              relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
@@ -494,11 +510,11 @@ class Sidebar:
     
     def get_selected_direction_vectors(self):
         """
-        Converts the strings in list_active_order into (dr, dc) vectors.
+        Converts the strings in list_selected_order into (dr, dc) vectors.
         Ensures all required directions are included, appending missing ones to the end.
         """
         # Get the user's custom order and current settings
-        selected_labels = self._get_clean_item_list(self.list_active_order)
+        selected_labels = self._get_clean_item_list(self.list_selected_order)
         include_diagonals = self.check_allow_diagonals.is_checked 
 
         # Define what complete looks like for the current mode 
@@ -517,10 +533,11 @@ class Sidebar:
         # Return a list of vectors [(dr, dc), ...]
         return [lookup[label].vector for label in final_labels if label in lookup]
     
+    
     def _sync_neighbor_order(self):
         """Fills missing directions in the UI so the user sees the final search order."""
         # Get the current user oder and the required defaults 
-        user_order = self._get_clean_item_list(self.list_active_order)
+        user_order = self._get_clean_item_list(self.list_selected_order)
         include_diagonals = self.check_allow_diagonals.is_checked 
         required_labels = Neighbor_Direction.get_labels(include_diagonals)
 
@@ -531,7 +548,7 @@ class Sidebar:
                 updated_order.append(label)
 
         # Update the UI lists 
-        self.list_active_order.set_item_list(updated_order)
+        self.list_selected_order.set_item_list(updated_order)
         self.list_avail_dirs.set_item_list([])  # everything is now in the active list
 
 
@@ -567,7 +584,11 @@ class Sidebar:
             self._handle_dropdown_menu_events(event)
 
         elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+            logging.info(f"new selection")
             self._handle_new_selection(event)
+        
+        elif event.type == pygame_gui.UI_SELECTION_LIST_DOUBLE_CLICKED_SELECTION:
+            self._handle_double_click_selection(event)
 
         elif event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
             if event.ui_element == self.input_preset_name:
@@ -590,7 +611,7 @@ class Sidebar:
             self.check_allow_diagonals.rebuild()   # force refresh 
 
             # update the lists 
-            self.list_active_order.set_item_list(data['order'])
+            self.list_selected_order.set_item_list(data['order'])
 
             # repopulate available with remaining items 
             all_possible = Neighbor_Direction.get_labels(data['diagonals']) 
@@ -614,7 +635,7 @@ class Sidebar:
             preset_name = f"Preset_{len(os.listdir('presets')) + 1}"
 
         # Get the current labels form UI list 
-        current_order = self._get_clean_item_list(self.list_active_order)
+        current_order = self._get_clean_item_list(self.list_selected_order)
         if not current_order:
             logging.warning(f"Not saving preset, order list is empty.")
             return 
@@ -669,14 +690,14 @@ class Sidebar:
 
     def _handle_clear_order(self):
         # Get strings from both lists 
-        current_order = self._get_clean_item_list(self.list_active_order)
+        current_order = self._get_clean_item_list(self.list_selected_order)
         current_pool = self._get_clean_item_list(self.list_avail_dirs)
 
         # Combine them back into the pool
         current_pool.extend(current_order)
 
         # Clear the active order list 
-        self.list_active_order.set_item_list([])
+        self.list_selected_order.set_item_list([])
 
         sorted_pool = Neighbor_Direction.sort_labels(current_pool)
         self.list_avail_dirs.set_item_list(sorted_pool)
@@ -701,64 +722,68 @@ class Sidebar:
         direction_labels = Neighbor_Direction.get_labels(include_diagonals=include_diagonals)
 
         # 5. Set lists: available empty, order full
-        self.list_active_order.set_item_list(direction_labels)
+        self.list_selected_order.set_item_list(direction_labels)
         self.list_avail_dirs.set_item_list([])
 
-
-    def _handle_randomize_order(self):
-        """Randomizes the sequence of all currently active directions."""
-        # Combine everything in use (available and order)
-        all_active = (self._get_clean_item_list(self.list_avail_dirs) +
-                      self._get_clean_item_list(self.list_active_order))
-        
-        # shuffle the entire set 
-        random.shuffle(all_active)
-
-        # move everything to the order list 
-        self.list_active_order.set_item_list(all_active)
-        self.list_avail_dirs.set_item_list([])
 
 
     def _handle_new_selection(self, event):
 
-        # --- Moving from Available to Order ---
+        # --- Moving from Available to Selected List ---
         if event.ui_object_id.endswith("#available_direction_selector"):
-           
             selected = event.text 
-            logging.info(f"Selected direction: {selected}")
-
-            # Remove from Available 
-            # Extract strings from the dictionary list
+           
+            # Update Available List
             current_avail = self._get_clean_item_list(self.list_avail_dirs)
-            logging.info(f"current_avail: {current_avail}")
-
             if selected in current_avail:
                 current_avail.remove(selected) 
                 self.list_avail_dirs.set_item_list(current_avail)
 
-                # Add to Neighbor Order 
-                current_order = self._get_clean_item_list(self.list_active_order)
+                # Update selected list
+                current_order = self._get_clean_item_list(self.list_selected_order)
                 current_order.append(selected)
-                self.list_active_order.set_item_list(current_order)
+                self.list_selected_order.set_item_list(current_order)
 
 
-        # --- Moving from Neighbor Order back to Available ---
-        if event.ui_object_id.endswith("#list_active_order"):
+        # --- Moving from Selected back to Available ---
+        elif event.ui_object_id.endswith("#list_selected_order"):
             selected = event.text 
 
-            # Remove from Neighbor Order
-            current_order = self._get_clean_item_list(self.list_active_order)
-
+            # Update selected list
+            current_order = self._get_clean_item_list(self.list_selected_order)
             if selected in current_order:
                 current_order.remove(selected)
-                self.list_active_order.set_item_list(current_order)
+                self.list_selected_order.set_item_list(current_order)
 
-                # Add back to Available in sorted order
+                # Update Available List (maintain sorted order)
                 current_avail = self._get_clean_item_list(self.list_avail_dirs)
                 current_avail.append(selected)
 
                 sorted_avail = Neighbor_Direction.sort_labels(current_avail)
                 self.list_avail_dirs.set_item_list(sorted_avail)
+
+
+
+    def _toggle_neighbor_order_ui(self, is_random: bool):
+        """Enable or disable all UI elements related to manual neighbor order."""
+        elements = [
+            self.btn_default_order, self.btn_clear_order, self.btn_save_preset,
+            self.list_avail_dirs, self.list_selected_order,
+            self.select_preset, self.input_preset_name
+        ]
+
+        for el in elements:
+            if is_random:
+                el.disable()
+            else:
+                el.enable()
+
+        # update selection list content 
+        if is_random:
+            # clear the list and show the message 
+            self.list_selected_order.set_item_list(["", "", "Randomly Selected at Runtime"])
+        else:
+            self.list_selected_order.set_item_list([])
 
 
     def _handle_checkbox_checked(self, event):
@@ -775,6 +800,13 @@ class Sidebar:
                 self.check_start.is_checked = False 
                 self.check_start.rebuild() 
 
+        elif event.ui_element == self.check_random_neighbor_order:
+            self._toggle_neighbor_order_ui(is_random=True)
+
+
+    def _handle_checkbox_unchecked(self, event):
+        if event.ui_element == self.check_random_neighbor_order:
+            self._toggle_neighbor_order_ui(is_random=False)
 
     
     def _handle_connectivity_selection(self, text):
@@ -784,7 +816,7 @@ class Sidebar:
         connectivity = Neighbor_Connectivity.from_label(text)
         
         # 1. Get the current version of both lists 
-        current_order = self._get_clean_item_list(self.list_active_order)
+        current_order = self._get_clean_item_list(self.list_selected_order)
         current_avail = self._get_clean_item_list(self.list_avail_dirs)
 
         # 2. Get the list of diagonal labels 
@@ -796,7 +828,7 @@ class Sidebar:
                 new_avail = [item for item in current_avail if item not in diagonals]
 
                 # update the UI 
-                self.list_active_order.set_item_list(new_order)
+                self.list_selected_order.set_item_list(new_order)
                 self.list_avail_dirs.set_item_list(new_avail)
         else:
             # add diagonals to available 
