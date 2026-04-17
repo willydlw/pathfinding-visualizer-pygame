@@ -153,21 +153,14 @@ class Sidebar:
         self.select_preset = None 
         self.input_preset_name = None 
 
-        # Group widgets that are disabled when 'Random' is checked
-        self.manual_order_widgets = [
-            self.btn_default_order, 
-            self.btn_clear_order, 
-            self.btn_save_preset,
-            self.list_avail_dirs, 
-            self.list_selected_order,
-            self.select_preset, 
-            self.input_preset_name
-        ]
 
         self.neighbor_event_types = {
             pygame_gui.UI_BUTTON_PRESSED,
-            pygame_gui.UI_CHECK_BOX_CHECKED, pygame_gui.UI_CHECK_BOX_UNCHECKED,
-            pygame_gui.UI_DROP_DOWN_MENU_CHANGED, pygame_gui.UI_SELECTION_LIST_NEW_SELECTION
+            pygame_gui.UI_CHECK_BOX_CHECKED, 
+            pygame_gui.UI_CHECK_BOX_UNCHECKED,
+            pygame_gui.UI_DROP_DOWN_MENU_CHANGED, 
+            pygame_gui.UI_SELECTION_LIST_NEW_SELECTION,
+            pygame_gui.UI_TEXT_ENTRY_FINISHED
         }
         self._init_panel_algo_settings()
 
@@ -181,6 +174,9 @@ class Sidebar:
         self.panel_map_config.hide()
         #self.panel_algo_settings.hide()
         self.panel_viz_settings.hide()
+
+        is_random = self.check_random_neighbor_order.is_checked 
+        self._toggle_neighbor_order_ui(is_random=is_random)
 
 
     def _init_tabs(self):
@@ -386,9 +382,10 @@ class Sidebar:
 
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
-        # 2. Neighbor Direction Priority 
+        # --- Neighbor Direction Order ---
+        #      UI Selections to control order in which search algorithms select neighbors
                  
-        # List available neighbor directions 
+        # Available neighbor directions label
         self.label_avail_dirs = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
@@ -400,8 +397,7 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.ui_layout.widget_height 
 
-
-        # Selection Lists
+        # Available neighbor directions list
         self.list_avail_dirs = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
@@ -411,11 +407,11 @@ class Sidebar:
             container=self.panel_algo_settings,
             object_id="#available_direction_selector"
         )
-
         self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
 
 
-        self.label_avail_dirs = UILabel(
+        # Selected directions label
+        self.label_selected_dirs = UILabel(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.full_width, self.ui_layout.widget_height)
@@ -426,6 +422,7 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.ui_layout.widget_height 
 
+        # Selected directions list
         self.list_selected_order = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
@@ -438,7 +435,7 @@ class Sidebar:
         self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
 
       
-        # Random neighbor order
+        # Random neighbor order checkbox
         self.check_random_neighbor_order = UICheckBox(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
@@ -450,7 +447,8 @@ class Sidebar:
             tool_tip_text="Algorithm selects neighbors randomly"
         )
 
-        # Default order
+
+        # Default neighbor order button
         self.btn_default_order = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -459,7 +457,8 @@ class Sidebar:
         )
         self.ui_layout.draw_row += self.config.ROW_SPACING
        
-        # Clear order
+
+        # Clear neighbor order button
         self.btn_clear_order = UIButton(
              relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -470,7 +469,7 @@ class Sidebar:
             tool_tip_text="Resets Search Order"
         )
         
-        # Dropdown to load saved presets
+        # Select presets dropdown
         self.select_preset = UIDropDownMenu(
             options_list=["Select Preset"], # We will populate this dynamically
             starting_option="Select Preset",
@@ -481,7 +480,7 @@ class Sidebar:
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
 
-        # Text field for the preset name
+        # Input preset name
         self.input_preset_name = UITextEntryLine(
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -490,7 +489,7 @@ class Sidebar:
         )
 
 
-        # Save preset
+        # Save preset 
         self.btn_save_preset = UIButton(
             relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
@@ -499,6 +498,17 @@ class Sidebar:
             tool_tip_text="Enter preset name or will save with default name"
         )
         #self.ui_layout.draw_row += self.ui_layout.widget_height + 5
+
+        # Group widgets that are disabled when 'Random' is checked
+        self.manual_order_widgets = [
+            self.list_avail_dirs, 
+            self.list_selected_order,
+            self.btn_default_order, 
+            self.btn_clear_order, 
+            self.select_preset, 
+            self.input_preset_name,
+            self.btn_save_preset,
+        ]
 
         self._refresh_preset_dropdown()
         
@@ -581,15 +591,6 @@ class Sidebar:
             elif event.ui_element == self.btn_viz_tab:
                 self._switch_tab(self.panel_viz_settings)
 
-            # Neighor Direction Order buttons
-            elif event.ui_element == self.btn_default_order:
-                self._handle_set_default_order()
-            elif event.ui_element == self.btn_random_order:
-                self._handle_randomize_order()
-            elif event.ui_element == self.btn_save_preset:
-                self._handle_save_preset()
-            elif event.ui_element == self.btn_clear_order:
-                self._handle_clear_order()
 
         elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
             self._handle_checkbox_checked(event)
@@ -607,9 +608,7 @@ class Sidebar:
         elif event.type == pygame_gui.UI_SELECTION_LIST_DOUBLE_CLICKED_SELECTION:
             self._handle_double_click_selection(event)
 
-        elif event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
-            if event.ui_element == self.input_preset_name:
-                self._handle_save_preset() 
+       
 
         elif event.type == pygame_gui.UI_WINDOW_CLOSE:
             self._handle_window_close_events(event)
@@ -637,24 +636,47 @@ class Sidebar:
                 self.speed_dropdown.show()
         """
         
-  
+
+    # ********* Neighbor Order Handlers **************
        
     def _handle_neighbor_updates(self, event):
         """Handles logic for any UI element that influences neighbor order."""
+
+        # Connectivity dropdown
         if event.ui_element == self.select_neighbor_connectivity:
             self._handle_connectivity_selection(event.text)
-        elif event.ui_element == self.select_preset:
-            self._handle_load_preset(event.text)
-        elif event.ui_element == self.btn_save_preset:
-            self._handle_save_preset()
-        elif event.ui_element == self.btn_clear_order:
-            self._handle_clear_order()
+        
+        # Random order checkbox
         elif event.ui_element == self.check_random_neighbor_order:
             # is_random should be True when checkbox is checked 
             # and false when check box is unchecked
             is_checked = (event.type == pygame_gui.UI_CHECK_BOX_CHECKED)
             self._toggle_neighbor_order_ui(is_random=is_checked)
+
+        # Save Preset Events 
+        elif event.ui_element == self.input_preset_name:
+            # event type: UI_TEXT_ENTRY_FINISHED
+            # Input Text Box: preset name 
+            # User pressed 'Enter', trigger the save logic
+            self._handle_save_preset() 
         
+        elif event.ui_element == self.btn_save_preset:
+            # User clicked 'Save', trigger the save logic
+            self._handle_save_preset()
+            
+        # Load Preset Events
+        elif event.ui_element == self.select_preset:
+            self._handle_load_preset(event.text)
+        
+        # Default Order button
+        elif event.ui_element == self.btn_default_order:
+            self._handle_set_default_order()
+        
+        # Clear Order button
+        elif event.ui_element == self.btn_clear_order:
+            self._handle_clear_order()
+
+
     def _handle_connectivity_selection(self, text):
         logging.info(f"connectivity choice text: {text}")
 
@@ -685,30 +707,15 @@ class Sidebar:
             sorted_avail = Neighbor_Direction.sort_labels(current_avail)
             self.list_avail_dirs.set_item_list(sorted_avail)
 
-    def _handle_load_preset(self, preset_name):
-        logging.info("entering handle_load_preset")
-        # load the data
-        try:
-            with open(f"presets/{preset_name}.json", "r") as f:
-                data = json.load(f)
+    def _toggle_neighbor_order_ui(self, is_random: bool):
+        """Enable or disable all UI elements related to manual neighbor order."""
+        for el in self.manual_order_widgets:
+            el.disable() if is_random else el.enable()
 
-            # 1. Update Connectivity Dropdown based on the 'diagonals' flag
-            connectivity = Neighbor_Connectivity.CONNECT8 if data['diagonals'] else Neighbor_Connectivity.CONNECT4
-            self.select_neighbor_connectivity.selected_option = connectivity.label
-            self.select_neighbor_connectivity.rebuild() 
-
-            # 2. Update the lists
-            self.list_selected_order.set_item_list(data['order'])
-
-            # repopulate available with remaining items 
-            all_possible = Neighbor_Direction.get_labels(data['diagonals']) 
-            remaining = [d for d in all_possible if d not in data['order']]
-            self.list_avail_dirs.set_item_list(Neighbor_Direction.sort_labels(remaining))
-
-            self._refresh_preset_dropdown()
-
-        except FileNotFoundError:
-            logging.warning(f"File {preset_name} not found.")
+        # Update selection list content 
+        # Providing a placeholder message helps the user understand WHY it's disabled
+        content = ["", "", "Randomly Selected at Runtime"] if is_random else []
+        self.list_selected_order.set_item_list(content)
 
     def _handle_save_preset(self):
         # Ensure the directory exists
@@ -742,48 +749,76 @@ class Sidebar:
 
         logging.info(f"Saved {preset_name} successfully")
 
+    def _handle_load_preset(self, preset_name):
+        logging.info("entering handle_load_preset")
+        # load the data
+        try:
+            with open(f"presets/{preset_name}.json", "r") as f:
+                data = json.load(f)
+
+            # 1. Update Connectivity Dropdown based on the 'diagonals' flag
+            connectivity = Neighbor_Connectivity.CONNECT8 if data['diagonals'] else Neighbor_Connectivity.CONNECT4
+            self.select_neighbor_connectivity.selected_option = connectivity.label
+            self.select_neighbor_connectivity.rebuild() 
+
+            # 2. Update the lists
+            self.list_selected_order.set_item_list(data['order'])
+
+            # repopulate available with remaining items 
+            all_possible = Neighbor_Direction.get_labels(data['diagonals']) 
+            remaining = [d for d in all_possible if d not in data['order']]
+            self.list_avail_dirs.set_item_list(Neighbor_Direction.sort_labels(remaining))
+
+            self._refresh_preset_dropdown()
+
+        except FileNotFoundError:
+            logging.warning(f"File {preset_name} not found.")
+
+
     def _refresh_preset_dropdown(self):
         """Scan the presets folder and update the dropdown options."""
 
-        # ensure directory exists
+        # ensure directory exists, get files and strip extension, prepend "Select Preset" to list
         os.makedirs('presets', exist_ok=True)
-
-        # get files and strip extensions
         files = [f.replace('.json', '') for f in os.listdir('presets') if f.endswith('.json')]
-
-        # always prepend "Select Preset" so the menu has its default value 
         options = ["Select Preset"] + files 
 
-        # Save the current position/parameters before killing 
+        # Capture the current state and current selection 
+        is_random = self.check_random_neighbor_order.is_checked 
+        current_selection = self.select_preset.selected_option 
+
         rect = self.select_preset.relative_rect 
         manager = self.select_preset.ui_manager 
-        container = self.select_preset.ui_container
+        container = self.select_preset.ui_container 
 
-        # Remove the old dropdown from the UI 
+        # Identify index in the tracking list to prevent stale references 
+        try: 
+            idx = self.manual_order_widgets.index(self.select_preset)
+        except ValueError:
+            idx = None 
+
         self.select_preset.kill() 
 
-        # Recreate it with the new list 
+        # Recreate with the previous selection
+        if current_selection not in options:
+            current_selection = "Select Preset"
+
         self.select_preset = UIDropDownMenu(
             options_list=options,
-            starting_option="Select Preset",
+            starting_option=current_selection,
             relative_rect=rect,
             manager=manager,
             container=container
         )
 
-    def _handle_clear_order(self):
-        # Get strings from both lists 
-        current_order = self._get_clean_item_list(self.list_selected_order)
-        current_pool = self._get_clean_item_list(self.list_avail_dirs)
+        # restore disabled state and update the tracking list
+        if random:
+            self.select_preset.disable() 
+        
+        # Update the reference so toggling still  works
+        if idx is not None:
+            self.manual_order_widgets[idx] = self.select_preset 
 
-        # Combine them back into the pool
-        current_pool.extend(current_order)
-
-        # Clear the active order list 
-        self.list_selected_order.set_item_list([])
-
-        sorted_pool = Neighbor_Direction.sort_labels(current_pool)
-        self.list_avail_dirs.set_item_list(sorted_pool)
 
     def _handle_set_default_order(self):
         """Sets order to the standard natural order based on connectivity selection."""
@@ -806,6 +841,22 @@ class Sidebar:
         # 5. Set lists: available empty, order full
         self.list_selected_order.set_item_list(direction_labels)
         self.list_avail_dirs.set_item_list([])
+
+    def _handle_clear_order(self):
+        # Get strings from both lists 
+        current_order = self._get_clean_item_list(self.list_selected_order)
+        current_pool = self._get_clean_item_list(self.list_avail_dirs)
+
+        # Combine them back into the pool
+        current_pool.extend(current_order)
+
+        # Clear the active order list 
+        self.list_selected_order.set_item_list([])
+
+        sorted_pool = Neighbor_Direction.sort_labels(current_pool)
+        self.list_avail_dirs.set_item_list(sorted_pool)
+
+
 
 
     def _handle_new_selection(self, event):
@@ -843,30 +894,6 @@ class Sidebar:
                 sorted_avail = Neighbor_Direction.sort_labels(current_avail)
                 self.list_avail_dirs.set_item_list(sorted_avail)
 
-
-    def _toggle_neighbor_order_ui(self, is_random: bool):
-        """Enable or disable all UI elements related to manual neighbor order."""
-        for el in self.manual_order_widgets:
-            el.disable() if is_random else el.enable()
-
-        # Update selection list content 
-        # Providing a placeholder message helps the user understand WHY it's disabled
-        content = ["", "", "Randomly Selected at Runtime"] if is_random else []
-        self.list_selected_order.set_item_list(content)
-
-
-
-        if event.ui_element == self.check_start:
-            if self.check_start.is_checked:
-                # Force uncheck the other 
-                self.check_end.is_checked = False 
-                self.check_end.rebuild()
-
-        elif event.ui_element == self.check_end:
-            if self.check_end.is_checked:
-                # force uncheck the other 
-                self.check_start.is_checked = False 
-                self.check_start.rebuild() 
 
  
     
