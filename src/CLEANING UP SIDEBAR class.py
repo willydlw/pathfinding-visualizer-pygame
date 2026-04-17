@@ -62,6 +62,22 @@ Initializing
         
         """ 
 
+
+        if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+
+            """
+            elif event.ui_element == self.anim_dropdown:
+                # Next Step button visibility
+                logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
+                if event.text == Animation_Mode.SINGLE_STEP.name:
+                    self.next_step_button.show() 
+                    self.speed_dropdown.hide() # hide speed as it's irrelevant 
+                else:
+                    self.next_step_button.hide() 
+                    self.speed_dropdown.show()
+            """
+
+
  
 Removed from theme.json
 

@@ -168,7 +168,7 @@ class Sidebar:
         self._init_event_maps()
        
         is_random = self.check_random_neighbor_order.is_checked 
-        self._toggle_neighbor_order_ui(is_random=is_random)
+        self._toggle_neighbor_order_ui(is_random)
 
 
     def _init_tabs(self):
@@ -526,7 +526,7 @@ class Sidebar:
             self.btn_save_preset: self._handle_save_preset,
             self.btn_clear_order: self._handle_clear_order,
             self.btn_default_order: self._handle_set_default_order,
-            #self.btn_reset_grid: This is handled by PathFinderApp
+            self.btn_reset_grid: self.uncheck_start_end()
         }
 
         # Dropdown -> Function Map 
@@ -545,7 +545,8 @@ class Sidebar:
         # Checkbox -> Function (receives a bool)
         self.checkbox_actions = {
             self.check_random_neighbor_order: self._toggle_neighbor_order_ui,
-            
+            self.check_start: self._toggle_start_end_ui,
+            self.check_end: self._toggle_start_end_ui
         }
 
 
@@ -565,7 +566,7 @@ class Sidebar:
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
             action = self.dropdown_actions.get(event.ui_element)
             if action:
-                action()
+                action(event.text)
                 return 
         
         # Handle Text Entry (Enter key)
@@ -573,33 +574,20 @@ class Sidebar:
             if event.ui_element == self.input_preset_name:
                 self._handle_save_preset() 
                 return 
-
-        # Priority: features that catch multiple event types 
-        if event.type in self.neighbor_event_types:
-            self._handle_neighbor_updates(event)
-
-        # Dispatch to logical groups 
-        self._handle_tab_navigation(event)
-        self._handle_preset_logic(event)
-        self._handle_map_logic(event) 
-        self._handle_list_logic(event)
-
+            
+        elif event.type in (pygame_gui.UI_CHECK_BOX_CHECKED, pygame_gui.UI_CHECK_BOX_UNCHECKED):
+            action = self.checkbox_actions.get(event.ui_element)
+            if action:
+                is_checked = (event.type == pygame_gui.UI_CHECK_BOX_CHECKED)
+                action(is_checked)
+                return 
         
-        if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+        elif event.type == pygame_gui.UI_WINDOW_CLOSE:
+            if event.ui_element == self.active_file_dialog:
+                self.active_file_dialog = None 
 
-            """
-            elif event.ui_element == self.anim_dropdown:
-                # Next Step button visibility
-                logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
-                if event.text == Animation_Mode.SINGLE_STEP.name:
-                    self.next_step_button.show() 
-                    self.speed_dropdown.hide() # hide speed as it's irrelevant 
-                else:
-                    self.next_step_button.hide() 
-                    self.speed_dropdown.show()
-            """
-            pass
-        
+
+
 
     # --------- Button Event Handlers -----------
 
@@ -644,6 +632,7 @@ class Sidebar:
 
         logging.info(f"Saved {preset_name} successfully")
 
+
     def _refresh_preset_dropdown(self):
         """Scan the presets folder and update the dropdown options."""
 
@@ -678,6 +667,7 @@ class Sidebar:
         if random:
             self.select_preset.disable() 
  
+
     def _handle_clear_order(self):
         # Get strings from both lists 
         current_order = self._get_clean_item_list(self.list_selected_order)
@@ -714,6 +704,48 @@ class Sidebar:
         self.list_selected_order.set_item_list(direction_labels)
         self.list_avail_dirs.set_item_list([])
 
+    
+    def uncheck_start_end(self):
+        #Unchecks both start and end boxes.
+        self.check_start.is_checked = False 
+        self.check_start.rebuild()
+        self.check_end.is_checked = False 
+        self.check_end.rebuild()
+
+
+    # --------- CheckBox Event Handlers ------------
+    def _toggle_neighbor_order_ui(self, is_random: bool):
+        """Enable or disable all UI elements related to manual neighbor order."""
+                # Group widgets that are disabled when 'Random' is checked
+        
+        self.manual_order_widgets = [
+            self.list_avail_dirs, 
+            self.list_selected_order,
+            self.btn_default_order, 
+            self.btn_clear_order, 
+            self.select_preset, 
+            self.input_preset_name,
+            self.btn_save_preset,
+        ]
+
+        for el in self.manual_order_widgets:
+            el.disable() if is_random else el.enable()
+
+        # Update selection list content 
+        # Providing a placeholder message helps the user understand WHY it's disabled
+        content = ["", "", "Randomly Selected at Runtime"] if is_random else []
+        self.list_selected_order.set_item_list(content)
+
+    def _toggle_start_end_ui(self, element, is_checked):
+        if not is_checked: return 
+
+        if element == self.check_start:
+                self.check_end.is_checked = False
+                self.check_end.rebuild() 
+        elif element == self.check_end:
+                self.check_start.is_checked = False 
+                self.check_start.rebuid()
+
 
     # --------- DropDown Event Handlers 
     
@@ -722,6 +754,28 @@ class Sidebar:
             self.open_file_dialog(Map_Actions.LOAD_MAP)
         elif text == Map_Actions.SAVE_MAP.label:
             self.open_file_dialog(Map_Actions.SAVE_MAP)
+
+
+    def open_file_dialog(self, action_type):
+        #Sidebar owns the dialog object, but the App uses the result
+        if self.active_file_dialog is None:
+           
+            if action_type == Map_Actions.SAVE_MAP:
+                path = "maps/new_map.json"
+            else:
+                path = "maps/"
+
+            self.active_file_dialog = UIFileDialog(
+                rect=pygame.Rect(160, 50, 440, 500),
+                manager=self.manager,
+                window_title=action_type.window_title,
+                initial_file_path=path,
+                object_id="#map_file_dialog",
+                allowed_suffixes={".json"},
+                allow_existing_files_only=(action_type == Map_Actions.LOAD_MAP)
+            )
+
+
 
     def _handle_connectivity_selection(self, text):
         logging.info(f"connectivity choice text: {text}")
@@ -780,73 +834,13 @@ class Sidebar:
 
 # ===============================================================
 
-    # ********* Neighbor Order Handlers **************
-       
-    def _handle_neighbor_updates(self, event):
-        """Handles logic for any UI element that influences neighbor order."""
-
-        
-        # Random order checkbox
-        elif event.ui_element == self.check_random_neighbor_order:
-            # is_random should be True when checkbox is checked 
-            # and false when check box is unchecked
-            is_checked = (event.type == pygame_gui.UI_CHECK_BOX_CHECKED)
-            self._toggle_neighbor_order_ui(is_random=is_checked)
-        
-
-        
  
-
-
-    def _toggle_neighbor_order_ui(self, is_random: bool):
-        """Enable or disable all UI elements related to manual neighbor order."""
-        for el in self.manual_order_widgets:
-            el.disable() if is_random else el.enable()
-
-        # Update selection list content 
-        # Providing a placeholder message helps the user understand WHY it's disabled
-        content = ["", "", "Randomly Selected at Runtime"] if is_random else []
-        self.list_selected_order.set_item_list(content)
-
-
 
     def set_status(self, message):
         self.status_label.set_text(message)
-    
-    def uncheck_start_end(self):
-        #Unchecks both start and end boxes.
-        self.check_start.is_checked = False 
-        self.check_start.rebuild()
-        self.check_end.is_checked = False 
-        self.check_end.rebuild()
-
-
-    # --- Map Logic ---
-    def _handle_map_logic(self, event):
-        
-        elif event.type == pygame_gui.UI_WINDOW_CLOSE and event.ui_element == self.active_file_dialog:
-            self.active_file_dialog = None 
 
 
 
-    def open_file_dialog(self, action_type):
-        #Sidebar owns the dialog object, but the App uses the result
-        if self.active_file_dialog is None:
-           
-            if action_type == Map_Actions.SAVE_MAP:
-                path = "maps/new_map.json"
-            else:
-                path = "maps/"
-
-            self.active_file_dialog = UIFileDialog(
-                rect=pygame.Rect(160, 50, 440, 500),
-                manager=self.manager,
-                window_title=action_type.window_title,
-                initial_file_path=path,
-                object_id="#map_file_dialog",
-                allowed_suffixes={".json"},
-                allow_existing_files_only=(action_type == Map_Actions.LOAD_MAP)
-            )
 
 
 
