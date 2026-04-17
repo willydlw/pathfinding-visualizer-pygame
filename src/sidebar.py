@@ -105,10 +105,6 @@ class Sidebar:
 
         # Initialize these class attributes before the gui elements 
         self.active_file_dialog = None 
-        self.current_action = None 
-        self.selected_algo = Algorithm_Type.BFS
-
-
         
         # 1. Create Tab Buttons at the top of the Sidebar
         self.btn_map_tab  = None 
@@ -155,7 +151,24 @@ class Sidebar:
 
         self.btn_save_preset = None 
         self.select_preset = None 
-        self.input_preset_name = None
+        self.input_preset_name = None 
+
+        # Group widgets that are disabled when 'Random' is checked
+        self.manual_order_widgets = [
+            self.btn_default_order, 
+            self.btn_clear_order, 
+            self.btn_save_preset,
+            self.list_avail_dirs, 
+            self.list_selected_order,
+            self.select_preset, 
+            self.input_preset_name
+        ]
+
+        self.neighbor_event_types = {
+            pygame_gui.UI_BUTTON_PRESSED,
+            pygame_gui.UI_CHECK_BOX_CHECKED, pygame_gui.UI_CHECK_BOX_UNCHECKED,
+            pygame_gui.UI_DROP_DOWN_MENU_CHANGED, pygame_gui.UI_SELECTION_LIST_NEW_SELECTION
+        }
         self._init_panel_algo_settings()
 
         # 6. Initialize viz panel with ui elements
@@ -554,6 +567,10 @@ class Sidebar:
 
     def handle_events(self, event):
 
+        if event.type in self.neighbor_event_types:
+            self._handle_neighbor_updates(event)
+            return 
+
         # Handles switching between map, panel, and viz tabs
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             # Tab buttons
@@ -598,6 +615,75 @@ class Sidebar:
             self._handle_window_close_events(event)
 
 
+    def _handle_dropdown_menu_events(self, event):
+
+        if event.ui_element == self.select_map_action:
+            logging.info("Selected map action")
+            self._handle_map_action(event.text)
+        elif event.ui_element == self.select_algo:
+            self.selected_algorithm = event.text 
+            logging.info(f"Selected algorithm: {self.selected_algorithm}")
+        
+
+        """
+        elif event.ui_element == self.anim_dropdown:
+            # Next Step button visibility
+            logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
+            if event.text == Animation_Mode.SINGLE_STEP.name:
+                self.next_step_button.show() 
+                self.speed_dropdown.hide() # hide speed as it's irrelevant 
+            else:
+                self.next_step_button.hide() 
+                self.speed_dropdown.show()
+        """
+        
+  
+       
+    def _handle_neighbor_updates(self, event):
+        """Handles logic for any UI element that influences neighbor order."""
+        if event.ui_element == self.select_neighbor_connectivity:
+            self._handle_connectivity_selection(event.text)
+        elif event.ui_element == self.select_preset:
+            self._handle_load_preset(event.text)
+        elif event.ui_element == self.btn_save_preset:
+            self._handle_save_preset()
+        elif event.ui_element == self.btn_clear_order:
+            self._handle_clear_order()
+        elif event.ui_element == self.check_random_neighbor_order:
+            # is_random should be True when checkbox is checked 
+            # and false when check box is unchecked
+            is_checked = (event.type == pygame_gui.UI_CHECK_BOX_CHECKED)
+            self._toggle_neighbor_order_ui(is_random=is_checked)
+        
+    def _handle_connectivity_selection(self, text):
+        logging.info(f"connectivity choice text: {text}")
+
+        # convert string to enum
+        connectivity = Neighbor_Connectivity.from_label(text)
+        
+        # 1. Get the current version of both lists 
+        current_order = self._get_clean_item_list(self.list_selected_order)
+        current_avail = self._get_clean_item_list(self.list_avail_dirs)
+
+        # 2. Get the list of diagonal labels 
+        diagonals = Neighbor_Direction.get_diagonal_labels() 
+
+        if connectivity == Neighbor_Connectivity.CONNECT4:
+                # Checkbox unchecked - remove diagonals from both lists 
+                new_order = [item for item in current_order if item not in diagonals]
+                new_avail = [item for item in current_avail if item not in diagonals]
+
+                # update the UI 
+                self.list_selected_order.set_item_list(new_order)
+                self.list_avail_dirs.set_item_list(new_avail)
+        else:
+            # add diagonals to available 
+            for d in diagonals:
+                if d not in current_avail and d not in current_order:
+                    current_avail.append(d)
+
+            sorted_avail = Neighbor_Direction.sort_labels(current_avail)
+            self.list_avail_dirs.set_item_list(sorted_avail)
 
     def _handle_load_preset(self, preset_name):
         logging.info("entering handle_load_preset")
@@ -606,11 +692,12 @@ class Sidebar:
             with open(f"presets/{preset_name}.json", "r") as f:
                 data = json.load(f)
 
-            # update the diagonal checkbox 
-            self.check_allow_diagonals.is_checked = data['diagonals']
-            self.check_allow_diagonals.rebuild()   # force refresh 
+            # 1. Update Connectivity Dropdown based on the 'diagonals' flag
+            connectivity = Neighbor_Connectivity.CONNECT8 if data['diagonals'] else Neighbor_Connectivity.CONNECT4
+            self.select_neighbor_connectivity.selected_option = connectivity.label
+            self.select_neighbor_connectivity.rebuild() 
 
-            # update the lists 
+            # 2. Update the lists
             self.list_selected_order.set_item_list(data['order'])
 
             # repopulate available with remaining items 
@@ -620,10 +707,8 @@ class Sidebar:
 
             self._refresh_preset_dropdown()
 
-          
         except FileNotFoundError:
             logging.warning(f"File {preset_name} not found.")
-
 
     def _handle_save_preset(self):
         # Ensure the directory exists
@@ -657,7 +742,6 @@ class Sidebar:
 
         logging.info(f"Saved {preset_name} successfully")
 
-
     def _refresh_preset_dropdown(self):
         """Scan the presets folder and update the dropdown options."""
 
@@ -687,7 +771,6 @@ class Sidebar:
             container=container
         )
 
-
     def _handle_clear_order(self):
         # Get strings from both lists 
         current_order = self._get_clean_item_list(self.list_selected_order)
@@ -701,7 +784,6 @@ class Sidebar:
 
         sorted_pool = Neighbor_Direction.sort_labels(current_pool)
         self.list_avail_dirs.set_item_list(sorted_pool)
-
 
     def _handle_set_default_order(self):
         """Sets order to the standard natural order based on connectivity selection."""
@@ -724,7 +806,6 @@ class Sidebar:
         # 5. Set lists: available empty, order full
         self.list_selected_order.set_item_list(direction_labels)
         self.list_avail_dirs.set_item_list([])
-
 
 
     def _handle_new_selection(self, event):
@@ -763,30 +844,17 @@ class Sidebar:
                 self.list_avail_dirs.set_item_list(sorted_avail)
 
 
-
     def _toggle_neighbor_order_ui(self, is_random: bool):
         """Enable or disable all UI elements related to manual neighbor order."""
-        elements = [
-            self.btn_default_order, self.btn_clear_order, self.btn_save_preset,
-            self.list_avail_dirs, self.list_selected_order,
-            self.select_preset, self.input_preset_name
-        ]
+        for el in self.manual_order_widgets:
+            el.disable() if is_random else el.enable()
 
-        for el in elements:
-            if is_random:
-                el.disable()
-            else:
-                el.enable()
-
-        # update selection list content 
-        if is_random:
-            # clear the list and show the message 
-            self.list_selected_order.set_item_list(["", "", "Randomly Selected at Runtime"])
-        else:
-            self.list_selected_order.set_item_list([])
+        # Update selection list content 
+        # Providing a placeholder message helps the user understand WHY it's disabled
+        content = ["", "", "Randomly Selected at Runtime"] if is_random else []
+        self.list_selected_order.set_item_list(content)
 
 
-    def _handle_checkbox_checked(self, event):
 
         if event.ui_element == self.check_start:
             if self.check_start.is_checked:
@@ -800,73 +868,9 @@ class Sidebar:
                 self.check_start.is_checked = False 
                 self.check_start.rebuild() 
 
-        elif event.ui_element == self.check_random_neighbor_order:
-            self._toggle_neighbor_order_ui(is_random=True)
-
-
-    def _handle_checkbox_unchecked(self, event):
-        if event.ui_element == self.check_random_neighbor_order:
-            self._toggle_neighbor_order_ui(is_random=False)
-
+ 
     
-    def _handle_connectivity_selection(self, text):
-        logging.info(f"connectivity choice text: {text}")
-
-        # convert string to enum
-        connectivity = Neighbor_Connectivity.from_label(text)
-        
-        # 1. Get the current version of both lists 
-        current_order = self._get_clean_item_list(self.list_selected_order)
-        current_avail = self._get_clean_item_list(self.list_avail_dirs)
-
-        # 2. Get the list of diagonal labels 
-        diagonals = Neighbor_Direction.get_diagonal_labels() 
-
-        if connectivity == Neighbor_Connectivity.CONNECT4:
-                # Checkbox unchecked - remove diagonals from both lists 
-                new_order = [item for item in current_order if item not in diagonals]
-                new_avail = [item for item in current_avail if item not in diagonals]
-
-                # update the UI 
-                self.list_selected_order.set_item_list(new_order)
-                self.list_avail_dirs.set_item_list(new_avail)
-        else:
-            # add diagonals to available 
-            for d in diagonals:
-                if d not in current_avail and d not in current_order:
-                    current_avail.append(d)
-
-            sorted_avail = Neighbor_Direction.sort_labels(current_avail)
-            self.list_avail_dirs.set_item_list(sorted_avail)
-
-    
-    def _handle_dropdown_menu_events(self, event):
-
-        if event.ui_element == self.select_map_action:
-            logging.info("Selected map action")
-            self._handle_map_action(event.text)
-        elif event.ui_element == self.select_algo:
-            self.selected_algorithm = event.text 
-            logging.info(f"Selected algorithm: {self.selected_algorithm}")
-        elif event.ui_element == self.select_neighbor_connectivity:
-            self._handle_connectivity_selection(event.text)
-        elif event.ui_element == self.select_preset:
-            self._handle_load_preset(event.text)
-        
-
-        """
-        elif event.ui_element == self.anim_dropdown:
-            # Next Step button visibility
-            logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
-            if event.text == Animation_Mode.SINGLE_STEP.name:
-                self.next_step_button.show() 
-                self.speed_dropdown.hide() # hide speed as it's irrelevant 
-            else:
-                self.next_step_button.hide() 
-                self.speed_dropdown.show()
-        """
-        
-        
+      
 
     def set_status(self, message):
         self.status_label.set_text(message)
