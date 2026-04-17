@@ -146,22 +146,12 @@ class Sidebar:
         self.btn_default_order = None 
         self.btn_random_order = None 
 
-        self.check_allow_diagonals = None 
         self.btn_clear_order = None 
 
         self.btn_save_preset = None 
         self.select_preset = None 
         self.input_preset_name = None 
 
-
-        self.neighbor_event_types = {
-            pygame_gui.UI_BUTTON_PRESSED,
-            pygame_gui.UI_CHECK_BOX_CHECKED, 
-            pygame_gui.UI_CHECK_BOX_UNCHECKED,
-            pygame_gui.UI_DROP_DOWN_MENU_CHANGED, 
-            pygame_gui.UI_SELECTION_LIST_NEW_SELECTION,
-            pygame_gui.UI_TEXT_ENTRY_FINISHED
-        }
         self._init_panel_algo_settings()
 
         # 6. Initialize viz panel with ui elements
@@ -175,6 +165,8 @@ class Sidebar:
         #self.panel_algo_settings.hide()
         self.panel_viz_settings.hide()
 
+        self._init_event_maps()
+       
         is_random = self.check_random_neighbor_order.is_checked 
         self._toggle_neighbor_order_ui(is_random=is_random)
 
@@ -512,7 +504,6 @@ class Sidebar:
 
         self._refresh_preset_dropdown()
         
-
     def _init_panel_viz_settings(self):
         self.ui_layout.reset_flow()
 
@@ -525,157 +516,212 @@ class Sidebar:
         )
         
 
-    
-    def _get_clean_item_list(self, ui_list_element):
-        """Extracts strings from a UISelectionList regardless of its internal format."""
-        raw_list = ui_list_element.item_list 
-        return [item['text'] if isinstance(item, dict) else item for item in raw_list]
-    
-    def get_selected_direction_vectors(self):
-        """
-        Converts the strings in list_selected_order into (dr, dc) vectors.
-        Ensures all required directions are included, appending missing ones to the end.
-        """
-        # Get the user's custom order and current settings
-        selected_labels = self._get_clean_item_list(self.list_selected_order)
-        include_diagonals = self.check_allow_diagonals.is_checked 
+    def _init_event_maps(self):
+        
+        # Button -> Function Map 
+        self.button_actions = {
+            self.btn_map_tab: lambda: self._switch_tab(self.panel_map_config),
+            self.btn_algo_tab: lambda: self._switch_tab(self.panel_algo_settings),
+            self.btn_viz_tab: lambda: self._switch_tab(self.panel_viz_settings),
+            self.btn_save_preset: self._handle_save_preset,
+            self.btn_clear_order: self._handle_clear_order,
+            self.btn_default_order: self._handle_set_default_order,
+            #self.btn_reset_grid: This is handled by PathFinderApp
+        }
 
-        # Define what complete looks like for the current mode 
-        required_labels = Neighbor_Direction.get_labels(include_diagonals)
+        # Dropdown -> Function Map 
+        self.dropdown_actions = {
+            self.select_map_action: self._handle_map_action,
+            self.select_neighbor_connectivity: self._handle_connectivity_selection,
+            self.select_preset: self._handle_load_preset,
+        }
 
-        # Create the final sequence: Start with user choices, then add missing 
-        final_labels = list(selected_labels)
-        for label in required_labels:
-            if label not in final_labels:
-                final_labels.append(label)
+        # The following dropdowns do not need additional logic for updating the UI
+        # The PathFinderApp class handles their dropdown events 
+        # self.select_algo
+        # self.select_grid_dimensions
+        # self.select_terrain 
 
-        # Map the labels back to vectors 
-        # Get the lookup map : {"North": <Neighbor_Direction.NORTH>, ...}
-        lookup = Neighbor_Direction.get_lookup()
-
-        # Return a list of vectors [(dr, dc), ...]
-        return [lookup[label].vector for label in final_labels if label in lookup]
-    
-    
-    def _sync_neighbor_order(self):
-        """Fills missing directions in the UI so the user sees the final search order."""
-        # Get the current user oder and the required defaults 
-        user_order = self._get_clean_item_list(self.list_selected_order)
-        include_diagonals = self.check_allow_diagonals.is_checked 
-        required_labels = Neighbor_Direction.get_labels(include_diagonals)
-
-        # Add missing directions to the user order list 
-        updated_order = list(user_order)
-        for label in required_labels:
-            if label not in updated_order:
-                updated_order.append(label)
-
-        # Update the UI lists 
-        self.list_selected_order.set_item_list(updated_order)
-        self.list_avail_dirs.set_item_list([])  # everything is now in the active list
+        # Checkbox -> Function (receives a bool)
+        self.checkbox_actions = {
+            self.check_random_neighbor_order: self._toggle_neighbor_order_ui,
+            
+        }
 
 
     def handle_events(self, event):
+        # Immediate exit for irrelevant events 
+        if not hasattr(event, "ui_element"):
+            return 
+        
+        # Handle buttons 
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            action = self.button_actions.get(event.ui_element)
+            if action:
+                action()
+                return 
 
+        # Handle Dropdowns    
+        elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+            action = self.dropdown_actions.get(event.ui_element)
+            if action:
+                action()
+                return 
+        
+        # Handle Text Entry (Enter key)
+        elif event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
+            if event.ui_element == self.input_preset_name:
+                self._handle_save_preset() 
+                return 
+
+        # Priority: features that catch multiple event types 
         if event.type in self.neighbor_event_types:
             self._handle_neighbor_updates(event)
+
+        # Dispatch to logical groups 
+        self._handle_tab_navigation(event)
+        self._handle_preset_logic(event)
+        self._handle_map_logic(event) 
+        self._handle_list_logic(event)
+
+        
+        if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+
+            """
+            elif event.ui_element == self.anim_dropdown:
+                # Next Step button visibility
+                logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
+                if event.text == Animation_Mode.SINGLE_STEP.name:
+                    self.next_step_button.show() 
+                    self.speed_dropdown.hide() # hide speed as it's irrelevant 
+                else:
+                    self.next_step_button.hide() 
+                    self.speed_dropdown.show()
+            """
+            pass
+        
+
+    # --------- Button Event Handlers -----------
+
+    def _switch_tab(self, target_panel):
+        for panel in self.tab_map.values():
+            panel.hide()
+        
+        target_panel.show() 
+        self.active_panel = target_panel
+
+    def _handle_save_preset(self):
+        # Ensure the directory exists
+        os.makedirs('presets', exist_ok=True)
+
+        # Get the name from the text entry field 
+        preset_name = self.input_preset_name.text.strip() 
+        if not preset_name:
+            preset_name = f"Preset_{len(os.listdir('presets')) + 1}"
+
+        # Get the current labels form UI list 
+        current_order = self._get_clean_item_list(self.list_selected_order)
+        if not current_order:
+            logging.warning(f"Not saving preset, order list is empty.")
             return 
-
-        # Handles switching between map, panel, and viz tabs
-        if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            # Tab buttons
-            if event.ui_element == self.btn_map_tab:
-                self._switch_tab(self.panel_map_config)
-            elif event.ui_element == self.btn_algo_tab:
-                self._switch_tab(self.panel_algo_settings)
-            elif event.ui_element == self.btn_viz_tab:
-                self._switch_tab(self.panel_viz_settings)
-
-
-        elif event.type == pygame_gui.UI_CHECK_BOX_CHECKED:
-            self._handle_checkbox_checked(event)
-
-        elif event.type == pygame_gui.UI_CHECK_BOX_UNCHECKED:
-            self._handle_checkbox_unchecked(event)
         
-        elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-            self._handle_dropdown_menu_events(event)
+        connectivity = Neighbor_Connectivity.CONNECT8 if data['diagonals'] else Neighbor_Connectivity.CONNECT4
 
-        elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
-            logging.info(f"new selection")
-            self._handle_new_selection(event)
-        
-        elif event.type == pygame_gui.UI_SELECTION_LIST_DOUBLE_CLICKED_SELECTION:
-            self._handle_double_click_selection(event)
+        # Define the data structure 
+        preset_data = {
+            "order": current_order,
+            "connectivity": connectivity
+        }
 
-       
+        # Save to JSON file 
+        os.makedirs('presets', exist_ok=True)
+        with open(f"presets/{preset_name}.json", "w") as f:
+            json.dump(preset_data, f)
 
-        elif event.type == pygame_gui.UI_WINDOW_CLOSE:
-            self._handle_window_close_events(event)
+        # Clear input and refresh dropdown 
+        self.input_preset_name.set_text("")
+        self._refresh_preset_dropdown()
+
+        logging.info(f"Saved {preset_name} successfully")
+
+    def _refresh_preset_dropdown(self):
+        """Scan the presets folder and update the dropdown options."""
+
+        # ensure directory exists, get files and strip extension, prepend "Select Preset" to list
+        os.makedirs('presets', exist_ok=True)
+        files = [f.replace('.json', '') for f in os.listdir('presets') if f.endswith('.json')]
+        options = ["Select Preset"] + files 
+
+        # Capture the current state and current selection 
+        is_random = self.check_random_neighbor_order.is_checked 
+        current_selection = self.select_preset.selected_option 
+
+        rect = self.select_preset.relative_rect 
+        manager = self.select_preset.ui_manager 
+        container = self.select_preset.ui_container 
+
+        self.select_preset.kill() 
+
+        # Recreate with the previous selection
+        if current_selection not in options:
+            current_selection = "Select Preset"
+
+        self.select_preset = UIDropDownMenu(
+            options_list=options,
+            starting_option=current_selection,
+            relative_rect=rect,
+            manager=manager,
+            container=container
+        )
+
+        # restore disabled state and update the tracking list
+        if random:
+            self.select_preset.disable() 
+ 
+    def _handle_clear_order(self):
+        # Get strings from both lists 
+        current_order = self._get_clean_item_list(self.list_selected_order)
+        current_pool = self._get_clean_item_list(self.list_avail_dirs)
+
+        # Combine them back into the pool
+        current_pool.extend(current_order)
+
+        # Clear the active order list 
+        self.list_selected_order.set_item_list([])
+
+        sorted_pool = Neighbor_Direction.sort_labels(current_pool)
+        self.list_avail_dirs.set_item_list(sorted_pool)
+
+    def _handle_set_default_order(self):
+        """Sets order to the standard natural order based on connectivity selection."""
+        # 1. Safely extract string (handles tuple issue)
+        raw_selection = self.select_neighbor_connectivity.selected_option 
+        if isinstance(raw_selection, (list, tuple)):
+            selected_text = raw_selection[0]
+        else:
+            selected_text = raw_selection 
+
+        # 2. Convert to enum 
+        connectivity = Neighbor_Connectivity.from_label(selected_text)
+
+        # 3. Determine if we need diagonals
+        include_diagonals = (connectivity == Neighbor_Connectivity.CONNECT8)
+
+        # 4. Get the labels 
+        direction_labels = Neighbor_Direction.get_labels(include_diagonals=include_diagonals)
+
+        # 5. Set lists: available empty, order full
+        self.list_selected_order.set_item_list(direction_labels)
+        self.list_avail_dirs.set_item_list([])
 
 
-    def _handle_dropdown_menu_events(self, event):
-
-        if event.ui_element == self.select_map_action:
-            logging.info("Selected map action")
-            self._handle_map_action(event.text)
-        elif event.ui_element == self.select_algo:
-            self.selected_algorithm = event.text 
-            logging.info(f"Selected algorithm: {self.selected_algorithm}")
-        
-
-        """
-        elif event.ui_element == self.anim_dropdown:
-            # Next Step button visibility
-            logging.info(f"event.text: {event.text}, Animation_Mode.SINGLE_STEP.label: {Animation_Mode.SINGLE_STEP.label}")
-            if event.text == Animation_Mode.SINGLE_STEP.name:
-                self.next_step_button.show() 
-                self.speed_dropdown.hide() # hide speed as it's irrelevant 
-            else:
-                self.next_step_button.hide() 
-                self.speed_dropdown.show()
-        """
-        
-
-    # ********* Neighbor Order Handlers **************
-       
-    def _handle_neighbor_updates(self, event):
-        """Handles logic for any UI element that influences neighbor order."""
-
-        # Connectivity dropdown
-        if event.ui_element == self.select_neighbor_connectivity:
-            self._handle_connectivity_selection(event.text)
-        
-        # Random order checkbox
-        elif event.ui_element == self.check_random_neighbor_order:
-            # is_random should be True when checkbox is checked 
-            # and false when check box is unchecked
-            is_checked = (event.type == pygame_gui.UI_CHECK_BOX_CHECKED)
-            self._toggle_neighbor_order_ui(is_random=is_checked)
-
-        # Save Preset Events 
-        elif event.ui_element == self.input_preset_name:
-            # event type: UI_TEXT_ENTRY_FINISHED
-            # Input Text Box: preset name 
-            # User pressed 'Enter', trigger the save logic
-            self._handle_save_preset() 
-        
-        elif event.ui_element == self.btn_save_preset:
-            # User clicked 'Save', trigger the save logic
-            self._handle_save_preset()
-            
-        # Load Preset Events
-        elif event.ui_element == self.select_preset:
-            self._handle_load_preset(event.text)
-        
-        # Default Order button
-        elif event.ui_element == self.btn_default_order:
-            self._handle_set_default_order()
-        
-        # Clear Order button
-        elif event.ui_element == self.btn_clear_order:
-            self._handle_clear_order()
-
+    # --------- DropDown Event Handlers 
+    
+    def _handle_map_action(self, text):
+        if text == Map_Actions.LOAD_MAP.label:
+            self.open_file_dialog(Map_Actions.LOAD_MAP)
+        elif text == Map_Actions.SAVE_MAP.label:
+            self.open_file_dialog(Map_Actions.SAVE_MAP)
 
     def _handle_connectivity_selection(self, text):
         logging.info(f"connectivity choice text: {text}")
@@ -707,50 +753,7 @@ class Sidebar:
             sorted_avail = Neighbor_Direction.sort_labels(current_avail)
             self.list_avail_dirs.set_item_list(sorted_avail)
 
-    def _toggle_neighbor_order_ui(self, is_random: bool):
-        """Enable or disable all UI elements related to manual neighbor order."""
-        for el in self.manual_order_widgets:
-            el.disable() if is_random else el.enable()
-
-        # Update selection list content 
-        # Providing a placeholder message helps the user understand WHY it's disabled
-        content = ["", "", "Randomly Selected at Runtime"] if is_random else []
-        self.list_selected_order.set_item_list(content)
-
-    def _handle_save_preset(self):
-        # Ensure the directory exists
-        os.makedirs('presets', exist_ok=True)
-
-        # Get the name from the text entry field 
-        preset_name = self.input_preset_name.text.strip() 
-        if not preset_name:
-            preset_name = f"Preset_{len(os.listdir('presets')) + 1}"
-
-        # Get the current labels form UI list 
-        current_order = self._get_clean_item_list(self.list_selected_order)
-        if not current_order:
-            logging.warning(f"Not saving preset, order list is empty.")
-            return 
-        
-        # Define the data structure 
-        preset_data = {
-            "order": current_order,
-            "diagonals": self.check_allow_diagonals.is_checked 
-        }
-
-        # Save to JSON file 
-        os.makedirs('presets', exist_ok=True)
-        with open(f"presets/{preset_name}.json", "w") as f:
-            json.dump(preset_data, f)
-
-        # Clear input and refresh dropdown 
-        self.input_preset_name.set_text("")
-        self._refresh_preset_dropdown()
-
-        logging.info(f"Saved {preset_name} successfully")
-
     def _handle_load_preset(self, preset_name):
-        logging.info("entering handle_load_preset")
         # load the data
         try:
             with open(f"presets/{preset_name}.json", "r") as f:
@@ -775,129 +778,37 @@ class Sidebar:
             logging.warning(f"File {preset_name} not found.")
 
 
-    def _refresh_preset_dropdown(self):
-        """Scan the presets folder and update the dropdown options."""
+# ===============================================================
 
-        # ensure directory exists, get files and strip extension, prepend "Select Preset" to list
-        os.makedirs('presets', exist_ok=True)
-        files = [f.replace('.json', '') for f in os.listdir('presets') if f.endswith('.json')]
-        options = ["Select Preset"] + files 
+    # ********* Neighbor Order Handlers **************
+       
+    def _handle_neighbor_updates(self, event):
+        """Handles logic for any UI element that influences neighbor order."""
 
-        # Capture the current state and current selection 
-        is_random = self.check_random_neighbor_order.is_checked 
-        current_selection = self.select_preset.selected_option 
-
-        rect = self.select_preset.relative_rect 
-        manager = self.select_preset.ui_manager 
-        container = self.select_preset.ui_container 
-
-        # Identify index in the tracking list to prevent stale references 
-        try: 
-            idx = self.manual_order_widgets.index(self.select_preset)
-        except ValueError:
-            idx = None 
-
-        self.select_preset.kill() 
-
-        # Recreate with the previous selection
-        if current_selection not in options:
-            current_selection = "Select Preset"
-
-        self.select_preset = UIDropDownMenu(
-            options_list=options,
-            starting_option=current_selection,
-            relative_rect=rect,
-            manager=manager,
-            container=container
-        )
-
-        # restore disabled state and update the tracking list
-        if random:
-            self.select_preset.disable() 
         
-        # Update the reference so toggling still  works
-        if idx is not None:
-            self.manual_order_widgets[idx] = self.select_preset 
+        # Random order checkbox
+        elif event.ui_element == self.check_random_neighbor_order:
+            # is_random should be True when checkbox is checked 
+            # and false when check box is unchecked
+            is_checked = (event.type == pygame_gui.UI_CHECK_BOX_CHECKED)
+            self._toggle_neighbor_order_ui(is_random=is_checked)
+        
 
-
-    def _handle_set_default_order(self):
-        """Sets order to the standard natural order based on connectivity selection."""
-        # 1. Safely extract string (handles tuple issue)
-        raw_selection = self.select_neighbor_connectivity.selected_option 
-        if isinstance(raw_selection, (list, tuple)):
-            selected_text = raw_selection[0]
-        else:
-            selected_text = raw_selection 
-
-        # 2. Convert to enum 
-        connectivity = Neighbor_Connectivity.from_label(selected_text)
-
-        # 3. Determine if we need diagonals
-        include_diagonals = (connectivity == Neighbor_Connectivity.CONNECT8)
-
-        # 4. Get the labels 
-        direction_labels = Neighbor_Direction.get_labels(include_diagonals=include_diagonals)
-
-        # 5. Set lists: available empty, order full
-        self.list_selected_order.set_item_list(direction_labels)
-        self.list_avail_dirs.set_item_list([])
-
-    def _handle_clear_order(self):
-        # Get strings from both lists 
-        current_order = self._get_clean_item_list(self.list_selected_order)
-        current_pool = self._get_clean_item_list(self.list_avail_dirs)
-
-        # Combine them back into the pool
-        current_pool.extend(current_order)
-
-        # Clear the active order list 
-        self.list_selected_order.set_item_list([])
-
-        sorted_pool = Neighbor_Direction.sort_labels(current_pool)
-        self.list_avail_dirs.set_item_list(sorted_pool)
-
-
-
-
-    def _handle_new_selection(self, event):
-
-        # --- Moving from Available to Selected List ---
-        if event.ui_object_id.endswith("#available_direction_selector"):
-            selected = event.text 
-           
-            # Update Available List
-            current_avail = self._get_clean_item_list(self.list_avail_dirs)
-            if selected in current_avail:
-                current_avail.remove(selected) 
-                self.list_avail_dirs.set_item_list(current_avail)
-
-                # Update selected list
-                current_order = self._get_clean_item_list(self.list_selected_order)
-                current_order.append(selected)
-                self.list_selected_order.set_item_list(current_order)
-
-
-        # --- Moving from Selected back to Available ---
-        elif event.ui_object_id.endswith("#list_selected_order"):
-            selected = event.text 
-
-            # Update selected list
-            current_order = self._get_clean_item_list(self.list_selected_order)
-            if selected in current_order:
-                current_order.remove(selected)
-                self.list_selected_order.set_item_list(current_order)
-
-                # Update Available List (maintain sorted order)
-                current_avail = self._get_clean_item_list(self.list_avail_dirs)
-                current_avail.append(selected)
-
-                sorted_avail = Neighbor_Direction.sort_labels(current_avail)
-                self.list_avail_dirs.set_item_list(sorted_avail)
-
-
+        
  
-    
-      
+
+
+    def _toggle_neighbor_order_ui(self, is_random: bool):
+        """Enable or disable all UI elements related to manual neighbor order."""
+        for el in self.manual_order_widgets:
+            el.disable() if is_random else el.enable()
+
+        # Update selection list content 
+        # Providing a placeholder message helps the user understand WHY it's disabled
+        content = ["", "", "Randomly Selected at Runtime"] if is_random else []
+        self.list_selected_order.set_item_list(content)
+
+
 
     def set_status(self, message):
         self.status_label.set_text(message)
@@ -910,11 +821,12 @@ class Sidebar:
         self.check_end.rebuild()
 
 
-    def _handle_map_action(self, text):
-        if text == Map_Actions.LOAD_MAP.label:
-            self.open_file_dialog(Map_Actions.LOAD_MAP)
-        elif text == Map_Actions.SAVE_MAP.label:
-            self.open_file_dialog(Map_Actions.SAVE_MAP)
+    # --- Map Logic ---
+    def _handle_map_logic(self, event):
+        
+        elif event.type == pygame_gui.UI_WINDOW_CLOSE and event.ui_element == self.active_file_dialog:
+            self.active_file_dialog = None 
+
 
 
     def open_file_dialog(self, action_type):
@@ -936,17 +848,89 @@ class Sidebar:
                 allow_existing_files_only=(action_type == Map_Actions.LOAD_MAP)
             )
 
-    
-    def _handle_window_close_events(self, event):
-        # Clean up dialog reference when closed
-        if event.ui_element == self.active_file_dialog:
-            self.active_file_dialog = None
 
 
-    def _switch_tab(self, target_panel):
-        self.panel_map_config.hide()
-        self.panel_algo_settings.hide()
-        self.panel_viz_settings.hide()
-        target_panel.show() 
-        self.active_panel = target_panel
+
  
+
+    # --- List Logic ---
+    def _handle_list_logic(self, event):
+        if event.type != pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+            return 
+        
+        # Define the relationships: clicking an item in 'src' moves it to 'dest'
+        list_map = {
+            self.list_avail_dirs: (self.list_selected_order, False), # To Selected (no sort)
+            self.list_selected_order: (self.list_avail_dirs, True),  # To Availalbe (sort)
+        }
+
+        if event.ui_element in list_map:
+            dest_list, should_sort = list_map[event.ui_element]
+            self._transfer_item(event.text, src=event.ui_element, dest=dest_list, sort=should_sort)
+
+    def _transfer_item(self, text, src, dest, sort=False):
+        s_list = self._get_clean_item_list(src)
+        d_list = self._get_clean_item_list(dest) 
+
+        if text in s_list:
+            s_list.remove(text)
+            d_list.append(text)
+            if sort: d_list = Neighbor_Direction.sort_labels(d_list)
+
+        src.set_item_list(s_list)
+        dest.set_item_list(d_list)
+
+
+
+
+
+
+
+    
+    def _get_clean_item_list(self, ui_list_element):
+        """Extracts strings from a UISelectionList regardless of its internal format."""
+        raw_list = ui_list_element.item_list 
+        return [item['text'] if isinstance(item, dict) else item for item in raw_list]
+    
+    def get_selected_direction_vectors(self):
+        """
+        Converts the strings in list_selected_order into (dr, dc) vectors.
+        Ensures all required directions are included, appending missing ones to the end.
+        """
+        # Get the user's custom order and current settings
+        selected_labels = self._get_clean_item_list(self.list_selected_order)
+        include_diagonals = (self.select_neighbor_connectivity == Neighbor_Connectivity.CONNECT8)
+
+        # Define what complete looks like for the current mode 
+        required_labels = Neighbor_Direction.get_labels(include_diagonals)
+
+        # Create the final sequence: Start with user choices, then add missing 
+        final_labels = list(selected_labels)
+        for label in required_labels:
+            if label not in final_labels:
+                final_labels.append(label)
+
+        # Map the labels back to vectors 
+        # Get the lookup map : {"North": <Neighbor_Direction.NORTH>, ...}
+        lookup = Neighbor_Direction.get_lookup()
+
+        # Return a list of vectors [(dr, dc), ...]
+        return [lookup[label].vector for label in final_labels if label in lookup]
+    
+    def _sync_neighbor_order(self):
+        """Fills missing directions in the UI so the user sees the final search order."""
+        # Get the current user oder and the required defaults 
+        user_order = self._get_clean_item_list(self.list_selected_order)
+        include_diagonals = self.check_allow_diagonals.is_checked 
+        required_labels = Neighbor_Direction.get_labels(include_diagonals)
+
+        # Add missing directions to the user order list 
+        updated_order = list(user_order)
+        for label in required_labels:
+            if label not in updated_order:
+                updated_order.append(label)
+
+        # Update the UI lists 
+        self.list_selected_order.set_item_list(updated_order)
+        self.list_avail_dirs.set_item_list([])  # everything is now in the active list
+
