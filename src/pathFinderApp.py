@@ -219,6 +219,8 @@ class PathFinderApp:
                     # read the current visual state from the sidebar 
                     new_order = self.sidebar.get_selected_directions()
 
+                    logging.info(f"event selection_list_new_selection, new_order: {new_order}")
+
                     # update the algorithm settings
                     self.algo_settings.neighbor_directions = new_order
 

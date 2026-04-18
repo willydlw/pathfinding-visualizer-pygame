@@ -581,12 +581,13 @@ class Sidebar:
                 is_checked = (event.type == pygame_gui.UI_CHECK_BOX_CHECKED)
                 action(is_checked)
                 return 
+            
+        elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+            self._handle_list_logic(event)
         
         elif event.type == pygame_gui.UI_WINDOW_CLOSE:
             if event.ui_element == self.active_file_dialog:
                 self.active_file_dialog = None 
-
-
 
 
     # --------- Button Event Handlers -----------
@@ -612,13 +613,23 @@ class Sidebar:
         if not current_order:
             logging.warning(f"Not saving preset, order list is empty.")
             return 
-        
-        connectivity = Neighbor_Connectivity.CONNECT8 if data['diagonals'] else Neighbor_Connectivity.CONNECT4
+
+        # 1. Get the raw selection
+        raw_selection = self.select_neighbor_connectivity.selected_option
+
+        # 2. Ensure it's a string (extracting from tuple if needed)
+        label_text = raw_selection[0] if isinstance(raw_selection, tuple) else raw_selection
+
+        # 3. Convert to Enum
+        connectivity_enum = Neighbor_Connectivity.from_label(label_text)
+
+        logging.info(f"Enum selected: {connectivity_enum} (Value: {connectivity_enum.value})")
+
 
         # Define the data structure 
         preset_data = {
             "order": current_order,
-            "connectivity": connectivity
+            "connectivity": connectivity_enum 
         }
 
         # Save to JSON file 
@@ -834,23 +845,17 @@ class Sidebar:
 
 # ===============================================================
 
- 
+# Helper functions for PathFinderApp's event handling to access UI data
+
 
     def set_status(self, message):
         self.status_label.set_text(message)
-
-
-
-
-
 
 
  
 
     # --- List Logic ---
     def _handle_list_logic(self, event):
-        if event.type != pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
-            return 
         
         # Define the relationships: clicking an item in 'src' moves it to 'dest'
         list_map = {
@@ -876,15 +881,15 @@ class Sidebar:
 
 
 
-
-
-
-
-    
     def _get_clean_item_list(self, ui_list_element):
         """Extracts strings from a UISelectionList regardless of its internal format."""
         raw_list = ui_list_element.item_list 
         return [item['text'] if isinstance(item, dict) else item for item in raw_list]
+    
+
+    def get_selected_directions(self):
+        return self._get_clean_item_list(self.list_selected_order)
+    
     
     def get_selected_direction_vectors(self):
         """
