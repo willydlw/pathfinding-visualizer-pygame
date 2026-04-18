@@ -153,6 +153,7 @@ class Sidebar:
         self.select_preset = None 
         self.label_save_preset = None 
         self.input_preset_name = None 
+
         self.default_preset_name = "Type name & press Enter"
 
         self._init_panel_algo_settings()
@@ -739,8 +740,8 @@ class Sidebar:
     # --------- CheckBox Event Handlers ------------
     def _toggle_neighbor_order_ui(self, is_random: bool):
         """Enable or disable all UI elements related to manual neighbor order."""
-                # Group widgets that are disabled when 'Random' is checked
-        
+               
+         # Group widgets that are disabled when 'Random' is checked
         self.manual_order_widgets = [
             self.list_avail_dirs, 
             self.list_selected_order,
@@ -753,10 +754,29 @@ class Sidebar:
         for el in self.manual_order_widgets:
             el.disable() if is_random else el.enable()
 
-        # Update selection list content 
-        # Providing a placeholder message helps the user understand WHY it's disabled
-        content = ["", "", "Randomly Selected at Runtime"] if is_random else []
-        self.list_selected_order.set_item_list(content)
+        if is_random:
+            self.list_avail_dirs.set_item_list([])
+            content = ["", "", "Randomly Selected at Runtime"] if is_random else []
+            self.list_selected_order.set_item_list(content)
+        else:
+            # Convert selected connectivity to enum 
+            selected_connectivity = self.select_neighbor_connectivity.selected_option
+            if isinstance(selected_connectivity, (tuple, list)) and len(selected_connectivity) > 0:
+                 connectivity_label = selected_connectivity[0]
+            else: 
+                 connectivity_label = selected_connectivity
+
+            connectivity_enum = Neighbor_Connectivity.from_label(connectivity_label)
+      
+            # Fill available list based on connectivity
+            if connectivity_enum == Neighbor_Connectivity.CONNECT4:
+                available_dirs = Neighbor_Direction.get_labels(False)
+            else:
+                available_dirs = Neighbor_Direction.get_natural_order()
+               
+            self.list_avail_dirs.set_item_list(available_dirs)
+            self.list_selected_order.set_item_list([])
+
 
 
     def _toggle_start_end_ui(self, element, is_checked):
@@ -801,8 +821,10 @@ class Sidebar:
 
 
     def _handle_connectivity_selection(self, text):
-        logging.info(f"connectivity choice text: {text}")
-
+        
+        if self.check_random_neighbor_order.is_checked:
+            return 
+        
         # convert string to enum
         connectivity = Neighbor_Connectivity.from_label(text)
         
