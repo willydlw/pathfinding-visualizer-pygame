@@ -316,6 +316,15 @@ class PathFinderApp:
 
         time_delta = self.clock.tick(self.config.FPS) / 1000.0 
 
+
+        # Check if teh "Saved!" feedback has expired 
+        if hasattr(self, 'sidebar.save_feedback_exiry') and self.save_feedback_expiry > 0:
+            if time.time() > self.save_feedback_expiry:
+                # revert to original text
+                self.input_preset_name.placeholder_text = "Type name & press Enter"
+                self.input_preset_name.redraw() 
+                self.save_feedback_expiry = 0 
+
         # pygame_gui UIManager.update() handles time-based logic
         # must be called once every frame 
         self.ui_manager.update(time_delta)

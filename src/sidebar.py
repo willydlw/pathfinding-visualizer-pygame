@@ -4,12 +4,14 @@ import logging
 import random
 import os 
 import json
+import time
 
 
 import pygame_gui.ui_manager
 from pygame_gui.windows import (
     UIConfirmationDialog,
-    UIFileDialog 
+    UIFileDialog,
+    UIMessageWindow
 )
 
 
@@ -148,9 +150,10 @@ class Sidebar:
 
         self.btn_clear_order = None 
 
-        self.btn_save_preset = None 
         self.select_preset = None 
+        self.label_save_preset = None 
         self.input_preset_name = None 
+        self.default_preset_name = "Type name & press Enter"
 
         self._init_panel_algo_settings()
 
@@ -472,24 +475,24 @@ class Sidebar:
         self.ui_layout.draw_row += self.config.ROW_SPACING
 
 
+        # Save preset label
+        self.label_save_preset = UILabel(
+            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
+                                    (self.ui_layout.label_width, self.ui_layout.widget_height)),
+            text="Save Preset: ",
+            manager=self.manager, 
+            container=self.panel_algo_settings,
+        )
+        
         # Input preset name
         self.input_preset_name = UITextEntryLine(
-            relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
-                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
-            manager=self.manager, container=self.panel_algo_settings,
-            placeholder_text="Enter Preset Name..." # Helpful hint for the user
+            relative_rect=pygame.Rect((self.ui_layout.label_width + 20, self.ui_layout.draw_row), 
+                                    (self.ui_layout.half_width + 30, self.ui_layout.widget_height)),
+            manager=self.manager,
+            container=self.panel_algo_settings,
+            placeholder_text=self.default_preset_name, # Shows when empty
         )
 
-
-        # Save preset 
-        self.btn_save_preset = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
-                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
-            text="Save Preset",
-            manager=self.manager, container=self.panel_algo_settings,
-            tool_tip_text="Enter preset name or will save with default name"
-        )
-        #self.ui_layout.draw_row += self.ui_layout.widget_height + 5
 
         # Group widgets that are disabled when 'Random' is checked
         self.manual_order_widgets = [
@@ -498,8 +501,7 @@ class Sidebar:
             self.btn_default_order, 
             self.btn_clear_order, 
             self.select_preset, 
-            self.input_preset_name,
-            self.btn_save_preset,
+            self.input_preset_name
         ]
 
         self._refresh_preset_dropdown()
@@ -523,7 +525,6 @@ class Sidebar:
             self.btn_map_tab: lambda: self._switch_tab(self.panel_map_config),
             self.btn_algo_tab: lambda: self._switch_tab(self.panel_algo_settings),
             self.btn_viz_tab: lambda: self._switch_tab(self.panel_viz_settings),
-            self.btn_save_preset: self._handle_save_preset,
             self.btn_clear_order: self._handle_clear_order,
             self.btn_default_order: self._handle_set_default_order,
             self.btn_reset_grid: self.uncheck_start_end()
@@ -599,49 +600,59 @@ class Sidebar:
         target_panel.show() 
         self.active_panel = target_panel
 
-    def _handle_save_preset(self):
-        # Ensure the directory exists
-        os.makedirs('presets', exist_ok=True)
 
-        # Get the name from the text entry field 
+
+    def _handle_save_preset(self):
         preset_name = self.input_preset_name.text.strip() 
         if not preset_name:
-            preset_name = f"Preset_{len(os.listdir('presets')) + 1}"
-
-        # Get the current labels form UI list 
+            # Show status message via pygame_gui popup 
+            UIMessageWindow(
+                rect=pygame.Rect((400, 300), (300, 200)),
+                html_message="<b>Error:</b> Preset name is required.",
+                manager=self.manager,
+                window_title="Save Error"
+            )
+            logging.warning("Save failed. No preset name provided.")
+            return 
+          
+        # Get connectivity and selected directions
+        raw_connectivity = self.select_neighbor_connectivity.selected_option
+        connectivity_text = raw_connectivity[0] if isinstance(raw_connectivity, tuple) else raw_connectivity
+        connectivity_enum = Neighbor_Connectivity.from_label(connectivity_text)
         current_order = self._get_clean_item_list(self.list_selected_order)
+
+        # Validation checks 
+        error_msg = None 
         if not current_order:
-            logging.warning(f"Not saving preset, order list is empty.")
+            error_msg = "Order list is empty."
+        elif len(current_order) != connectivity_enum.value:
+            error_msg = f"Please select all {connectivity_enum.value} directions."
+        
+        if error_msg:
+            UIMessageWindow(
+                rect=pygame.Rect((400, 300), (300, 200)),
+                html_message=f"<b>Cannot Save:</b> {error_msg}",
+                manager=self.manager
+            )
+            logging.warning(error_msg)
+            self.input_preset_name.set_text("")
             return 
 
-        # 1. Get the raw selection
-        raw_selection = self.select_neighbor_connectivity.selected_option
-
-        # 2. Ensure it's a string (extracting from tuple if needed)
-        label_text = raw_selection[0] if isinstance(raw_selection, tuple) else raw_selection
-
-        # 3. Convert to Enum
-        connectivity_enum = Neighbor_Connectivity.from_label(label_text)
-
-        logging.info(f"Enum selected: {connectivity_enum} (Value: {connectivity_enum.value})")
-
-
-        # Define the data structure 
+        # Save the file
+        os.makedirs('presets', exist_ok=True)
         preset_data = {
             "order": current_order,
-            "connectivity": connectivity_enum 
+            "connectivity": connectivity_text
         }
 
-        # Save to JSON file 
-        os.makedirs('presets', exist_ok=True)
-        with open(f"presets/{preset_name}.json", "w") as f:
-            json.dump(preset_data, f)
+        try:
+            with open(f"presets/{preset_name}.json", "w") as f:
+                json.dump(preset_data, f)
+            self.input_preset_name.set_text("") 
+            logging.info(f"{preset_name} saved.")
 
-        # Clear input and refresh dropdown 
-        self.input_preset_name.set_text("")
-        self._refresh_preset_dropdown()
-
-        logging.info(f"Saved {preset_name} successfully")
+        except Exception as e:
+            logging.error(f"Failed to write file: {e}")
 
 
     def _refresh_preset_dropdown(self):
@@ -693,6 +704,7 @@ class Sidebar:
         sorted_pool = Neighbor_Direction.sort_labels(current_pool)
         self.list_avail_dirs.set_item_list(sorted_pool)
 
+
     def _handle_set_default_order(self):
         """Sets order to the standard natural order based on connectivity selection."""
         # 1. Safely extract string (handles tuple issue)
@@ -736,7 +748,6 @@ class Sidebar:
             self.btn_clear_order, 
             self.select_preset, 
             self.input_preset_name,
-            self.btn_save_preset,
         ]
 
         for el in self.manual_order_widgets:
@@ -746,6 +757,7 @@ class Sidebar:
         # Providing a placeholder message helps the user understand WHY it's disabled
         content = ["", "", "Randomly Selected at Runtime"] if is_random else []
         self.list_selected_order.set_item_list(content)
+
 
     def _toggle_start_end_ui(self, element, is_checked):
         if not is_checked: return 
@@ -818,24 +830,32 @@ class Sidebar:
             sorted_avail = Neighbor_Direction.sort_labels(current_avail)
             self.list_avail_dirs.set_item_list(sorted_avail)
 
+
     def _handle_load_preset(self, preset_name):
         # load the data
         try:
             with open(f"presets/{preset_name}.json", "r") as f:
                 data = json.load(f)
 
+            connectivity_label = data.get('connectivity')
+            if not connectivity_label:
+                UIMessageWindow(
+                    rect=pygame.Rect((400, 300), (300, 200)),
+                    html_message="<b>Error:</b> Connectivity is required.",
+                    manager=self.manager,
+                    window_title="Load Error"
+                )
+                logging.warning("Load failed. No connectivity provided.")
+                return 
+                
+          
             # 1. Update Connectivity Dropdown based on the 'diagonals' flag
-            connectivity = Neighbor_Connectivity.CONNECT8 if data['diagonals'] else Neighbor_Connectivity.CONNECT4
-            self.select_neighbor_connectivity.selected_option = connectivity.label
+            self.select_neighbor_connectivity.selected_option = connectivity_label 
             self.select_neighbor_connectivity.rebuild() 
 
             # 2. Update the lists
             self.list_selected_order.set_item_list(data['order'])
-
-            # repopulate available with remaining items 
-            all_possible = Neighbor_Direction.get_labels(data['diagonals']) 
-            remaining = [d for d in all_possible if d not in data['order']]
-            self.list_avail_dirs.set_item_list(Neighbor_Direction.sort_labels(remaining))
+            self.list_avail_dirs.set_item_list([])
 
             self._refresh_preset_dropdown()
 
@@ -916,6 +936,7 @@ class Sidebar:
         # Return a list of vectors [(dr, dc), ...]
         return [lookup[label].vector for label in final_labels if label in lookup]
     
+
     def _sync_neighbor_order(self):
         """Fills missing directions in the UI so the user sees the final search order."""
         # Get the current user oder and the required defaults 
@@ -932,4 +953,3 @@ class Sidebar:
         # Update the UI lists 
         self.list_selected_order.set_item_list(updated_order)
         self.list_avail_dirs.set_item_list([])  # everything is now in the active list
-
