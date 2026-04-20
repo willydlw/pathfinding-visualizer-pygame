@@ -202,8 +202,6 @@ class Sidebar:
             manager=self.manager 
         )
 
-
-
     def _init_panels(self):
         """Create a panel for each Tab."""
         panel_y_start = 70 
@@ -587,7 +585,7 @@ class Sidebar:
             action = self.checkbox_actions.get(event.ui_element)
             if action:
                 is_checked = (event.type == pygame_gui.UI_CHECK_BOX_CHECKED)
-                action(is_checked)
+                action(event.ui_element, is_checked)
                 return 
             
         elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
@@ -793,7 +791,7 @@ class Sidebar:
                 self.check_end.rebuild() 
         elif element == self.check_end:
                 self.check_start.is_checked = False 
-                self.check_start.rebuid()
+                self.check_start.rebuild()
 
 
     # --------- DropDown Event Handlers 
