@@ -170,9 +170,13 @@ class Sidebar:
         self.panel_viz_settings.hide()
 
         self._init_event_maps()
-       
-        is_random = self.check_random_neighbor_order.is_checked 
-        self._toggle_neighbor_order_ui(is_random)
+
+        # Dictionary to map tabs to panels
+        self.tab_map = {
+            "map" : self.panel_map_config,
+            "algo": self.panel_algo_settings,
+            "viz" : self.panel_viz_settings
+        }
 
 
     def _init_tabs(self):
@@ -197,6 +201,8 @@ class Sidebar:
             text="Visualize",
             manager=self.manager 
         )
+
+
 
     def _init_panels(self):
         """Create a panel for each Tab."""
