@@ -196,3 +196,8 @@ Object size: 1x1 square, 2x2 square, 3x3 square
 
 Visualization: toggle grid
 instant path, animated search, single step
+
+
+
+
+WRITE TESTS!!!!
