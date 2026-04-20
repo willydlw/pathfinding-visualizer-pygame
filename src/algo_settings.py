@@ -11,12 +11,25 @@ logger = logging.getLogger(__name__)
 
 
 class Algo_Settings:
-    def __init__(self):
+    def __init__(self, 
+                 algo_name= Algorithm_Type.get_default(),
+                 connectivity=Neighbor_Connectivity.get_default(),
+                 algorithm=Algorithm_Type.get_default(), 
+                 randomize_neighbors=False):
+        self._algo_name = algo_name,
         self._neighbor_connectivity : Neighbor_Connectivity = Neighbor_Connectivity.get_default()
         self._algorithm : Algorithm_Type = Algorithm_Type.get_default()
         self._randomize_neighbors = False 
-        self._neighbor_directions = Neighbor_Direction.get_labels(include_diagonals=False)
+        self._selected_neighbor_order = None 
 
+    @property 
+    def algo_name(self) -> Algorithm_Type:
+        return self._algo_name 
+    
+    @algo_name.setter 
+    def algo_name(self, value):
+        if not isinstance(value, Algorithm_Type):
+            raise TypeError(f"algo_name: {value} (type: {type(value.__name__)}) must be Algorithm_Type")
 
     @property 
     def randomize_neighbors(self) -> bool:
@@ -25,7 +38,7 @@ class Algo_Settings:
     @randomize_neighbors.setter 
     def randomize_neighbors(self, enabled: bool):
         if not isinstance(enabled, bool):
-            raise TypeError(f"randomize_neighbors: {value} (type: {type(value.__name__)}) must be a boolean.")
+            raise TypeError(f"randomize_neighbors: {enabled} (type: {type(enabled.__name__)}) must be a boolean.")
         self._randomize_neighbors = enabled 
     
 
@@ -69,12 +82,12 @@ class Algo_Settings:
 
     
     @property
-    def neighbor_directions(self) -> list[str]:
+    def selected_neighbor_order(self) -> list[str]:
         """Returns the current list of direction labels."""
-        return self._neighbor_directions
+        return self._selected_neighbor_order
     
-    @neighbor_directions.setter 
-    def neighbor_directions(self, values: list[str]):
+    @selected_neighbor_order.setter 
+    def selected_neighbor_order(self, values: list[str]):
         """Validates and set the direction order exactly as provided by the user."""
         if not isinstance(values, list):
             raise TypeError(f"neighbor_directions must be a list, not {type(values).__name__}")
@@ -88,10 +101,32 @@ class Algo_Settings:
         for label in values:
             if label not in allowed_labels:
                 conn_desc = "8-way" if is_8_way else "4-way"
-                raise ValueError(f"'{label}' is invalie for {conn_desc} connectivity.")
+                raise ValueError(f"'{label}' is invalid for {conn_desc} connectivity.")
     
         self._neighbor_directions = list(values)
 
+    
+
+    def ensure_direction_completeness(self) -> bool:
+        """
+        Checks for missing directions based on connectivity and adds them.
+        """
+
+        is_8_way = (self._neighbor_connectivity == Neighbor_Connectivity.CONNECT8)
+        required_labels = Neighbor_Direction.get_labels(include_diagonals=is_8_way)
+
+        missing = [label for label in required_labels if label not in self._neighbor_directions]
+
+        if missing:
+            # append the missing directions to the end of the list
+            self._neighbor_directions.extend(missing)
+            logging.info(f"Added missing directions: {missing}")
+
+        # If the list contains directions that are not allowed 
+        # (e.g. diagonal labels in a 4-way mode), filter them out
+        self._neighbor_directions = [ 
+            label for label in self._neighbor_directions if label in required_labels
+        ]
         
     
 

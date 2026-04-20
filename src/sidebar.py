@@ -979,3 +979,4 @@ class Sidebar:
         # Update the UI lists 
         self.list_selected_order.set_item_list(updated_order)
         self.list_avail_dirs.set_item_list([])  # everything is now in the active list
+

@@ -1,7 +1,7 @@
 import pygame 
 import pygame_gui 
 from pygame_gui.elements import UIButton
-from pygame_gui.windows import UIConfirmationDialog 
+from pygame_gui.windows import UIConfirmationDialog, UIMessageWindow
 
 import json
 import logging 
@@ -427,6 +427,12 @@ class PathFinderApp:
 
         # 1. Validation:Ensure start and end are set 
         if not self.grid.start_node or not self.grid.end_node:
+            UIMessageWindow(
+                    rect=pygame.Rect((400, 300), (300, 200)),
+                    html_message="<b>Error:</b> Start and End locations required.",
+                    manager=self.sidebar.manager,
+                    window_title="Missing Start/End Locations"
+            )
             logging.warning("Select both a Start and End node first!")
             return 
         
@@ -435,6 +441,12 @@ class PathFinderApp:
         end_terrain = self.grid.end_node.terrain 
 
         if start_terrain != end_terrain:
+            UIMessageWindow(
+                    rect=pygame.Rect((400, 300), (300, 200)),
+                    html_message="<b>Error:</b>Terrain mismatch: no path from Start to End",
+                    manager=self.sidebar.manager,
+                    window_title="Terrain Mismatch"
+            )
             logging.error(
                 f"Terrain mismatch! Start is {start_terrain}, "
                 f"End is {end_terrain}. They must match."
@@ -452,20 +464,19 @@ class PathFinderApp:
         # before staring the new search 
         self.active_generator = None 
 
+        # Save the current algo_settings state to use in the search
+        # Will use these settings for the search. Changes to the UI will not 
+        # affect this search until the search is finished 
+
+        STOP PROGRAM HERE: FINISH creating new Algo_Settings object
+
+        self.current_search_settings = Algo_Settings(
+            self.algo_name
+            self.algo_settings.neighbor_connectivity, self.algo_settings.selected_neighbor_order
+
         # Neighbor Search Directions 
-        lookup = Neighbor_Direction.get_lookup() 
-
-        item_list = self.sidebar.list_active_order.item_list 
-        neighbor_search_order = [item['text'] for item in item_list]
-        logging.info(f"neighbor_search_order: {neighbor_search_order}")
-
-
-        # Fallback to a default order if the list is empty 
-        if not self.sidebar.neigbor_order_list:
-            search_order = [d.vector for d in [Neighbor_Direction.NORTH, Neighbor_Direction.SOUTH,
-                                               Neighbor_Direction.EAST, Neighbor_Direction.WEST]]
-        else:
-            search_order = [lookup[label].vector for label in self.sidebar.neigbor_order_list]
+        self.algo_settings.ensure_direction_completeness()
+   
 
         self.sidebar.set_status("Searching...")
  

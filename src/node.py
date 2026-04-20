@@ -67,7 +67,8 @@ class Node:
         elif self.visited:
             color = Draw_State.VISITED.color
         else:
-            color = Terrain_Type(self.terrain).color
+            color = self.terrain.color
+           
 
         rect = (self.x + x_offset, self.y + y_offset, self.size, self.size)
         pygame.draw.rect(surface, color, rect)

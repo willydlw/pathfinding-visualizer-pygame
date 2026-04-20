@@ -197,6 +197,11 @@ class Neighbor_Direction(Enum):
             return Neighbor_Direction.get_natural_order()
         cardinals = [cls.NORTH, cls.EAST, cls.SOUTH, cls.WEST]
         return [m.label for m in cardinals]
+    
+    @classmethod 
+    def get_lookup(cls):
+        """Returns a dictionary mapping labels to enum members."""
+        return {member.label: member for member in cls}
        
     @classmethod 
     def from_label(cls, label_text: str):
@@ -249,7 +254,7 @@ class Neighbor_Order(IntEnum):
         for member in cls:
             if member.label.lower() == label_text.lower():
                 return member 
-        raise ValueError(f"Invalid label: {label_text}")
+        raise cls.CLOCKWISE
 
  
 
