@@ -201,3 +201,7 @@ instant path, animated search, single step
 
 
 WRITE TESTS!!!!
+
+
+
+To run tests: uv run pytest
