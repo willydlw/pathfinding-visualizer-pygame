@@ -4,7 +4,7 @@ If you are using pytest, just navigate to the project_root in your terminal and 
 
 
 import pytest
-from your_module import UIEnum, Neighbor_Connectivity
+from myapp.ui.ui_types import UIEnum, Neighbor_Connectivity
 
 class MockEnum(UIEnum):
     FIRST_OPTION = 1

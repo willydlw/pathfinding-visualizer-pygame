@@ -4,7 +4,6 @@ import logging
 import random
 import os 
 import json
-import time
 
 
 import pygame_gui.ui_manager
@@ -26,7 +25,7 @@ from pygame_gui.elements import (
     UIPanel
 )
 
-from .appConfig import AppConfig
+from .config import UIConfig
 
 from .constants import (
     Algorithm_Type,
@@ -51,7 +50,7 @@ logger = logging.getLogger(__name__)
 class Sidebar:
     # Declare instance attributes here for the IDE/Type Checker 
     manager:    pygame_gui.UIManager 
-    config:     AppConfig 
+    config:     UIConfig 
     ui_layout:  UI_Layout
     btn_map_tab:    UIButton   # Hinting the attributes defined in _init_tabs 
     btn_algo_tab:   UIButton  
@@ -61,9 +60,9 @@ class Sidebar:
     panel_viz_settings:  UIPanel
 
 
-    def __init__(self, manager, config: AppConfig):
+    def __init__(self, manager, ui_config: UIConfig):
         self.manager = manager
-        self.config = config
+        self.config = ui_config
 
         # UI Layout
         self.ui_layout = UI_Layout(

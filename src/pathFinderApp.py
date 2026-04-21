@@ -33,6 +33,11 @@ class PathFinderApp:
    
     def __init__(self, config: AppConfig):
 
+        settings = Settings()
+# Just pass the .ui portion
+panel = ControlPanel(ui_config=settings.ui)
+
+
         # window attributes
         self.config = config 
         self.screen_width = config.GRID_WIDTH + config.SIDEBAR_WIDTH + (config.GRID_PADDING * 3) 
