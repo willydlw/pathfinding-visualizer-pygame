@@ -2,6 +2,6 @@
 from .pathFinderApp import PathFinderApp
 from .algo_settings import Algo_Settings 
 from .algorithms import bfs, dfs, astar 
-from .appConfig import AppConfig
+from .config import Settings
 
-__all__ = [ "AppConfig", "PathFinderApp"]
+__all__ = [ "PathFinderApp"]

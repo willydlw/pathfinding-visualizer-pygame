@@ -47,7 +47,7 @@ from .algorithms import (
 
 logger = logging.getLogger(__name__)
 
-class Sidebar:
+class ControlPanel:
     # Declare instance attributes here for the IDE/Type Checker 
     manager:    pygame_gui.UIManager 
     config:     UIConfig 
@@ -774,7 +774,7 @@ class Sidebar:
 
 
     def open_file_dialog(self, action_type):
-        #Sidebar owns the dialog object, but the App uses the result
+        #ControlPanel owns the dialog object, but the App uses the result
         if self.active_file_dialog is None:
            
             if action_type == Map_Actions.SAVE_MAP:
