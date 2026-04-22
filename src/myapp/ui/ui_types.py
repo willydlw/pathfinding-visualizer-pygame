@@ -6,7 +6,6 @@ class PATH_COST(IntEnum):
     DIAGONAL = 14
 
 
-
 # UI Base Class 
 class UIEnum(IntEnum):
     @classmethod 
@@ -296,7 +295,7 @@ class Terrain_Type(UIEnum):
         }.get(self, (255, 255, 255))        # Default white
     
     @classmethod 
-    def default(cls):
+    def get_default(cls):
         return cls.GRASS 
 
 
