@@ -1,13 +1,8 @@
-import logging 
-
-from .constants import (
+from ui.ui_types import (
     Algorithm_Type,
     Neighbor_Connectivity, 
     Neighbor_Direction
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 class Algo_Settings:

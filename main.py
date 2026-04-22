@@ -2,7 +2,8 @@ import logging
 import pygame
 from pathlib import Path 
 
-from src import AppConfig, PathFinderApp
+from src.myapp.pathFinderApp import PathFinderApp 
+from src.myapp.config import Settings 
 
 def configure_logger():
     # define absolute path of the log file 

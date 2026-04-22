@@ -2,7 +2,6 @@
 If you are using pytest, just navigate to the project_root in your terminal and run: pytest
 """
 
-
 import pytest
 from myapp.ui.ui_types import UIEnum, Neighbor_Connectivity
 

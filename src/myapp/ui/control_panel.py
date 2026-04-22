@@ -25,24 +25,20 @@ from pygame_gui.elements import (
     UIPanel
 )
 
-from .config import UIConfig
+from myapp.config import UIConfig
 
-from .constants import (
+from .ui_types import (
     Algorithm_Type,
-    Animation_Mode,
+    #Animation_Mode,
     Map_Actions,
     Map_Dimension,
     Neighbor_Connectivity,
     Neighbor_Direction,
-    Speed_Options,
+    #Speed_Options,
     Terrain_Type, 
-    Speed_Options
 )
 
-
-from .algorithms import (
-    bfs, dfs, astar
-)
+from .ui_layout import UI_Layout
 
 
 logger = logging.getLogger(__name__)

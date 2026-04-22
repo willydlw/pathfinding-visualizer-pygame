@@ -7,13 +7,13 @@ import json
 import logging 
 import os 
 
-from .appConfig import AppConfig
+from .config import 
 from .algo_settings import Algo_Settings
 from .grid import Grid 
-from .sidebar import Sidebar
+from .ui.control_panel import ControlPanel
 from .algorithms import bfs, dfs, astar
 
-from .constants import (
+from ui.ui_types import (
     Algorithm_Type,
     Animation_Mode,
     Map_Actions,
