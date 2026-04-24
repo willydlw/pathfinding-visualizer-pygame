@@ -56,9 +56,9 @@ class ControlPanel:
     panel_viz_settings:  UIPanel
 
 
-    def __init__(self, manager, ui_config: UIConfig):
+    def __init__(self, manager, config: UIConfig):
         self.manager = manager
-        self.config = ui_config
+        self.config = config
 
         # UI Layout
         self.ui_layout = UI_Layout(
