@@ -1,10 +1,18 @@
 from collections import deque 
+from enum import IntEnum
 import heapq 
 import logging 
 import random 
 
 from .grid import Grid 
-from .constants import Neighbor_Order
+from ui.ui_types import Neighbor_Order
+
+
+# Path Costs 
+class PATH_COST(IntEnum):
+    CARDINAL = 10
+    DIAGONAL = 14
+
 
 
 logger = logging.getLogger(__name__)

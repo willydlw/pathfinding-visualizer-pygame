@@ -7,7 +7,7 @@ import json
 import logging 
 import os 
 
-from .config import 
+from .config import Settings
 from .algo_settings import Algo_Settings
 from .grid import Grid 
 from .ui.control_panel import ControlPanel
