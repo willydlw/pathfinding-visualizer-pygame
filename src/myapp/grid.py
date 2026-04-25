@@ -4,7 +4,7 @@ import os
 
 import logging 
 
-from .constants import Draw_State, Terrain_Type
+from ui.ui_types import Draw_State, Terrain_Type
 from .node import Node
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class Grid:
         self.rect = pygame.Rect(x, y, self.grid_size, self.grid_size)   # grid rectangle
 
         
-        self.current_brush = Terrain_Type.GRASS             # default brush color
+        self.current_brush = Terrain_Type.get_default()
 
         self.start_node = None                       
         self.end_node = None 

@@ -69,6 +69,8 @@ def test_uienum_no_side_effects():
     assert labels1 is not labels2  # Different instances
 
 
+# ----- Neighbor Connectivity -----
+
 def test_neighbor_connectivity_custom_labels():
     """Verify the specific descriptive labels for Neighbor_Connectivity."""
     assert Neighbor_Connectivity.CONNECT4.label == '4 Cardinal (N, E, S, W)'
@@ -84,7 +86,7 @@ def test_neighbor_connectivity_values():
     assert Neighbor_Connectivity.CONNECT8 == 8
 
 
-
+# ------ Terrain Types ------
 def test_terrain_type_values():
     """Verify that terrain costs and colors are correctly mapped."""
     # Test Cost (Crucial for pathfinding accuracy)

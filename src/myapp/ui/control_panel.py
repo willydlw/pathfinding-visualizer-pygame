@@ -63,9 +63,9 @@ class ControlPanel:
         # UI Layout
         self.ui_layout = UI_Layout(
             width=config.SIDEBAR_WIDTH,
-            padding = 10,
+            padding = config.PADDING,
             widget_height=self.config.WIDGET_HEIGHT,
-            label_width=110,
+            label_width = config.LABEL_WIDTH,
             x_offset = self.config.GRID_WIDTH + (self.config.GRID_PADDING * 2),
             start_row=config.UI_START_ROW
         )

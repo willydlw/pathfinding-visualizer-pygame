@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class GridConfig:
-    DEFAULT_SIZE: int = 8
-    MAX_SIZE: int = 256
+    MIN_CELLS: int = 8
+    MAX_CELLS: int = 256
     WIDTH: int = 768
     PADDING: int = 20
 
@@ -12,6 +12,8 @@ class UIConfig:
     SIDEBAR_WIDTH: int = 400
     WIDGET_HEIGHT: int = 35
     ROW_SPACING: int = 50
+    PADDING:     int = 10
+    LABEL_WIDTH: int = 110
     # ... include your other UI constants here
 
 @dataclass(frozen=True)
