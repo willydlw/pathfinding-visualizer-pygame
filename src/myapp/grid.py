@@ -4,7 +4,7 @@ import os
 
 import logging 
 
-from ui.ui_types import Draw_State, Terrain_Type
+from .ui.ui_types import Draw_State, Terrain_Type
 from .node import Node
 
 logger = logging.getLogger(__name__)

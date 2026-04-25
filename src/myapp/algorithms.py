@@ -5,7 +5,7 @@ import logging
 import random 
 
 from .grid import Grid 
-from ui.ui_types import Neighbor_Order
+from .ui.ui_types import Neighbor_Order
 
 
 # Path Costs 

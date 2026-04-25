@@ -25,7 +25,7 @@ from pygame_gui.elements import (
     UIPanel
 )
 
-from myapp.config import UIConfig
+from ..config import UIConfig
 
 from .ui_types import (
     Algorithm_Type,
@@ -56,17 +56,17 @@ class ControlPanel:
     panel_viz_settings:  UIPanel
 
 
-    def __init__(self, manager, config: UIConfig):
+    def __init__(self, manager, ui_config: UIConfig):
         self.manager = manager
-        self.config = config
+        self.ui_config = ui_config
 
         # UI Layout
         self.ui_layout = UI_Layout(
-            width=config.SIDEBAR_WIDTH,
-            padding = config.PADDING,
-            widget_height=self.config.WIDGET_HEIGHT,
-            label_width = config.LABEL_WIDTH,
-            x_offset = self.config.GRID_WIDTH + (self.config.GRID_PADDING * 2),
+            width = ui_config.SIDEBAR_WIDTH,
+            padding = ui_config.PADDING,
+            widget_height = ui_config.WIDGET_HEIGHT,
+            label_width = ui_config.LABEL_WIDTH,
+            x_offset = ui_config.GRID_SIZE + (ui_config.GRID_PADDING * 2),
             start_row=config.UI_START_ROW
         )
 

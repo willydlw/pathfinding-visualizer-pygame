@@ -33,8 +33,7 @@ def main():
     configure_logger() 
     
     try:
-        config = AppConfig()
-        app = PathFinderApp(config=config)
+        app = PathFinderApp(settings=Settings())
         app.run()
     finally:
         pygame.quit() 

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 class GridConfig:
     MIN_CELLS: int = 8
     MAX_CELLS: int = 256
-    WIDTH: int = 768
+    GRID_SIZE: int = 768
     PADDING: int = 20
 
 @dataclass(frozen=True)

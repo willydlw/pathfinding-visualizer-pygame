@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .constants import Draw_State, Terrain_Type
+from .ui.ui_types import Draw_State, Terrain_Type
 
 
 class Node:

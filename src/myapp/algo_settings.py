@@ -1,4 +1,4 @@
-from ui.ui_types import (
+from .ui.ui_types import (
     Algorithm_Type,
     Neighbor_Connectivity, 
     Neighbor_Direction

@@ -13,7 +13,7 @@ from .grid import Grid
 from .ui.control_panel import ControlPanel
 from .algorithms import bfs, dfs, astar
 
-from ui.ui_types import (
+from .ui.ui_types import (
     Algorithm_Type,
     Animation_Mode,
     Map_Actions,
@@ -31,17 +31,14 @@ logger = logging.getLogger(__name__)
 
 class PathFinderApp:
    
-    def __init__(self, config: AppConfig):
+    def __init__(self, settings: Settings = Settings()):
 
-        settings = Settings()
-# Just pass the .ui portion
-panel = ControlPanel(ui_config=settings.ui)
-
-
+        self.settings = settings 
+     
         # window attributes
-        self.config = config 
-        self.screen_width = config.GRID_WIDTH + config.SIDEBAR_WIDTH + (config.GRID_PADDING * 3) 
-        self.screen_height = config.GRID_WIDTH + (config.GRID_PADDING * 2)
+        self.screen_width = settings.grid.GRID_SIZE + settings.ui.SIDEBAR_WIDTH + (settings.grid.PADDING * 3)
+        self.screen_height = settings.grid.GRID_SIZE + (settings.grid.PADDING * 2)
+       
 
         # pygame initialization
         pygame.init() 
@@ -61,8 +58,12 @@ panel = ControlPanel(ui_config=settings.ui)
         self.running = True 
 
         # Grid position top left x,y with padding on left and above
-        self.grid = Grid(self.config.GRID_PADDING, self.config.GRID_PADDING, 
-                         self.config.GRID_WIDTH, self.config.DEFAULT_GRID_SIZE)
+        self.grid = Grid(
+            x=settings.grid.PADDING, 
+            y=settings.grid.PADDING, 
+            grid_size=settings.grid.GRID_SIZE,
+            num_cells=settings.grid.MIN_CELLS
+        )
 
         # UI Management 
         try:
@@ -84,10 +85,11 @@ panel = ControlPanel(ui_config=settings.ui)
             ])
 
         # Position sidebar after the grid + extra padding 
-        sidebar_x = self.config.GRID_WIDTH + (self.config.GRID_PADDING * 2)
-        self.sidebar = Sidebar(
+        sidebar_x = settings.grid.GRID_SIZE + (settings.grid.PADDING * 2)
+        self.control_panel = ControlPanel(
+            sidebar_x,
             self.ui_manager,
-            self.config
+            settings.ui
         )
 
         self.algo_settings = Algo_Settings()
@@ -473,15 +475,17 @@ panel = ControlPanel(ui_config=settings.ui)
         # Will use these settings for the search. Changes to the UI will not 
         # affect this search until the search is finished 
 
-        STOP PROGRAM HERE: FINISH creating new Algo_Settings object
+        logging.info("STOP PROGRAM HERE: FINISH creating new Algo_Settings object")
 
+        """
         self.current_search_settings = Algo_Settings(
             self.algo_name
             self.algo_settings.neighbor_connectivity, self.algo_settings.selected_neighbor_order
+            )
 
         # Neighbor Search Directions 
         self.algo_settings.ensure_direction_completeness()
-   
+        """
 
         self.sidebar.set_status("Searching...")
  
