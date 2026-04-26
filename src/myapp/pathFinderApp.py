@@ -39,7 +39,6 @@ class PathFinderApp:
         self.screen_width = settings.grid.GRID_SIZE + settings.ui.SIDEBAR_WIDTH + (settings.grid.PADDING * 3)
         self.screen_height = settings.grid.GRID_SIZE + (settings.grid.PADDING * 2)
        
-
         # pygame initialization
         pygame.init() 
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
@@ -84,12 +83,14 @@ class PathFinderApp:
                 {'name': 'noto_sans', 'point_size': 14, 'style': 'bold'},
             ])
 
-        # Position sidebar after the grid + extra padding 
-        sidebar_x = settings.grid.GRID_SIZE + (settings.grid.PADDING * 2)
+        # Position control panel to right of grid 
+        cpx = settings.grid.GRID_SIZE + (settings.grid.PADDING * 2)
+        cpy = settings.grid.PADDING
         self.control_panel = ControlPanel(
-            sidebar_x,
+            cpx,
+            cpy,
             self.ui_manager,
-            settings.ui
+            settings
         )
 
         self.algo_settings = Algo_Settings()
@@ -104,13 +105,10 @@ class PathFinderApp:
         self.right_button_held = False 
 
         self.current_brush = Terrain_Type.get_default().label
-        
-
         logging.info(f"PathFinderApp initialized")
 
     
     def _handle_events(self):
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False 

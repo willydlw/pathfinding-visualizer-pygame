@@ -21,14 +21,11 @@ class Grid:
 
         self.rect = pygame.Rect(x, y, self.grid_size, self.grid_size)   # grid rectangle
 
-        
-        self.current_brush = Terrain_Type.get_default()
-
         self.start_node = None                       
         self.end_node = None 
         
         # init 2D list
-        self.map = [[Node(r, c, self.cell_size, Terrain_Type.GRASS) for c in range(self.cols)] 
+        self.map = [[Node(r, c, self.cell_size, Terrain_Type.get_default()) for c in range(self.cols)] 
                     for r in range(self.rows)
         ]
 
@@ -37,7 +34,7 @@ class Grid:
 
     
     def clear(self, terrain):    # terrain is Terrain_Type enum not string
-        """Resets the grid map to all DEFAULT (0)."""
+        """Resets the grid map."""
         self.map = [
             [Node(r, c, self.cell_size, terrain) for c in range(self.cols)] 
             for r in range(self.rows)
@@ -67,7 +64,6 @@ class Grid:
         return None 
     
 
-
     def draw(self, surface, font):
         # Draw the colored cell blocks
         for row in self.map:
@@ -90,6 +86,7 @@ class Grid:
                                  (self.rect.x + self.grid_size, self.rect.y + offset)
                                 )
     
+
     def find_node(self, node_type):
         for r in range(self.rows):
             for c in range(self.cols):
