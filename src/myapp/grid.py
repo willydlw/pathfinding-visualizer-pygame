@@ -4,6 +4,7 @@ import os
 
 import logging 
 
+from .config import GridConfig
 from .ui.ui_types import Draw_State, Terrain_Type
 from .node import Node
 
@@ -11,37 +12,33 @@ logger = logging.getLogger(__name__)
 
 class Grid:
 
-    def __init__(self, x, y, grid_size, num_cells):
+    def __init__(self, config: GridConfig): 
 
-        self.rows = num_cells 
-        self.cols = num_cells 
+        self.config = config 
+
+        self.cell_width = self.config.width // self.config.cols 
+        self.cell_height = self.config.height // self.config.rows 
+                    
+        # define grid rectangle
+        self.rect = pygame.Rect(
+            self.config.start_x, self.config.start_y, 
+            self.config.width, self.config.height) 
         
-        self.grid_size = grid_size                  # units: pixels
-        self.cell_size = grid_size // num_cells     # units: pixels
-
-        self.rect = pygame.Rect(x, y, self.grid_size, self.grid_size)   # grid rectangle
-
-        self.start_node = None                       
-        self.end_node = None 
+        # Initialize the map and node states using the clear method
+        self.reset(Terrain_Type.get_default())
         
-        # init 2D list
-        self.map = [[Node(r, c, self.cell_size, Terrain_Type.get_default()) for c in range(self.cols)] 
-                    for r in range(self.rows)
-        ]
-
-        logging.info(f"grid_size: {self.grid_size}, rows: {self.rows}, cell_size: {self.cell_size}")
-        logging.info(f"Grid init completed.")
-
+        logging.info(f"Grid init completed: {self.config.rows}x{self.config.cols}")
+        
     
-    def clear(self, terrain):    # terrain is Terrain_Type enum not string
+    def reset(self, terrain):    # terrain is Terrain_Type enum not string
         """Resets the grid map."""
         self.map = [
-            [Node(r, c, self.cell_size, terrain) for c in range(self.cols)] 
-            for r in range(self.rows)
+            [Node(r, c, self.config.width, self.config.height, terrain) for c in range(self.config.cols)] 
+            for r in range(self.config.rows)
         ]
         self.start_node = None 
         self.end_node = None 
-        logger.info("Grid cleared!")
+        logging.info("Grid cleared!")
 
     
     def get_node_from_pos(self, pos):

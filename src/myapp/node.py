@@ -7,12 +7,13 @@ from .ui.ui_types import Draw_State, Terrain_Type
 
 
 class Node:
-    def __init__(self, row, col, size, terrain):
+    def __init__(self, row, col, width, height, terrain):
         self.row = row 
         self.col = col 
-        self.x = col * size 
-        self.y = row * size 
-        self.size = size 
+        self.x = col * width
+        self.y = row * height
+        self.width = width 
+        self.height = height 
 
         self.terrain = terrain 
 

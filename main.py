@@ -3,7 +3,6 @@ import pygame
 from pathlib import Path 
 
 from src.myapp.pathFinderApp import PathFinderApp 
-from src.myapp.config import Settings 
 
 def configure_logger():
     # define absolute path of the log file 
@@ -33,7 +32,7 @@ def main():
     configure_logger() 
     
     try:
-        app = PathFinderApp(settings=Settings())
+        app = PathFinderApp()
         app.run()
     finally:
         pygame.quit() 

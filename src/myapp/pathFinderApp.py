@@ -7,7 +7,8 @@ import json
 import logging 
 import os 
 
-from .config import Settings
+
+from .config import load_config
 from .algo_settings import Algo_Settings
 from .grid import Grid 
 from .ui.control_panel import ControlPanel
@@ -27,21 +28,15 @@ from .ui.ui_types import (
 logger = logging.getLogger(__name__)
 
 
-
-
 class PathFinderApp:
    
-    def __init__(self, settings: Settings = Settings()):
+    def __init__(self):
 
-        self.settings = settings 
+        self.config = load_config()
      
-        # window attributes
-        self.screen_width = settings.grid.GRID_SIZE + settings.ui.SIDEBAR_WIDTH + (settings.grid.PADDING * 3)
-        self.screen_height = settings.grid.GRID_SIZE + (settings.grid.PADDING * 2)
-       
         # pygame initialization
         pygame.init() 
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.screen = pygame.display.set_mode((self.config.window_width, self.config.window_height))
         pygame.display.set_caption("Pathfinding Visualizer")
 
         pygame.font.init() 
@@ -57,40 +52,31 @@ class PathFinderApp:
         self.running = True 
 
         # Grid position top left x,y with padding on left and above
-        self.grid = Grid(
-            x=settings.grid.PADDING, 
-            y=settings.grid.PADDING, 
-            grid_size=settings.grid.GRID_SIZE,
-            num_cells=settings.grid.MIN_CELLS
-        )
+        self.grid = Grid( config=self.config.grid)
 
         # UI Management 
         try:
             self.ui_manager = pygame_gui.UIManager(
-                (self.screen_width, self.screen_height),
+                (self.config.window_width, self.config.window_height),
                 'theme.json'
                 )
         except json.JSONDecodeError as e:
             logging.error(f"problem with 'theme.json'")
             logging.error(f"Details: {e.msg} at line {e.lineno}, column {e.colno}")
-            self.ui_manager = pygame_gui.UIManager((self.screen_width, self.screen_height))
+            self.ui_manager = pygame_gui.UIManager((self.config.window_width, self.config.window_height))
         except FileNotFoundError:
             logging.error(f"File 'theme.json' not found")
-            self.ui_manager = pygame_gui.UIManager((self.screen_width, self.screen_height))
+            self.ui_manager = pygame_gui.UIManager((self.config.window_width, self.config.window_height))
 
         # Preloading this font to avoid a warning when UI later has to load it.
         self.ui_manager.preload_fonts([
                 {'name': 'noto_sans', 'point_size': 14, 'style': 'bold'},
             ])
 
-        # Position control panel to right of grid 
-        cpx = settings.grid.GRID_SIZE + (settings.grid.PADDING * 2)
-        cpy = settings.grid.PADDING
+       
         self.control_panel = ControlPanel(
-            cpx,
-            cpy,
-            self.ui_manager,
-            settings
+            manager=self.ui_manager,
+            config=self.config
         )
 
         self.algo_settings = Algo_Settings()
@@ -188,8 +174,8 @@ class PathFinderApp:
                     dialog_w, dialog_h = 300, 200 
 
                     # Calculate center position 
-                    center_x = (self.screen_width - dialog_w) // 2 
-                    center_y = (self.screen_height - dialog_h) // 2
+                    center_x = (self.config.window_width - dialog_w) // 2 
+                    center_y = (self.config.window_height - dialog_h) // 2
                 
                     # Create the confirmation dialog
                     self.confirmation_dialog = UIConfirmationDialog(

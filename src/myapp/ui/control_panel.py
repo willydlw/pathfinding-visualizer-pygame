@@ -25,7 +25,7 @@ from pygame_gui.elements import (
     UIPanel
 )
 
-from ..config import UIConfig
+from ..config import AppConfig
 
 from .ui_types import (
     Algorithm_Type,
@@ -38,16 +38,13 @@ from .ui_types import (
     Terrain_Type, 
 )
 
-from .ui_layout import UI_Layout
-
 
 logger = logging.getLogger(__name__)
 
 class ControlPanel:
     # Declare instance attributes here for the IDE/Type Checker 
     manager:    pygame_gui.UIManager 
-    config:     UIConfig 
-    ui_layout:  UI_Layout
+    config:     AppConfig
     btn_map_tab:    UIButton   # Hinting the attributes defined in _init_tabs 
     btn_algo_tab:   UIButton  
     btn_viz_tab: UIButton
@@ -56,19 +53,35 @@ class ControlPanel:
     panel_viz_settings:  UIPanel
 
 
-    def __init__(self, manager, ui_config: UIConfig):
-        self.manager = manager
-        self.ui_config = ui_config
+ 
+    def __init__(self, manager: pygame_gui.UIManager, config: AppConfig):
+        #startx, starty, ui_manager, settings: Settings = Settings()):
+        self.ui_manager = manager
+        self.config = config 
 
-        # UI Layout
-        self.ui_layout = UI_Layout(
-            width = ui_config.SIDEBAR_WIDTH,
-            padding = ui_config.PADDING,
-            widget_height = ui_config.WIDGET_HEIGHT,
-            label_width = ui_config.LABEL_WIDTH,
-            x_offset = ui_config.GRID_SIZE + (ui_config.GRID_PADDING * 2),
-            start_row=config.UI_START_ROW
+
+        panel_rect = pygame.Rect(
+            (
+                -self.config.ui.width - self.config.grid.padding, # X: Gap on the left
+                self.config.grid.padding                          # Y: Gap on the top
+            ),
+            (
+                self.config.ui.width,                             # Fixed Width
+                - (self.config.grid.padding * 2)                  # Height: Stretch, but subtract total padding
+            )
         )
+
+        self.panel = pygame_gui.elements.UIPanel(
+            relative_rect=panel_rect,
+            manager=manager,
+            anchors={
+                'left': 'right', 
+                'right': 'right', 
+                'top': 'top', 
+                'bottom': 'bottom' # This tells pygame_gui to respect the bottom margin
+            }
+        )
+
 
 
         # Initialize these class attributes before the gui elements 
@@ -145,185 +158,205 @@ class ControlPanel:
         }
 
 
+
     def _init_tabs(self):
-        """Create the Tab Buttons."""
-        tab_w = self.config.SIDEBAR_WIDTH // 3 
-        tab_h = 40 
-
+        """Create the Tab Buttons inside the ControlPanel."""
+        # Divide the sidebar width into 3 equal buttons
+        tab_w = self.config.ui.width // 3
+        tab_h = 40
+        
+        # We use (0, 0) relative to the PANEL, not the window!
         self.btn_map_tab = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.start_x,20), (tab_w, tab_h)),
+            relative_rect=pygame.Rect((0, 0), (tab_w, tab_h)),
             text="Map",
-            manager=self.manager 
+            manager=self.ui_manager,
+            container=self.panel, # <--- THIS IS KEY
+            anchors={'left': 'left', 'top': 'top'}
         )
-
+        
         self.btn_algo_tab = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.start_x + tab_w,20), (tab_w, tab_h)),
+            relative_rect=pygame.Rect((tab_w, 0), (tab_w, tab_h)),
             text="Algorithm",
-            manager=self.manager 
+            manager=self.ui_manager,
+            container=self.panel,
+            anchors={'left': 'left', 'top': 'top'}
         )
-
+        
         self.btn_viz_tab = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.start_x + tab_w * 2,20), (tab_w, tab_h)),
+            relative_rect=pygame.Rect((tab_w * 2, 0), (tab_w, tab_h)),
             text="Visualize",
-            manager=self.manager 
+            manager=self.ui_manager,
+            container=self.panel,
+            anchors={'left': 'left', 'top': 'top'}
         )
 
     def _init_panels(self):
-        """Create a panel for each Tab."""
-        panel_y_start = 70 
-        bottom_margin = 20 
-        dynamic_height = self.config.GRID_WIDTH + (self.config.GRID_PADDING * 2) - panel_y_start - bottom_margin
-        panel_rect = pygame.Rect(
-            (self.ui_layout.start_x, panel_y_start), 
-            (self.config.SIDEBAR_WIDTH, dynamic_height))
+        """Create a panel for each Tab, filling the remaining sidebar space."""
+        panel_y_start = 45 # Just below the 40px tall tabs
+        
+        # Use -1 for height and anchor to 'bottom' so it stretches to fit the sidebar
+        panel_rect = pygame.Rect((0, panel_y_start), (self.config.ui.width, -1))
+        
+        anchor_settings = {
+            'left': 'left', 
+            'right': 'right', 
+            'top': 'top', 
+            'bottom': 'bottom'
+        }
 
-        self.panel_map_config = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-        self.panel_algo_settings = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-        self.panel_viz_settings = UIPanel(relative_rect=panel_rect, manager=self.manager, starting_height=1)
-
-    def _init_panel_map_config(self):
-        """
-        Create UI elements for 
-            1. Map actions: create map, load map, save map
-            2. Terrain type, 
-            3. Setting grid dimensions
-            4. Setting start, end locations 
-        """
-        self.ui_layout.reset_flow()
-
-        # 1. Map Actions 
-        self.label_map_action = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.label_width, self.ui_layout.widget_height)),
-            text="Map Actions:",
-            manager=self.manager,
-            container=self.panel_map_config 
+        # All panels share the same position, we just hide/show them
+        self.panel_map_config = UIPanel(
+            relative_rect=panel_rect, 
+            manager=self.ui_manager, 
+            container=self.panel,
+            anchors=anchor_settings
         )
 
+        # ... create other two panels similarly ...
+        self.panel_algo_settings = UIPanel(
+            relative_rect=panel_rect, 
+            manager=self.ui_manager, 
+            container=self.panel,
+            anchors=anchor_settings
+        )
+        self.panel_viz_settings = UIPanel(
+            relative_rect=panel_rect, 
+            manager=self.ui_manager, 
+            container=self.panel,
+            anchors=anchor_settings
+        )
+
+
+    def _get_layout_metrics(self):
+        """Returns a dictionary of standard UI measurements based on current config."""
+        p = self.config.ui.padding
+        w_h = self.config.ui.widget_height
+        label_w = self.config.ui.label_width
+        
+        # Total usable width inside the panel
+        full_w = self.config.ui.width - (p * 3)
+        
+        return {
+            "padding": p,
+            "row_sp": self.config.ui.row_spacing,
+            "widget_h": w_h,
+            "label_w": label_w,
+            "col2_x": label_w + p,
+            "col2_w": full_w - label_w,
+            "full_w": full_w,
+            "half_w": (full_w // 2) - (p // 2)
+        }
+
+
+    def _init_panel_map_config(self):
+        """Create UI elements relative to the map config panel."""
+        m = self._get_layout_metrics() # 'm' for metrics
+        current_y = m["padding"]
+
+        # 1. Map Actions
+        self.label_map_action = UILabel(
+            relative_rect=pygame.Rect((m["padding"], current_y), (m["label_w"], m["widget_h"])),
+            text="Map Actions:", manager=self.ui_manager, container=self.panel_map_config
+        )
         self.select_map_action = UIDropDownMenu(
             options_list=Map_Actions.options_list(),
             starting_option=Map_Actions.get_default().label,
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col2x, self.ui_layout.draw_row),
-                (self.ui_layout.col2_width, self.ui_layout.widget_height)),
-            manager=self.manager,
-            container=self.panel_map_config,
-            object_id="#select_map_action"
+            relative_rect=pygame.Rect((m["col2_x"], current_y), (m["col2_w"], m["widget_h"])),
+            manager=self.ui_manager, container=self.panel_map_config, object_id="#select_map_action"
         )
         
-        self.ui_layout.draw_row += self.config.ROW_SPACING 
+        current_y += m["row_sp"]
 
-        # 2. Terrain        
+        # 2. Terrain
         self.label_terrain_type = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.label_width, self.ui_layout.widget_height)),
-            text="Terrain Type:",
-            manager=self.manager,
-            container=self.panel_map_config 
+            relative_rect=pygame.Rect((m["padding"], current_y), (m["label_w"], m["widget_h"])),
+            text="Terrain Type:", manager=self.ui_manager, container=self.panel_map_config
         )
-
         self.select_terrain = UIDropDownMenu(
             options_list=Terrain_Type.options_list(),
             starting_option=Terrain_Type.get_default().label,
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col2x, self.ui_layout.draw_row), 
-                (self.ui_layout.col2_width, self.ui_layout.widget_height)),
-            manager=self.manager,
-            container=self.panel_map_config,
-            object_id="#select_terrain"
+            relative_rect=pygame.Rect((m["col2_x"], current_y), (m["col2_w"], m["widget_h"])),
+            manager=self.ui_manager, container=self.panel_map_config, object_id="#select_terrain"
         )
 
-        self.ui_layout.draw_row += self.config.ROW_SPACING 
-    
-        # Grid Settings
+        current_y += m["row_sp"]
+
+        # 3. Grid Settings
         self.label_grid_dimensions = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row),
-                (self.ui_layout.label_width, self.ui_layout.widget_height)
-            ),
-            text="Set Grid Size:",
-            manager=self.manager,
-            container=self.panel_map_config 
+            relative_rect=pygame.Rect((m["padding"], current_y), (m["label_w"], widget_h)),
+            text="Set Grid Size:", manager=self.ui_manager, container=self.panel_map_config
         )
-
         self.select_grid_dimensions = UIDropDownMenu(
             options_list=Map_Dimension.options_list(),
             starting_option=Map_Dimension.get_default().label,
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col2x, self.ui_layout.draw_row),
-                (self.ui_layout.col2_width, self.ui_layout.widget_height)
-            ),
-            manager=self.manager,
-            container=self.panel_map_config,
-            object_id="#select_grid_dimensions"
+            relative_rect=pygame.Rect((m["col2_x"], current_y), (m["col2_w"], m["widget_h"])),
+            manager=self.ui_manager, container=self.panel_map_config, object_id="#select_grid_dimensions"
         )
 
-        self.ui_layout.draw_row += self.config.ROW_SPACING 
+        current_y += m["row_sp"]
 
-        # Start/End Markers     
+         # 4. Start/End Markers (Checkboxes)
+
+        # Calculate how much extra space is in each column
+        cb_size = self.config.ui.checkbox_size
+        # col1 width is roughly label_w
+        col1_center_offset = (m["label_w"] - cb_size) // 2
+        # col2 width was defined as col2_w
+        col2_center_offset = (m["col2_w"] - cb_size) // 2
+
+        # Set Start (Centered in Column 1)
         self.check_start = UICheckBox(
             relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
-            text="Set Start",
-            manager=self.manager,
+                (m["padding"] + col1_center_offset, current_y), 
+                (cb_size, cb_size)
+            ),
+            text="Set Start", # Text usually appears to the right of the box
+            manager=self.ui_manager,
             container=self.panel_map_config,
             object_id="#check_start"
         )
 
+        # Set End (Centered in Column 2)
         self.check_end = UICheckBox(
             relative_rect=pygame.Rect(
-                (self.ui_layout.col2x, self.ui_layout.draw_row), 
-                (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
+                (m["col2_x"] + col2_center_offset, current_y), 
+                (cb_size, cb_size)
+            ),
             text="Set End",
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_map_config,
             object_id="#check_end"
         )
 
-        self.ui_layout.draw_row += self.config.ROW_SPACING 
+        current_y += m["row_sp"]
 
+        # 5. Reset Button (Full Width)
+        full_btn_w = self.config.ui.width - (m["padding"] * 3)
         self.btn_reset_grid = UIButton(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_width, self.ui_layout.widget_height)
-            ),
-            text="CLEAR GRID",
-            manager=self.manager,
-            container=self.panel_map_config,
-            object_id="#btn_reset_grid",
-            tool_tip_text="Click here to reset the entire drawing area."
+            relative_rect=pygame.Rect((m["padding"], current_y), (full_btn_w, m["widget_h"])),
+            text="CLEAR GRID", manager=self.ui_manager, container=self.panel_map_config,
+            object_id="#btn_reset_grid", tool_tip_text="Click here to reset the entire drawing area."
         )
 
-        self.ui_layout.draw_row += self.config.ROW_SPACING  
 
     def _init_panel_algo_settings(self):
-        self.ui_layout.reset_flow()
 
-        # 1. Algorithm Selection 
+        m = self._get_layout_metrics() # 'm' for metrics
+        current_y = m["padding"]
+
+        # 1. Algorithm Selection
         self.label_algo = UILabel(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.label_width, self.ui_layout.widget_height)),
-            text="Algorithm:",
-            manager=self.manager,
-            container=self.panel_algo_settings 
+            relative_rect=pygame.Rect((m["padding"], current_y), (m["label_w"], m["widget_h"])),
+            text="Algorithm:", manager=self.ui_manager, container=self.panel_algo_settings
         )
-
         self.select_algo = UIDropDownMenu(
             options_list=Algorithm_Type.options_list(),
             starting_option=Algorithm_Type.get_default().label,
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col2x, self.ui_layout.draw_row), 
-                (self.ui_layout.col2_width, self.ui_layout.widget_height)),
-            manager=self.manager,
-            container=self.panel_algo_settings,
-            object_id="#select_algo"
+            relative_rect=pygame.Rect((m["col2_x"], current_y), (m["col2_w"], m["widget_h"])),
+            manager=self.ui_manager, container=self.panel_algo_settings
         )
+        current_y += m["row_sp"]
 
-        self.ui_layout.draw_row += self.config.ROW_SPACING
 
         # Neighbor Connectivity
         self.label_neighbor_connectivity = UILabel(
@@ -331,7 +364,7 @@ class ControlPanel:
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
                 (self.ui_layout.label_width, self.ui_layout.widget_height)),
             text="Connectivity",
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_algo_settings 
         )
 
@@ -341,12 +374,12 @@ class ControlPanel:
             relative_rect=pygame.Rect(
                 (self.ui_layout.col2x, self.ui_layout.draw_row), 
                 (self.ui_layout.col2_width, self.ui_layout.widget_height)),
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_algo_settings,
             object_id="#select_neighbor_connectivity"
         )
 
-        self.ui_layout.draw_row += self.config.ROW_SPACING
+        self.ui_layout.draw_row += self.settings.ui.m["row_sp"]
 
         # --- Neighbor Direction Order ---
         #      UI Selections to control order in which search algorithms select neighbors
@@ -358,7 +391,7 @@ class ControlPanel:
                 (self.ui_layout.full_width, self.ui_layout.widget_height)
             ),
             text="Neighbor Directions (click to select)",
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_algo_settings
         )
         self.ui_layout.draw_row += self.ui_layout.widget_height 
@@ -367,13 +400,13 @@ class ControlPanel:
         self.list_avail_dirs = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_width, self.config.LIST_HEIGHT)),
+                (self.ui_layout.full_width, self.settings.ui.LIST_HEIGHT)),
             item_list=Neighbor_Direction.get_labels(include_diagonals=False),
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_algo_settings,
             object_id="#available_direction_selector"
         )
-        self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
+        self.ui_layout.draw_row += self.settings.ui.LIST_HEIGHT + 10
 
 
         # Selected directions label
@@ -383,7 +416,7 @@ class ControlPanel:
                 (self.ui_layout.full_width, self.ui_layout.widget_height)
             ),
             text="Selected Order",
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_algo_settings
         )
         self.ui_layout.draw_row += self.ui_layout.widget_height 
@@ -392,36 +425,28 @@ class ControlPanel:
         self.list_selected_order = UISelectionList(
             relative_rect=pygame.Rect(
                 (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.ui_layout.full_width, self.config.LIST_HEIGHT)),
+                (self.ui_layout.full_width, self.settings.ui.LIST_HEIGHT)),
             item_list=[],
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_algo_settings,
             object_id="#list_selected_order"
         )
-        self.ui_layout.draw_row += self.config.LIST_HEIGHT + 10
+        self.ui_layout.draw_row += self.settings.ui.LIST_HEIGHT + 10
+
+
+
+        # Random Checkbox & Default Button (Using half_w)
+        self.check_random = UICheckBox(
+            relative_rect=pygame.Rect((m["padding"], current_y), (m["half_w"], m["widget_h"])),
+            text="Random", manager=self.ui_manager, container=self.panel_algo_settings
+        )
+        self.btn_default = UIButton(
+            relative_rect=pygame.Rect((m["col2_x"], current_y), (m["half_w"], m["widget_h"])),
+            text="Default", manager=self.ui_manager, container=self.panel_algo_settings
+        )
 
       
-        # Random neighbor order checkbox
-        self.check_random_neighbor_order = UICheckBox(
-            relative_rect=pygame.Rect(
-                (self.ui_layout.col1x, self.ui_layout.draw_row), 
-                (self.config.CHECKBOX_SIZE, self.config.CHECKBOX_SIZE)),
-            text="Random Order",
-            manager=self.manager,
-            container=self.panel_algo_settings,
-            object_id="#check_start",
-            tool_tip_text="Algorithm selects neighbors randomly"
-        )
-
-
-        # Default neighbor order button
-        self.btn_default_order = UIButton(
-            relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
-                                    (self.ui_layout.half_width, self.ui_layout.widget_height)),
-            text="Default Order",
-            manager=self.manager, container=self.panel_algo_settings
-        )
-        self.ui_layout.draw_row += self.config.ROW_SPACING
+        self.ui_layout.draw_row += self.settings.ui.m["row_sp"]
        
 
         # Clear neighbor order button
@@ -429,7 +454,7 @@ class ControlPanel:
              relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
             text="Clear Search Order",
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_algo_settings, 
             object_id="#clear_order_btn",
             tool_tip_text="Resets Search Order"
@@ -441,9 +466,9 @@ class ControlPanel:
             starting_option="Select Preset",
             relative_rect=pygame.Rect((self.ui_layout.half_width + 20, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
-            manager=self.manager, container=self.panel_algo_settings
+            manager=self.ui_manager, container=self.panel_algo_settings
         )
-        self.ui_layout.draw_row += self.config.ROW_SPACING
+        self.ui_layout.draw_row += self.settings.ui.m["row_sp"]
 
 
         # Save preset label
@@ -451,7 +476,7 @@ class ControlPanel:
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.label_width, self.ui_layout.widget_height)),
             text="Save Preset: ",
-            manager=self.manager, 
+            manager=self.ui_manager, 
             container=self.panel_algo_settings,
         )
         
@@ -459,7 +484,7 @@ class ControlPanel:
         self.input_preset_name = UITextEntryLine(
             relative_rect=pygame.Rect((self.ui_layout.label_width + 20, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width + 30, self.ui_layout.widget_height)),
-            manager=self.manager,
+            manager=self.ui_manager,
             container=self.panel_algo_settings,
             placeholder_text=self.default_preset_name, # Shows when empty
         )
@@ -485,7 +510,7 @@ class ControlPanel:
             relative_rect=pygame.Rect((self.ui_layout.col1x, self.ui_layout.draw_row), 
                                     (self.ui_layout.half_width, self.ui_layout.widget_height)),
             text="Run Search",
-            manager=self.manager, container=self.panel_viz_settings
+            manager=self.ui_manager, container=self.panel_viz_settings
         )
         
 
@@ -580,7 +605,7 @@ class ControlPanel:
             UIMessageWindow(
                 rect=pygame.Rect((400, 300), (300, 200)),
                 html_message="<b>Error:</b> Preset name is required.",
-                manager=self.manager,
+                manager=self.ui_manager,
                 window_title="Save Error"
             )
             logging.warning("Save failed. No preset name provided.")
@@ -603,7 +628,7 @@ class ControlPanel:
             UIMessageWindow(
                 rect=pygame.Rect((400, 300), (300, 200)),
                 html_message=f"<b>Cannot Save:</b> {error_msg}",
-                manager=self.manager
+                manager=self.ui_manager
             )
             logging.warning(error_msg)
             self.input_preset_name.set_text("")
@@ -780,7 +805,7 @@ class ControlPanel:
 
             self.active_file_dialog = UIFileDialog(
                 rect=pygame.Rect(160, 50, 440, 500),
-                manager=self.manager,
+                manager=self.ui_manager,
                 window_title=action_type.window_title,
                 initial_file_path=path,
                 object_id="#map_file_dialog",
@@ -834,7 +859,7 @@ class ControlPanel:
                 UIMessageWindow(
                     rect=pygame.Rect((400, 300), (300, 200)),
                     html_message="<b>Error:</b> Connectivity is required.",
-                    manager=self.manager,
+                    manager=self.ui_manager,
                     window_title="Load Error"
                 )
                 logging.warning("Load failed. No connectivity provided.")
